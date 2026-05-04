@@ -1,0 +1,5 @@
+/* login.css — override for login page body */
+body.login-body {
+  overflow: auto;
+  background: radial-gradient(ellipse at 30% 20%, color-mix(in srgb, #6ee7b7 6%, #0d0f14), #0d0f14 60%);
+}

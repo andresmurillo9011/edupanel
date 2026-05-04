@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduPanel · Administración</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">EduPanel</span>
+      </a>
+      <span class="admin-badge">👑 Panel Admin</span>
+    </div>
+    <div class="header-right">
+      <span id="admin-name" class="teacher-name"></span>
+      <button class="logout-btn" onclick="Auth.logout()">Salir →</button>
+    </div>
+  </header>
+
+  <!-- TABS PRINCIPALES -->
+  <div class="admin-nav">
+    <button class="anav-btn active" data-sec="docentes"    onclick="showSection('docentes',this)">👤 Docentes</button>
+    <button class="anav-btn"         data-sec="estudiantes" onclick="showSection('estudiantes',this)">🎓 Estudiantes</button>
+    <button class="anav-btn"         data-sec="malla"       onclick="showSection('malla',this)">📚 Malla Curricular</button>
+    <button class="anav-btn"         data-sec="resumen"     onclick="showSection('resumen',this)">📊 Resumen</button>
+  </div>
+
+  <main class="admin-main">
+
+    <!-- ==============================  DOCENTES  ============================== -->
+    <section id="sec-docentes" class="admin-section">
+      <div class="section-top">
+        <h2 class="sec-title">Gestión de Docentes</h2>
+        <button class="primary-btn" onclick="openModal('modal-docente')">+ Nuevo docente</button>
+      </div>
+      <div class="cards-grid" id="docentes-grid"></div>
+    </section>
+
+    <!-- ============================== ESTUDIANTES ============================== -->
+    <section id="sec-estudiantes" class="admin-section" style="display:none">
+      <div class="section-top">
+        <h2 class="sec-title">Gestión de Estudiantes</h2>
+        <div class="top-actions">
+          <!-- Selector de grado SIEMPRE visible y prominente -->
+          <div class="grado-selector-wrap">
+            <label class="sel-label">Grado:</label>
+            <select class="form-select grado-select-big" id="grado-select-est" onchange="renderEstudiantesList()">
+              <option value="sexto">Grado 6°</option>
+              <option value="septimo">Grado 7°</option>
+              <option value="octavo">Grado 8°</option>
+              <option value="noveno">Grado 9°</option>
+              <option value="decimo">Grado 10°</option>
+              <option value="once">Grado 11°</option>
+            </select>
+          </div>
+          <button class="primary-btn" onclick="abrirModalEstudiante()">+ Agregar estudiante</button>
+          <button class="secondary-btn" onclick="abrirModalImport()">⬆ Importar CSV</button>
+        </div>
+      </div>
+
+      <!-- Resumen por grados -->
+      <div class="grados-resumen" id="grados-resumen"></div>
+
+      <div class="est-panel">
+        <div class="est-list-wrap">
+          <div id="estudiantes-list" class="est-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== MALLA CURRICULAR ============================== -->
+    <section id="sec-malla" class="admin-section" style="display:none">
+      <div class="section-top">
+        <h2 class="sec-title">Malla Curricular</h2>
+      </div>
+
+      <!-- Selector de carga: Materia + Grado + botón Cargar -->
+      <div class="malla-selector-card">
+        <div class="malla-sel-row">
+          <div class="malla-sel-group">
+            <label class="form-label">1. Selecciona el área</label>
+            <select class="form-select" id="malla-materia">
+              <option value="">— Seleccionar área —</option>
+            </select>
+          </div>
+          <div class="malla-sel-group">
+            <label class="form-label">2. Selecciona el grado</label>
+            <select class="form-select" id="malla-grado">
+              <option value="sexto">Grado 6°</option>
+              <option value="septimo">Grado 7°</option>
+              <option value="octavo">Grado 8°</option>
+              <option value="noveno">Grado 9°</option>
+              <option value="decimo">Grado 10°</option>
+              <option value="once">Grado 11°</option>
+            </select>
+          </div>
+          <div class="malla-sel-group malla-sel-btn-group">
+            <label class="form-label">&nbsp;</label>
+            <button class="primary-btn malla-load-btn" onclick="loadMallaData()">📂 Cargar malla</button>
+          </div>
+        </div>
+        <!-- Estado actual cargado -->
+        <div class="malla-current-badge" id="malla-current-badge" style="display:none"></div>
+      </div>
+
+      <!-- Editor de períodos (aparece solo tras cargar) -->
+      <div id="malla-editor" style="display:none">
+        <div class="malla-layout">
+          <div class="malla-periods">
+            <div class="period-block">
+              <h4 class="period-title">📘 Período 1</h4>
+              <textarea class="malla-textarea" id="malla-p1" placeholder="Un tema por línea&#10;Ej:&#10;Introducción al álgebra&#10;Expresiones algebraicas&#10;Factorización"></textarea>
+            </div>
+            <div class="period-block">
+              <h4 class="period-title">📗 Período 2</h4>
+              <textarea class="malla-textarea" id="malla-p2" placeholder="Un tema por línea..."></textarea>
+            </div>
+            <div class="period-block">
+              <h4 class="period-title">📙 Período 3</h4>
+              <textarea class="malla-textarea" id="malla-p3" placeholder="Un tema por línea..."></textarea>
+            </div>
+            <div class="period-block">
+              <h4 class="period-title">📕 Período 4</h4>
+              <textarea class="malla-textarea" id="malla-p4" placeholder="Un tema por línea..."></textarea>
+            </div>
+          </div>
+
+          <div class="malla-sidebar">
+            <div class="malla-preview">
+              <h4 class="preview-title">Vista previa de temas</h4>
+              <div id="malla-preview-list"><div class="empty-state">Sin temas aún</div></div>
+            </div>
+            <div class="malla-actions">
+              <button class="save-btn" onclick="saveMalla()">💾 Guardar esta malla</button>
+              <button class="secondary-btn full-w" onclick="openModal('modal-malla-import')">⬆ Subir archivo .txt/.csv</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mallas guardadas para esta materia -->
+        <div class="mallas-guardadas-section">
+          <h4 class="mallas-guard-title">Mallas guardadas para <span id="malla-materia-label"></span></h4>
+          <div id="mallas-guardadas-list" class="mallas-guardadas-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== RESUMEN ============================== -->
+    <section id="sec-resumen" class="admin-section" style="display:none">
+      <div class="section-top"><h2 class="sec-title">Resumen General</h2></div>
+      <div id="resumen-content"></div>
+    </section>
+
+  </main>
+
+  <!-- ================================================================
+       MODALES
+       ================================================================ -->
+
+  <!-- Modal: Crear/Editar Docente — con asignación grado+área -->
+  <div class="modal-overlay" id="modal-docente" style="display:none">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 id="modal-docente-title">Nuevo docente</h3>
+        <button class="modal-close" onclick="closeModal('modal-docente')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-user-id">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input class="form-input" id="doc-name" type="text" placeholder="Ej: María Fernández">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Usuario (para login)</label>
+            <input class="form-input" id="doc-username" type="text" placeholder="mariaf">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <input class="form-input" id="doc-pass" type="text" placeholder="mínimo 6 caracteres">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email (opcional)</label>
+            <input class="form-input" id="doc-email" type="email" placeholder="maria@ie.edu.co">
+          </div>
+        </div>
+
+        <!-- ASIGNACIÓN POR GRADO + ÁREA -->
+        <div class="asignacion-section">
+          <label class="form-label">Asignación académica (Grado + Área)</label>
+          <p class="asig-hint">Selecciona un grado y un área, luego haz clic en "Agregar". Repite hasta completar la carga del docente.</p>
+
+          <div class="asig-add-row">
+            <select class="form-select asig-sel" id="asig-grado-sel">
+              <option value="sexto">Grado 6°</option>
+              <option value="septimo">Grado 7°</option>
+              <option value="octavo">Grado 8°</option>
+              <option value="noveno">Grado 9°</option>
+              <option value="decimo">Grado 10°</option>
+              <option value="once">Grado 11°</option>
+            </select>
+            <select class="form-select asig-sel" id="asig-area-sel">
+              <!-- Llenado por JS -->
+            </select>
+            <button class="primary-btn asig-add-btn" onclick="agregarAsignacion()">+ Agregar</button>
+          </div>
+
+          <!-- Lista de asignaciones agregadas -->
+          <div class="asig-lista" id="asig-lista">
+            <div class="asig-empty" id="asig-empty">Sin asignaciones. Agrega al menos una arriba.</div>
+          </div>
+        </div>
+
+        <div class="modal-error" id="modal-doc-error" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" onclick="closeModal('modal-docente')">Cancelar</button>
+        <button class="primary-btn" onclick="saveDocente()">Guardar docente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Agregar Estudiante individual -->
+  <div class="modal-overlay" id="modal-estudiante" style="display:none">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <h3>Agregar estudiante</h3>
+        <button class="modal-close" onclick="closeModal('modal-estudiante')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Grado destino</label>
+          <select class="form-select" id="modal-est-grado">
+            <option value="sexto">Grado 6°</option>
+            <option value="septimo">Grado 7°</option>
+            <option value="octavo">Grado 8°</option>
+            <option value="noveno">Grado 9°</option>
+            <option value="decimo">Grado 10°</option>
+            <option value="once">Grado 11°</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input class="form-input" id="est-name" type="text" placeholder="Ej: Juan Camilo Pérez">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número de lista (opcional)</label>
+          <input class="form-input" id="est-num" type="number" placeholder="Se asigna automáticamente">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" onclick="closeModal('modal-estudiante')">Cancelar</button>
+        <button class="primary-btn" onclick="saveEstudiante()">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Importar CSV de estudiantes -->
+  <div class="modal-overlay" id="modal-import" style="display:none">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <h3>Importar estudiantes desde CSV</h3>
+        <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Selector de grado DENTRO del modal -->
+        <div class="form-group">
+          <label class="form-label">📌 Grado donde se importarán</label>
+          <select class="form-select import-grado-sel" id="import-grado-sel">
+            <option value="sexto">Grado 6°</option>
+            <option value="septimo">Grado 7°</option>
+            <option value="octavo">Grado 8°</option>
+            <option value="noveno">Grado 9°</option>
+            <option value="decimo">Grado 10°</option>
+            <option value="once">Grado 11°</option>
+          </select>
+        </div>
+
+        <p class="import-hint">El archivo debe tener un nombre por línea. También puedes pegar los nombres directamente.</p>
+
+        <div class="upload-zone" onclick="document.getElementById('csv-upload').click()">
+          <input type="file" id="csv-upload" accept=".csv,.txt" style="display:none" onchange="previewCSV(event)">
+          <span class="upload-icon">📋</span>
+          <span class="upload-text">Seleccionar archivo CSV o TXT</span>
+          <span class="upload-sub">Un nombre por línea</span>
+        </div>
+
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">O pega los nombres aquí (uno por línea)</label>
+          <textarea class="form-textarea" id="csv-paste" rows="8"
+            placeholder="Juan Pérez&#10;María López&#10;Carlos García&#10;..."
+            oninput="livePreviewCSV(this.value)"></textarea>
+        </div>
+
+        <div id="csv-preview" class="csv-preview" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" onclick="closeModal('modal-import')">Cancelar</button>
+        <button class="primary-btn" onclick="importarEstudiantes()">✓ Importar al grado seleccionado</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Subir documento de malla -->
+  <div class="modal-overlay" id="modal-malla-import" style="display:none">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <h3>Subir malla desde archivo</h3>
+        <button class="modal-close" onclick="closeModal('modal-malla-import')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="import-hint">Sube un archivo <strong>.txt</strong> o <strong>.csv</strong> con los temas, uno por línea. Se cargará en el <strong>Período 1</strong>.</p>
+        <div class="upload-zone" onclick="document.getElementById('malla-upload').click()">
+          <input type="file" id="malla-upload" accept=".txt,.csv" style="display:none" onchange="loadMallaFile(event)">
+          <span class="upload-icon">📚</span>
+          <span class="upload-text">Seleccionar archivo .txt o .csv</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" onclick="closeModal('modal-malla-import')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="data.js"></script>
+  <script src="auth.js"></script>
+  <script src="storage.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
