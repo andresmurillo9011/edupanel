@@ -1,0 +1,33 @@
+// FIRESTORE RULES — edupanel-iess
+// Pegar en: Firebase Console → Firestore → Reglas
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Usuarios — lectura y escritura libre (la app maneja auth manualmente)
+    match /usuarios/{userId} {
+      allow read, write: if true;
+    }
+
+    // Estudiantes
+    match /estudiantes/{estId} {
+      allow read, write: if true;
+    }
+
+    // Mallas curriculares
+    match /mallas/{materiaId} {
+      allow read, write: if true;
+    }
+
+    // Diarios de clase
+    match /diarios/{diarioId} {
+      allow read, write: if true;
+    }
+
+    // Notas
+    match /notas/{notaId} {
+      allow read, write: if true;
+    }
+  }
+}

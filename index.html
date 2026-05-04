@@ -9,11 +9,10 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
   <header class="header">
     <div class="header-left">
       <a href="index.html" class="logo">
-        <img src="escudo.png" alt="Escudo IESS" class="logo-escudo">
+        <img src="escudo.png" alt="Escudo" class="logo-escudo">
         <div class="logo-text-block">
           <span class="logo-title">EduPanel · IESS</span>
           <span class="logo-sub">Santiago de la Selva</span>
@@ -26,16 +25,9 @@
       </div>
     </div>
     <div class="header-right">
-      <!-- TOGGLE VISTA: Mi horario / Horario completo -->
       <div class="vista-toggle" id="vista-toggle">
-        <button class="vista-btn active" id="btn-mi-horario"
-          onclick="setVista('mio',this)" title="Solo tus clases asignadas">
-          📋 Mi horario
-        </button>
-        <button class="vista-btn" id="btn-completo"
-          onclick="setVista('completo',this)" title="Ver todo el horario institucional">
-          🏫 Completo
-        </button>
+        <button class="vista-btn active" id="btn-mi-horario" onclick="setVista('mio',this)">📋 Mi horario</button>
+        <button class="vista-btn" id="btn-completo" onclick="setVista('completo',this)">🏫 Completo</button>
       </div>
       <a href="admin.html" id="admin-link" class="admin-nav-btn" style="display:none">👑 Admin</a>
       <div class="teacher-badge">
@@ -45,7 +37,7 @@
           <span class="teacher-role" id="user-role">Docente</span>
         </div>
       </div>
-      <button class="logout-btn" onclick="Auth.logout()">Salir</button>
+      <button class="logout-btn" id="logout-btn">Salir</button>
     </div>
   </header>
 
@@ -61,31 +53,29 @@
           <button class="day-btn" data-day="Viernes">Vie</button>
         </div>
       </div>
-
       <div class="table-wrapper">
         <table class="schedule-table" id="schedule-table">
           <thead>
             <tr>
               <th class="th-hora">Hora</th>
-              <th>6°</th><th>7°</th><th>8°</th>
-              <th>9°</th><th>10°</th><th>11°</th>
+              <th>6°</th><th>7°</th><th>8°</th><th>9°</th><th>10°</th><th>11°</th>
             </tr>
           </thead>
-          <tbody id="schedule-body"></tbody>
+          <tbody id="schedule-body">
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:#3A5580">
+              <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+                <div class="spinner"></div> Conectando con Firebase...
+              </div>
+            </td></tr>
+          </tbody>
         </table>
       </div>
-
-      <div class="legend">
-        <span class="legend-title">Áreas:</span>
-        <div class="legend-items" id="legend-items"></div>
-      </div>
+      <div class="legend"><span class="legend-title">Áreas:</span><div class="legend-items" id="legend-items"></div></div>
     </main>
 
     <aside class="side-panel" id="side-panel">
       <div class="panel-empty" id="panel-empty">
-        <div class="empty-icon">
-          <img src="escudo.png" alt="" style="width:60px;opacity:.25;filter:grayscale(1)">
-        </div>
+        <div class="empty-icon"><img src="escudo.png" alt="" style="width:60px;opacity:.2;filter:grayscale(1)"></div>
         <p>Haz clic en una celda del horario para abrir el panel de gestión académica</p>
       </div>
       <div class="panel-content" id="panel-content" style="display:none;"></div>
@@ -94,9 +84,13 @@
 
   <div class="toast" id="toast"></div>
 
+  <style>
+    .spinner { width:16px; height:16px; border:2px solid #1A3D1E; border-top-color:#43A047; border-radius:50%; animation:spin .8s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+
   <script src="data.js"></script>
-  <script src="auth.js"></script>
-  <script src="storage.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

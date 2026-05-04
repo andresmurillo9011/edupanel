@@ -5,22 +5,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Colores institucionales del escudo */
+  /* Colores institucionales del escudo — verdes naturaleza + azul IESS */
   --iess-azul:       #1565C0;   /* azul escudo */
-  --iess-azul-dark:  #0D47A1;   /* azul oscuro */
-  --iess-azul-light: #1976D2;   /* azul medio */
-  --iess-verde:      #2E7D32;   /* verde banner */
-  --iess-verde-light:#388E3C;
-  --iess-dorado:     #F9A825;   /* estrellas */
+  --iess-azul-dark:  #0D47A1;   /* azul profundo */
+  --iess-azul-light: #42A5F5;   /* azul cielo claro */
+  --iess-verde:      #2E7D32;   /* verde selva oscuro */
+  --iess-verde-light:#43A047;   /* verde medio */
+  --iess-verde-bright:#66BB6A;  /* verde vibrante */
+  --iess-dorado:     #F9A825;   /* dorado estrellas */
   --iess-dorado-dim: #F57F17;
 
-  /* Fondos oscuros con tono azul institucional */
-  --bg-base:      #070C18;
-  --bg-surface:   #0C1628;
-  --bg-card:      #111E36;
-  --bg-input:     #162240;
-  --border:       #1E3560;
-  --border-light: #2A4A80;
+  /* Fondos — tonos tierra/naturaleza oscuros, NO solo azul marino */
+  --bg-base:      #060E08;   /* negro verdoso muy profundo */
+  --bg-surface:   #0A1A0C;   /* verde oscuro casi negro */
+  --bg-card:      #0F2211;   /* verde bosque oscuro */
+  --bg-input:     #142916;   /* verde tierra oscuro */
+  --border:       #1A3D1E;   /* borde verde selva */
+  --border-light: #2A5C30;   /* borde verde más visible */
 
   /* Textos */
   --text-primary:   #E8EEF8;
