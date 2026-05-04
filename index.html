@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduPanel · Horario</title>
+  <title>EduPanel · Horario IESS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <header class="header">
     <div class="header-left">
-      <div class="logo">
-        <span class="logo-icon">⬡</span>
-        <span class="logo-text">EduPanel</span>
-      </div>
+      <a href="index.html" class="logo">
+        <img src="escudo.png" alt="Escudo IESS" class="logo-escudo">
+        <div class="logo-text-block">
+          <span class="logo-title">EduPanel · IESS</span>
+          <span class="logo-sub">Santiago de la Selva</span>
+        </div>
+      </a>
       <div class="header-info">
         <span id="current-date"></span>
         <span class="separator">·</span>
@@ -23,6 +26,17 @@
       </div>
     </div>
     <div class="header-right">
+      <!-- TOGGLE VISTA: Mi horario / Horario completo -->
+      <div class="vista-toggle" id="vista-toggle">
+        <button class="vista-btn active" id="btn-mi-horario"
+          onclick="setVista('mio',this)" title="Solo tus clases asignadas">
+          📋 Mi horario
+        </button>
+        <button class="vista-btn" id="btn-completo"
+          onclick="setVista('completo',this)" title="Ver todo el horario institucional">
+          🏫 Completo
+        </button>
+      </div>
       <a href="admin.html" id="admin-link" class="admin-nav-btn" style="display:none">👑 Admin</a>
       <div class="teacher-badge">
         <div class="teacher-avatar" id="user-avatar">DO</div>
@@ -38,7 +52,7 @@
   <div class="app-layout">
     <main class="schedule-section">
       <div class="section-header">
-        <h2 class="section-title">Horario Semanal</h2>
+        <h2 class="section-title" id="schedule-title">📅 Mi Horario</h2>
         <div class="day-nav">
           <button class="day-btn active" data-day="Lunes">Lun</button>
           <button class="day-btn" data-day="Martes">Mar</button>
@@ -47,17 +61,20 @@
           <button class="day-btn" data-day="Viernes">Vie</button>
         </div>
       </div>
+
       <div class="table-wrapper">
         <table class="schedule-table" id="schedule-table">
           <thead>
             <tr>
               <th class="th-hora">Hora</th>
-              <th>6°</th><th>7°</th><th>8°</th><th>9°</th><th>10°</th><th>11°</th>
+              <th>6°</th><th>7°</th><th>8°</th>
+              <th>9°</th><th>10°</th><th>11°</th>
             </tr>
           </thead>
           <tbody id="schedule-body"></tbody>
         </table>
       </div>
+
       <div class="legend">
         <span class="legend-title">Áreas:</span>
         <div class="legend-items" id="legend-items"></div>
@@ -66,7 +83,9 @@
 
     <aside class="side-panel" id="side-panel">
       <div class="panel-empty" id="panel-empty">
-        <div class="empty-icon">◈</div>
+        <div class="empty-icon">
+          <img src="escudo.png" alt="" style="width:60px;opacity:.25;filter:grayscale(1)">
+        </div>
         <p>Haz clic en una celda del horario para abrir el panel de gestión académica</p>
       </div>
       <div class="panel-content" id="panel-content" style="display:none;"></div>
