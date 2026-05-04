@@ -440,6 +440,7 @@ function loadMallaData() {
     ${malla.updatedAt?`<span class="badge-date">${new Date(malla.updatedAt).toLocaleDateString("es-CO")}</span>`:""}`;
   document.getElementById("malla-editor").style.display = "block";
   renderMallaPreview();
+  renderMallaDocsList();
   showToast(`✓ Malla de ${materia} cargada`);
 }
 function saveMalla() {
@@ -499,6 +500,93 @@ function loadMallaFile(event) {
     showToast("✓ Temas en Período 1 — recuerda Guardar");
   };
   reader.readAsText(file, "UTF-8");
+}
+
+// ---- DOCUMENTOS DE LA MALLA (PDF / Word) ----
+function subirDocMalla(event) {
+  const file = event.target.files[0];
+  if (!file || !mallaActual) { showToast("⚠ Primero carga un área"); return; }
+
+  const MAX_MB = 4; // localStorage soporta hasta ~5MB por clave
+  if (file.size > MAX_MB * 1024 * 1024) {
+    showToast(`⚠ El archivo supera ${MAX_MB}MB. Usa un archivo más pequeño.`);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const info = {
+      nombre:    file.name,
+      tipo:      file.type || "application/octet-stream",
+      tamaño:    (file.size / 1024).toFixed(1) + " KB",
+      data:      e.target.result, // base64 dataURL
+      fechaSubida: new Date().toLocaleDateString("es-CO")
+    };
+    try {
+      Storage.saveMallaArchivo(mallaActual, info);
+      renderMallaDocsList();
+      showToast(`✓ "${file.name}" subido`);
+    } catch(err) {
+      showToast("⚠ No hay espacio. El archivo es muy grande para almacenamiento local.");
+    }
+    event.target.value = ""; // reset input
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderMallaDocsList() {
+  if (!mallaActual) return;
+  const malla    = Storage.getMalla(mallaActual);
+  const archivos = malla.archivos || [];
+  const cont     = document.getElementById("malla-docs-list");
+  if (!cont) return;
+
+  if (!archivos.length) {
+    cont.innerHTML = `<div style="font-size:.72rem;color:var(--text-muted);padding:8px 0">Sin documentos subidos aún.</div>`;
+    return;
+  }
+
+  cont.innerHTML = archivos.map(f => {
+    const icon = getDocIcon(f.nombre);
+    return `
+      <div class="doc-item">
+        <span class="doc-icon">${icon}</span>
+        <div class="doc-info">
+          <div class="doc-name" title="${f.nombre}">${f.nombre}</div>
+          <div class="doc-meta">${f.tamaño} · ${f.fechaSubida}</div>
+        </div>
+        <div class="doc-actions-row">
+          <button class="doc-dl-btn" onclick="descargarDocMalla('${mallaActual}','${f.nombre}')">⬇ Descargar</button>
+          <button class="doc-del-btn" onclick="eliminarDocMalla('${mallaActual}','${f.nombre}')">🗑</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function descargarDocMalla(materia, nombre) {
+  const malla  = Storage.getMalla(materia);
+  const file   = (malla.archivos || []).find(f => f.nombre === nombre);
+  if (!file) return;
+  const a      = document.createElement("a");
+  a.href       = file.data;
+  a.download   = file.nombre;
+  a.click();
+}
+
+function eliminarDocMalla(materia, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  Storage.deleteMallaArchivo(materia, nombre);
+  renderMallaDocsList();
+  showToast("✓ Documento eliminado");
+}
+
+function getDocIcon(nombre) {
+  const ext = nombre.split(".").pop().toLowerCase();
+  if (ext === "pdf")  return "📕";
+  if (["doc","docx"].includes(ext)) return "📘";
+  if (["ppt","pptx"].includes(ext)) return "📙";
+  if (["xls","xlsx"].includes(ext)) return "📗";
+  return "📄";
 }
 
 // ============================================================

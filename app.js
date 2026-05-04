@@ -489,10 +489,12 @@ function exportNotas(dia, hora, grado, materia) {
 }
 
 // ============================================================
-// TAB: PLAN
+// TAB: PLAN — con subida de múltiples documentos
 // ============================================================
 function renderPlan(dia, hora, grado, materia) {
-  const d = Storage.getDiario(dia, grado, hora, materia);
+  const d        = Storage.getDiario(dia, grado, hora, materia);
+  const archivos = d.archivos || [];
+
   return `
     <div class="tab-panel">
       <div class="form-group">
@@ -505,26 +507,128 @@ function renderPlan(dia, hora, grado, materia) {
         <input class="form-input" id="logros" type="text"
           placeholder="Ej: El estudiante analiza y resuelve..." value="${d.logros||''}">
       </div>
-      <div class="upload-zone" onclick="document.getElementById('file-upload').click()">
-        <input type="file" id="file-upload" accept=".pdf,.doc,.docx,.pptx" style="display:none"
-          onchange="handleFileUpload(event)">
-        <span class="upload-icon">📄</span>
-        <span class="upload-text">Subir guía o material</span>
-        <span class="upload-sub">PDF, Word, PPT</span>
-        <div id="file-name" class="file-name">${d.fileName?`📎 ${d.fileName}`:""}</div>
+
+      <!-- SUBIDA DE DOCUMENTOS -->
+      <div class="plan-docs-section">
+        <label class="plan-docs-title">📎 Planeaciones y guías (PDF, Word, PPT...)</label>
+
+        <div class="upload-zone" style="min-height:70px" onclick="document.getElementById('plan-file-upload').click()">
+          <input type="file" id="plan-file-upload"
+            accept=".pdf,.doc,.docx,.pptx,.ppt,.xlsx,.xls"
+            style="display:none" onchange="handlePlanFileUpload(event)" multiple>
+          <span class="upload-icon">📄</span>
+          <span class="upload-text">Subir documentos</span>
+          <span class="upload-sub">PDF, Word, PowerPoint, Excel — puedes seleccionar varios</span>
+        </div>
+
+        <!-- Lista de archivos subidos -->
+        <div id="plan-docs-list">
+          ${archivos.length ? archivos.map(f => renderPlanDocItem(f)).join("") :
+            `<div style="font-size:.7rem;color:var(--text-muted)">Sin documentos subidos aún.</div>`}
+        </div>
       </div>
+
       <button class="save-btn" onclick="savePlan()">💾 Guardar plan</button>
     </div>`;
 }
 
-function handleFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file || !activeCell) return;
+function renderPlanDocItem(f) {
+  const icon = getPlanDocIcon(f.nombre);
+  return `
+    <div class="plan-doc-item" id="plandoc-${encodeURIComponent(f.nombre)}">
+      <span style="font-size:1rem">${icon}</span>
+      <span class="plan-doc-name" title="${f.nombre}">${f.nombre}</span>
+      <span style="font-size:.62rem;color:var(--text-muted);white-space:nowrap">${f.tamaño}</span>
+      <button class="plan-doc-dl" onclick="descargarPlanDoc('${encodeURIComponent(f.nombre)}')">⬇</button>
+      <button class="plan-doc-del" onclick="eliminarPlanDoc('${encodeURIComponent(f.nombre)}')">🗑</button>
+    </div>`;
+}
+
+function getPlanDocIcon(nombre) {
+  const ext = (nombre || "").split(".").pop().toLowerCase();
+  if (ext === "pdf")  return "📕";
+  if (["doc","docx"].includes(ext)) return "📘";
+  if (["ppt","pptx"].includes(ext)) return "📙";
+  if (["xls","xlsx"].includes(ext)) return "📗";
+  return "📄";
+}
+
+function handlePlanFileUpload(event) {
+  if (!activeCell) return;
+  const { dia, hora, grado, materia } = activeCell;
+  const files = [...event.target.files];
+  if (!files.length) return;
+
+  const MAX_MB   = 4;
+  const existing = Storage.getDiario(dia, grado, hora, materia);
+  const archivos = existing.archivos || [];
+  let  uploaded  = 0;
+
+  const processFile = (i) => {
+    if (i >= files.length) {
+      // Guardar todo
+      Storage.saveDiario(dia, grado, hora, materia, { ...existing, archivos }, currentUser.id);
+      // Refrescar lista
+      const cont = document.getElementById("plan-docs-list");
+      if (cont) cont.innerHTML = archivos.length
+        ? archivos.map(f => renderPlanDocItem(f)).join("")
+        : `<div style="font-size:.7rem;color:var(--text-muted)">Sin documentos.</div>`;
+      showToast(`✓ ${uploaded} documento(s) subido(s)`);
+      event.target.value = "";
+      return;
+    }
+    const file = files[i];
+    if (file.size > MAX_MB * 1024 * 1024) {
+      showToast(`⚠ "${file.name}" supera ${MAX_MB}MB`);
+      processFile(i + 1); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const info = {
+        nombre:      file.name,
+        tipo:        file.type || "application/octet-stream",
+        tamaño:      (file.size / 1024).toFixed(1) + " KB",
+        data:        e.target.result,
+        fechaSubida: new Date().toLocaleDateString("es-CO")
+      };
+      // Evitar duplicados
+      const idx = archivos.findIndex(a => a.nombre === file.name);
+      if (idx >= 0) archivos[idx] = info; else archivos.push(info);
+      uploaded++;
+      processFile(i + 1);
+    };
+    reader.onerror = () => processFile(i + 1);
+    reader.readAsDataURL(file);
+  };
+
+  try { processFile(0); }
+  catch(err) { showToast("⚠ Sin espacio en el navegador. Elimina archivos anteriores."); }
+}
+
+function descargarPlanDoc(nombreEnc) {
+  if (!activeCell) return;
+  const { dia, hora, grado, materia } = activeCell;
+  const nombre   = decodeURIComponent(nombreEnc);
+  const d        = Storage.getDiario(dia, grado, hora, materia);
+  const file     = (d.archivos || []).find(f => f.nombre === nombre);
+  if (!file) return;
+  const a        = document.createElement("a");
+  a.href         = file.data;
+  a.download     = file.nombre;
+  a.click();
+}
+
+function eliminarPlanDoc(nombreEnc) {
+  if (!activeCell) return;
+  const nombre = decodeURIComponent(nombreEnc);
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
   const { dia, hora, grado, materia } = activeCell;
   const existing = Storage.getDiario(dia, grado, hora, materia);
-  Storage.saveDiario(dia, grado, hora, materia, { ...existing, fileName: file.name }, currentUser.id);
-  document.getElementById("file-name").textContent = `📎 ${file.name}`;
-  showToast("✓ Archivo registrado");
+  const archivos = (existing.archivos || []).filter(f => f.nombre !== nombre);
+  Storage.saveDiario(dia, grado, hora, materia, { ...existing, archivos }, currentUser.id);
+  const el = document.getElementById(`plandoc-${nombreEnc}`);
+  if (el) el.remove();
+  showToast("✓ Documento eliminado");
 }
 
 function savePlan() {

@@ -926,6 +926,34 @@ body {
 .asig-remove-grado { background:none; border:none; cursor:pointer; font-size:.9rem; margin-left:auto; opacity:.6; padding:0 2px; }
 .asig-remove-grado:hover { opacity:1; }
 
+/* DOCUMENTOS DE MALLA */
+.docs-section       { margin-top: 16px; background: var(--bg-card); border: 1px solid var(--border); border-top: 2px solid var(--iess-azul); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.docs-title         { font-size: .84rem; font-weight: 700; color: var(--text-secondary); }
+.docs-upload-row    { display: flex; gap: 10px; }
+.docs-upload-zone   { flex: 0 0 200px; min-height: 80px; padding: 12px; }
+.docs-list          { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.doc-item           { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.doc-item:hover     { border-color: var(--border-light); }
+.doc-icon           { font-size: 1.1rem; flex-shrink: 0; }
+.doc-info           { flex: 1; min-width: 0; }
+.doc-name           { font-size: .76rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta           { font-size: .63rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.doc-actions-row    { display: flex; gap: 5px; flex-shrink: 0; }
+.doc-dl-btn         { padding: 4px 9px; border: 1px solid var(--iess-verde); border-radius: var(--radius-sm); background: var(--accent-dim); color: var(--accent); font-family: 'Sora', sans-serif; font-size: .66rem; cursor: pointer; transition: all .15s; }
+.doc-dl-btn:hover   { background: var(--iess-verde); color: #fff; }
+.doc-del-btn        { padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); font-size: .66rem; cursor: pointer; transition: all .15s; }
+.doc-del-btn:hover  { border-color: var(--red); color: var(--red); }
+
+/* PLAN DOCS — panel lateral */
+.plan-docs-section  { display: flex; flex-direction: column; gap: 7px; }
+.plan-docs-title    { font-size: .72rem; font-weight: 600; color: var(--text-secondary); }
+.plan-doc-item      { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.plan-doc-name      { flex: 1; font-size: .72rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-doc-dl        { padding: 3px 8px; border: 1px solid var(--iess-verde); border-radius: 4px; background: var(--accent-dim); color: var(--accent); font-size: .65rem; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.plan-doc-dl:hover  { background: var(--iess-verde); color: #fff; }
+.plan-doc-del       { padding: 3px 7px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-muted); font-size: .65rem; cursor: pointer; flex-shrink: 0; }
+.plan-doc-del:hover { border-color: var(--red); color: var(--red); }
+
 /* SCROLLBARS */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }

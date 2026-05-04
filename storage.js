@@ -82,14 +82,34 @@ const Storage = (() => {
 
   // BUG CORREGIDO: clave solo por materia, sin grado
   function getMalla(materia) {
-    return _get(`malla::${materia}`, { p1: "", p2: "", p3: "", p4: "" });
+    return _get(`malla::${materia}`, { p1: "", p2: "", p3: "", p4: "", archivos: [] });
   }
 
   function saveMalla(materia, periodos) {
+    const existing = getMalla(materia);
     _set(`malla::${materia}`, {
+      ...existing,
       ...periodos,
       updatedAt: new Date().toISOString()
     });
+  }
+
+  // ---- ARCHIVOS DE MALLA (PDF / Word) ----
+  // Guarda metadatos del archivo (nombre, tipo, tamaño, base64 si es pequeño)
+  function saveMallaArchivo(materia, fileInfo) {
+    const malla    = getMalla(materia);
+    const archivos = malla.archivos || [];
+    // Evitar duplicados por nombre
+    const idx = archivos.findIndex(a => a.nombre === fileInfo.nombre);
+    if (idx >= 0) archivos[idx] = fileInfo;
+    else archivos.push(fileInfo);
+    _set(`malla::${materia}`, { ...malla, archivos, updatedAt: new Date().toISOString() });
+  }
+
+  function deleteMallaArchivo(materia, nombre) {
+    const malla    = getMalla(materia);
+    const archivos = (malla.archivos || []).filter(a => a.nombre !== nombre);
+    _set(`malla::${materia}`, { ...malla, archivos });
   }
 
   // Lista plana de todos los temas de la materia (todos los períodos)
@@ -190,6 +210,7 @@ const Storage = (() => {
     init,
     getEstudiantes, saveEstudiantes, addEstudiante, removeEstudiante, updateEstudiante,
     getMalla, saveMalla, getTemasList, getAllMallas,
+    saveMallaArchivo, deleteMallaArchivo,
     getDiario, saveDiario, allDiarios,
     getNota, saveNota,
     exportAll

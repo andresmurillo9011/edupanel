@@ -122,9 +122,23 @@
             </div>
             <div class="malla-actions">
               <button class="save-btn" onclick="saveMalla()">💾 Guardar malla</button>
-              <button class="secondary-btn full-w" onclick="openModal('modal-malla-import')">⬆ Subir archivo .txt</button>
             </div>
           </div>
+        </div>
+
+        <!-- ZONA DE DOCUMENTOS (PDF / Word) -->
+        <div class="docs-section">
+          <h4 class="docs-title">📎 Documentos de la malla (PDF, Word)</h4>
+          <div class="docs-upload-row">
+            <div class="upload-zone docs-upload-zone" onclick="document.getElementById('malla-doc-upload').click()">
+              <input type="file" id="malla-doc-upload" accept=".pdf,.doc,.docx,.pptx,.xlsx"
+                style="display:none" onchange="subirDocMalla(event)">
+              <span class="upload-icon">📄</span>
+              <span class="upload-text">Subir documento</span>
+              <span class="upload-sub">PDF, Word, PowerPoint, Excel</span>
+            </div>
+          </div>
+          <div id="malla-docs-list" class="docs-list"></div>
         </div>
       </div>
       <div class="mallas-guardadas-section">

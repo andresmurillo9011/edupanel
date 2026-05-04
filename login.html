@@ -7,17 +7,96 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Login compacto sin escudo gigante */
+    .login-body {
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(21,101,192,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 70%, rgba(46,125,50,0.12) 0%, transparent 55%),
+        #070C18;
+    }
+    .login-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Encabezado sin escudo */
+    .login-header-text {
+      text-align: center;
+      padding: 0 0 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .login-iess-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #F9A825;
+      letter-spacing: 0.1em;
+    }
+    .login-school-name-sm {
+      font-size: .88rem;
+      font-weight: 600;
+      color: #E8EEF8;
+    }
+    .login-school-sub-sm {
+      font-size: .7rem;
+      color: #7B9CC8;
+    }
+    .login-divider {
+      width: 48px;
+      height: 2px;
+      background: linear-gradient(90deg, #1565C0, #2E7D32);
+      border-radius: 2px;
+      margin: 6px auto 0;
+    }
+
+    /* Tarjeta del formulario */
+    .login-card {
+      border-top: 3px solid #1565C0;
+      margin-bottom: 24px;
+    }
+
+    /* Escudo pequeño al fondo */
+    .login-bottom-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.75;
+    }
+    .login-escudo-small {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(21,101,192,0.4));
+    }
+    .login-footer-text {
+      font-size: .62rem;
+      color: #3A5580;
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body class="login-body">
 
   <div class="login-wrap">
-    <div class="login-brand">
-      <img src="escudo.png" alt="Escudo IESS" class="login-escudo">
-      <div class="login-school-name">I.E.R. Santiago de la Selva</div>
-      <div class="login-school-sub">Valparaíso · Caquetá · Colombia</div>
-      <div class="login-iess-badge">IESS · 2026</div>
+
+    <!-- ENCABEZADO — solo texto, sin escudo grande -->
+    <div class="login-header-text">
+      <div class="login-iess-title">EduPanel</div>
+      <div class="login-school-name-sm">I.E.R. Santiago de la Selva</div>
+      <div class="login-school-sub-sm">Valparaíso · Caquetá · Colombia · 2026</div>
+      <div class="login-divider"></div>
     </div>
 
+    <!-- FORMULARIO -->
     <div class="login-card">
       <h2 class="login-title">Acceso al Sistema Académico</h2>
 
@@ -42,14 +121,20 @@
 
       <div class="recovery-note">
         <span class="recovery-icon">🔐</span>
-        <p>¿Olvidaste tu contraseña o no tienes acceso?<br>
-        Comunícate con el <strong>Administrador del sistema</strong> para recuperar o crear tu usuario.</p>
+        <p>¿Olvidaste tu contraseña?<br>
+        Comunícate con el <strong>Administrador</strong> del sistema.</p>
       </div>
     </div>
 
-    <p class="login-footer">
-      Institución Educativa Rural Santiago de la Selva · Valparaíso, Caquetá · 2026
-    </p>
+    <!-- ESCUDO PEQUEÑO AL FONDO -->
+    <div class="login-bottom-brand">
+      <img src="escudo.png" alt="Escudo IESS" class="login-escudo-small">
+      <div class="login-footer-text">
+        Institución Educativa Rural<br>
+        Santiago de la Selva · IESS
+      </div>
+    </div>
+
   </div>
 
   <script src="data.js"></script>
@@ -68,8 +153,8 @@
       if (result.ok) {
         window.location.href = result.user.role === "admin" ? "admin.html" : "index.html";
       } else {
-        errEl.textContent    = result.message;
-        errEl.style.display  = "block";
+        errEl.textContent   = result.message;
+        errEl.style.display = "block";
         document.getElementById("login-pass").value = "";
       }
     }
