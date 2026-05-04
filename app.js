@@ -236,7 +236,7 @@ function saveDiario() {
 // ---- SEGUIMIENTO ----
 function renderSeguimiento(dia, hora, grado, materia) {
   const d = Storage.getDiario(dia, grado, hora, materia);
-  const temas = Storage.getTemasList(materia, grado);
+  const temas = Storage.getTemasList(materia);
   const idx = d.proximoTemaIdx !== undefined ? d.proximoTemaIdx : 0;
   const proximo = temas[idx] || "⚠ Sin malla curricular. Ve a Admin → Malla Curricular.";
   return `
@@ -266,7 +266,7 @@ function setProximoTema(idx) {
   const { dia, hora, grado, materia } = activeCell;
   const existing = Storage.getDiario(dia, grado, hora, materia);
   Storage.saveDiario(dia, grado, hora, materia, { ...existing, proximoTemaIdx: idx }, currentUser.id);
-  const temas = Storage.getTemasList(materia, grado);
+  const temas = Storage.getTemasList(materia);
   document.querySelector(".siguiente-tema").textContent = temas[idx] || "—";
   document.querySelectorAll(".tema-chip").forEach((c,i) => c.classList.toggle("active", i===idx));
   showToast("✓ Próximo tema actualizado");

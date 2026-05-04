@@ -1,15 +1,14 @@
 // ============================================================
-// ADMIN.JS — Panel de administración v3
+// ADMIN.JS v3 — Panel de administración
 // Correcciones:
-//  1. CSV: grado se toma del modal, no del panel externo
-//  2. Malla: botón "Cargar" explícito, muestra qué está cargado
-//  3. Docentes: asignación por combinación grado+área individual
+//  1. Asignaciones se guardan y muestran correctamente
+//  2. updateUser preserva asignaciones al cambiar contraseña
+//  3. Malla curricular sin grado (una por materia para todos)
 // ============================================================
 
-// Estado global
-let editingUserId   = null;
-let asignacionesTemp = []; // [{grado, area}] mientras se edita un docente
-let mallaActual      = { materia: null, grado: null }; // qué está cargado en el editor
+let editingUserId    = null;
+let asignacionesTemp = [];
+let mallaActual      = null; // materia actualmente cargada
 
 // ============================================================
 // INIT
@@ -19,20 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
   Storage.init();
   document.getElementById("admin-name").textContent = admin.name;
 
-  // Poblar select de áreas del modal de asignación
   poblarAreasSel();
-
-  // Poblar select de materias de la malla
-  const mallaMateria = document.getElementById("malla-materia");
-  Object.keys(MATERIAS_CONFIG)
-    .filter(m => !["DESCANSO","ALMUERZO"].includes(m))
-    .sort()
-    .forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m; opt.textContent = `${MATERIAS_CONFIG[m].icon} ${m}`;
-      mallaMateria.appendChild(opt);
-    });
-
+  poblarMallaMateriaSel();
   showSection("docentes");
 });
 
@@ -48,11 +35,12 @@ function showSection(name, btn) {
 
   if (name === "docentes")    renderDocentesGrid();
   if (name === "estudiantes") { renderGradosResumen(); renderEstudiantesList(); }
+  if (name === "malla")       renderMallasResumen();
   if (name === "resumen")     renderResumen();
 }
 
 // ============================================================
-// DOCENTES — Asignación por grado+área
+// DOCENTES
 // ============================================================
 
 function poblarAreasSel() {
@@ -64,7 +52,8 @@ function poblarAreasSel() {
     .sort()
     .forEach(m => {
       const opt = document.createElement("option");
-      opt.value = m; opt.textContent = `${MATERIAS_CONFIG[m].icon} ${m}`;
+      opt.value = m;
+      opt.textContent = `${MATERIAS_CONFIG[m].icon} ${m}`;
       sel.appendChild(opt);
     });
 }
@@ -73,11 +62,9 @@ function agregarAsignacion() {
   const grado = document.getElementById("asig-grado-sel").value;
   const area  = document.getElementById("asig-area-sel").value;
   if (!grado || !area) return;
-
-  // Evitar duplicados
-  const existe = asignacionesTemp.find(a => a.grado === grado && a.area === area);
-  if (existe) { showToast("Esa combinación ya fue agregada"); return; }
-
+  if (asignacionesTemp.find(a => a.grado === grado && a.area === area)) {
+    showToast("Esa combinación ya fue agregada"); return;
+  }
   asignacionesTemp.push({ grado, area });
   renderAsignacionesLista();
 }
@@ -90,18 +77,14 @@ function quitarAsignacion(grado, area) {
 function renderAsignacionesLista() {
   const cont  = document.getElementById("asig-lista");
   const empty = document.getElementById("asig-empty");
+  cont.querySelectorAll(".asig-tag").forEach(t => t.remove());
 
   if (!asignacionesTemp.length) {
-    empty.style.display = "block";
-    cont.querySelectorAll(".asig-tag").forEach(t => t.remove());
-    return;
+    empty.style.display = "block"; return;
   }
   empty.style.display = "none";
 
-  // Limpiar tags anteriores
-  cont.querySelectorAll(".asig-tag").forEach(t => t.remove());
-
-  // Agrupar por grado para mostrar mejor
+  // Agrupar por grado
   const porGrado = {};
   asignacionesTemp.forEach(a => {
     if (!porGrado[a.grado]) porGrado[a.grado] = [];
@@ -117,7 +100,7 @@ function renderAsignacionesLista() {
         ${areas.map(area => `
           <span class="asig-area-chip" style="--ac:${MATERIAS_CONFIG[area]?.color||'#888'}">
             ${MATERIAS_CONFIG[area]?.icon||''} ${area}
-            <button class="asig-remove" onclick="quitarAsignacion('${grado}','${area}')" title="Quitar">×</button>
+            <button class="asig-remove" onclick="quitarAsignacion('${grado}','${area}')">×</button>
           </span>
         `).join("")}
       </div>
@@ -131,17 +114,15 @@ function renderDocentesGrid() {
   const grid  = document.getElementById("docentes-grid");
 
   grid.innerHTML = users.map(u => {
-    const asignaciones = u.asignaciones || [];
-
-    // Agrupar asignaciones por grado para mostrar en la tarjeta
+    const asigs = u.asignaciones || [];
     const porGrado = {};
-    asignaciones.forEach(a => {
+    asigs.forEach(a => {
       if (!porGrado[a.grado]) porGrado[a.grado] = [];
       porGrado[a.grado].push(a.area);
     });
 
     return `
-      <div class="doc-card ${u.role === 'admin' ? 'admin-card' : ''}">
+      <div class="doc-card ${u.role==='admin'?'admin-card':''}">
         <div class="doc-card-top">
           <div class="doc-avatar">${u.name.split(" ").map(n=>n[0]).join("").substring(0,2).toUpperCase()}</div>
           <div class="doc-meta">
@@ -152,56 +133,54 @@ function renderDocentesGrid() {
         </div>
         ${u.role !== 'admin' ? `
           <div class="doc-asignaciones">
-            ${Object.keys(porGrado).length ? Object.entries(porGrado).map(([grado, areas]) => `
-              <div class="doc-grado-row">
-                <span class="doc-grado-pill">${GRADOS_LABEL[grado]}</span>
-                <div class="doc-areas-wrap">
-                  ${areas.map(a => `
-                    <span class="tag mat" style="--mc:${MATERIAS_CONFIG[a]?.color||'#888'}">
-                      ${MATERIAS_CONFIG[a]?.icon||''} ${a}
-                    </span>
-                  `).join("")}
-                </div>
-              </div>
-            `).join("") : '<span class="tag empty">Sin asignaciones</span>'}
+            ${Object.keys(porGrado).length
+              ? Object.entries(porGrado).map(([grado, areas]) => `
+                  <div class="doc-grado-row">
+                    <span class="doc-grado-pill">${GRADOS_LABEL[grado]}</span>
+                    <div class="doc-areas-wrap">
+                      ${areas.map(a => `
+                        <span class="tag mat" style="--mc:${MATERIAS_CONFIG[a]?.color||'#888'}">
+                          ${MATERIAS_CONFIG[a]?.icon||''} ${a}
+                        </span>`).join("")}
+                    </div>
+                  </div>`).join("")
+              : '<span class="tag empty">Sin asignaciones</span>'}
           </div>
           <div class="doc-actions">
             <button class="icon-btn edit" onclick="editDocente('${u.id}')">✏️ Editar</button>
             <button class="icon-btn del"  onclick="deleteDocente('${u.id}')">🗑 Eliminar</button>
           </div>
-        ` : `<div class="doc-admin-note">Acceso completo a todo el sistema</div>`}
+        ` : `<div class="doc-admin-note">Acceso completo al sistema</div>`}
       </div>
     `;
   }).join("");
 }
 
-function openModal(id) { document.getElementById(id).style.display = "flex"; }
+function openModal(id)  { document.getElementById(id).style.display = "flex"; }
 
 function closeModal(id) {
   document.getElementById(id).style.display = "none";
   if (id === "modal-docente") {
-    editingUserId = null;
+    editingUserId    = null;
     asignacionesTemp = [];
-    document.getElementById("modal-docente-title").textContent = "Nuevo docente";
-    ["doc-name","doc-username","doc-pass","doc-email","edit-user-id"].forEach(i => {
-      const el = document.getElementById(i); if (el) el.value = "";
-    });
+    ["doc-name","doc-username","doc-pass","doc-email","edit-user-id"]
+      .forEach(i => { const el = document.getElementById(i); if(el) el.value = ""; });
     document.getElementById("modal-doc-error").style.display = "none";
     renderAsignacionesLista();
   }
   if (id === "modal-import") {
     document.getElementById("csv-paste").value = "";
     document.getElementById("csv-preview").style.display = "none";
-    const fileInput = document.getElementById("csv-upload");
-    if (fileInput) fileInput.value = "";
+    const f = document.getElementById("csv-upload"); if(f) f.value = "";
   }
 }
 
 function editDocente(id) {
   const user = Auth.getAllUsers().find(u => u.id === id);
   if (!user) return;
-  editingUserId = id;
-  asignacionesTemp = [...(user.asignaciones || [])];
+  editingUserId    = id;
+  // CLAVE: cargar asignaciones existentes en el temporal
+  asignacionesTemp = JSON.parse(JSON.stringify(user.asignaciones || []));
 
   document.getElementById("modal-docente-title").textContent = "Editar docente";
   document.getElementById("edit-user-id").value  = id;
@@ -226,16 +205,21 @@ function saveDocente() {
   }
   errEl.style.display = "none";
 
-  // Derivar grados[] y materias[] de las asignaciones (para compatibilidad con canAccess)
+  // Derivar grados[] y materias[] de asignaciones (para canAccess legacy)
   const grados   = [...new Set(asignacionesTemp.map(a => a.grado))];
   const materias = [...new Set(asignacionesTemp.map(a => a.area))];
 
-  const payload = { name, username, password: pass, email,
-                    asignaciones: asignacionesTemp, grados, materias };
+  // CLAVE: asignaciones siempre se incluyen en el payload
+  const payload = {
+    name, username, password: pass, email,
+    asignaciones: [...asignacionesTemp],
+    grados,
+    materias
+  };
 
   if (editingUserId) {
     Auth.updateUser(editingUserId, payload);
-    showToast("✓ Docente actualizado");
+    showToast("✓ Docente actualizado correctamente");
   } else {
     const r = Auth.createUser({ ...payload, role: "docente" });
     if (!r.ok) { errEl.textContent = r.message; errEl.style.display = "block"; return; }
@@ -259,22 +243,18 @@ function deleteDocente(id) {
 function renderGradosResumen() {
   const cont = document.getElementById("grados-resumen");
   cont.innerHTML = GRADOS.map(g => {
-    const lista = Storage.getEstudiantes(g);
+    const n = Storage.getEstudiantes(g).length;
     return `
-      <div class="grado-resumen-chip ${lista.length ? '' : 'empty-chip'}"
-           onclick="seleccionarGrado('${g}')">
+      <div class="grado-resumen-chip ${n?'':'empty-chip'}" onclick="seleccionarGrado('${g}')">
         <span class="gr-label">${GRADOS_LABEL[g]}</span>
-        <span class="gr-count">${lista.length}</span>
-      </div>
-    `;
+        <span class="gr-count">${n}</span>
+      </div>`;
   }).join("");
 }
 
 function seleccionarGrado(grado) {
   document.getElementById("grado-select-est").value = grado;
   renderEstudiantesList();
-  // Scroll al panel
-  document.getElementById("estudiantes-list").scrollIntoView({ behavior: "smooth" });
 }
 
 function renderEstudiantesList() {
@@ -282,11 +262,9 @@ function renderEstudiantesList() {
   const lista = Storage.getEstudiantes(grado);
   const cont  = document.getElementById("estudiantes-list");
 
-  // Resaltar chip activo
-  document.querySelectorAll(".grado-resumen-chip").forEach(c => c.classList.remove("active-chip"));
-  const chips = document.querySelectorAll(".grado-resumen-chip");
-  const idx   = GRADOS.indexOf(grado);
-  if (chips[idx]) chips[idx].classList.add("active-chip");
+  document.querySelectorAll(".grado-resumen-chip").forEach((c, i) => {
+    c.classList.toggle("active-chip", GRADOS[i] === grado);
+  });
 
   if (!lista.length) {
     cont.innerHTML = `<div class="empty-state">Sin estudiantes en ${GRADOS_LABEL[grado]}<br>
@@ -297,7 +275,7 @@ function renderEstudiantesList() {
   cont.innerHTML = `
     <div class="est-list-header">
       <span class="est-list-title">${GRADOS_LABEL[grado]} — ${lista.length} estudiantes</span>
-      <button class="icon-btn-act exp" onclick="exportarEstudiantes('${grado}')">⬇ Exportar CSV</button>
+      <button class="icon-btn-act exp" onclick="exportarEstudiantes('${grado}')">⬇ CSV</button>
     </div>
     <table class="est-table">
       <thead><tr><th>#</th><th>Nombre completo</th><th></th></tr></thead>
@@ -314,11 +292,9 @@ function renderEstudiantesList() {
               <button class="icon-btn-sm edit" onclick="toggleEditEst('${grado}','${e.id}')">✏️</button>
               <button class="icon-btn-sm del"  onclick="delEst('${grado}','${e.id}')">🗑</button>
             </td>
-          </tr>
-        `).join("")}
+          </tr>`).join("")}
       </tbody>
-    </table>
-  `;
+    </table>`;
 }
 
 function toggleEditEst(grado, estId) {
@@ -328,9 +304,7 @@ function toggleEditEst(grado, estId) {
     display.style.display = "none";
     input.style.display = "inline-block";
     input.focus(); input.select();
-  } else {
-    confirmEditEst(grado, estId);
-  }
+  } else { confirmEditEst(grado, estId); }
 }
 
 function cancelEditEst(estId) {
@@ -341,31 +315,23 @@ function cancelEditEst(estId) {
 function confirmEditEst(grado, estId) {
   const input   = document.getElementById(`est-edit-${estId}`);
   const newName = input.value.trim();
-  if (newName) {
-    Storage.updateEstudiante(grado, estId, { nombre: newName });
-    showToast("✓ Nombre actualizado");
-  }
+  if (newName) { Storage.updateEstudiante(grado, estId, { nombre: newName }); showToast("✓ Nombre actualizado"); }
   renderEstudiantesList();
 }
 
 function delEst(grado, estId) {
   if (!confirm("¿Eliminar este estudiante?")) return;
   Storage.removeEstudiante(grado, estId);
-  renderEstudiantesList();
-  renderGradosResumen();
+  renderEstudiantesList(); renderGradosResumen();
 }
 
 function abrirModalEstudiante() {
-  // Sincronizar grado seleccionado
-  const gradoActual = document.getElementById("grado-select-est").value;
-  document.getElementById("modal-est-grado").value = gradoActual;
+  document.getElementById("modal-est-grado").value = document.getElementById("grado-select-est").value;
   openModal("modal-estudiante");
 }
 
 function abrirModalImport() {
-  // Sincronizar grado seleccionado
-  const gradoActual = document.getElementById("grado-select-est").value;
-  document.getElementById("import-grado-sel").value = gradoActual;
+  document.getElementById("import-grado-sel").value = document.getElementById("grado-select-est").value;
   openModal("modal-import");
 }
 
@@ -378,14 +344,12 @@ function saveEstudiante() {
   closeModal("modal-estudiante");
   document.getElementById("est-name").value = "";
   document.getElementById("est-num").value  = "";
-  // Actualizar vista si coincide con el grado del panel
   document.getElementById("grado-select-est").value = grado;
-  renderEstudiantesList();
-  renderGradosResumen();
+  renderEstudiantesList(); renderGradosResumen();
   showToast(`✓ Estudiante agregado a ${GRADOS_LABEL[grado]}`);
 }
 
-// ---- CSV IMPORT (BUG 1 CORREGIDO) ----
+// ---- CSV ----
 function previewCSV(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -403,164 +367,158 @@ function livePreviewCSV(text) {
   if (!nombres.length) { preview.style.display = "none"; return; }
   preview.style.display = "block";
   preview.innerHTML = `<strong>${nombres.length} nombres detectados:</strong><br>
-    ${nombres.slice(0,6).map(n => `<span class="csv-name-pill">${n}</span>`).join("")}
-    ${nombres.length > 6 ? `<span class="csv-more">+${nombres.length-6} más</span>` : ""}`;
+    ${nombres.slice(0,6).map(n=>`<span class="csv-name-pill">${n}</span>`).join("")}
+    ${nombres.length>6?`<span class="csv-more">+${nombres.length-6} más</span>`:""}`;
 }
 
 function parseCSVNombres(text) {
-  return text
-    .split(/\r?\n/)
+  return text.split(/\r?\n/)
     .map(line => {
       if (!line.trim()) return null;
-      // Soporta CSV con comas: tomar el campo más largo que no sea número
-      const parts = line.split(/[,;|\t]/);
-      const candidatos = parts
-        .map(p => p.replace(/"/g, "").trim())
-        .filter(p => p.length > 1 && isNaN(p));
-      // Preferir el campo más largo (probablemente el nombre completo)
-      return candidatos.sort((a,b) => b.length - a.length)[0] || null;
+      const parts     = line.split(/[,;|\t]/);
+      const candidatos = parts.map(p=>p.replace(/"/g,"").trim())
+                              .filter(p=>p.length>1 && isNaN(p));
+      return candidatos.sort((a,b)=>b.length-a.length)[0] || null;
     })
-    .filter(Boolean)
-    .filter(n => n.length > 2); // descartar encabezados tipo "ID", "No"
+    .filter(n => n && n.length > 2);
 }
 
 function importarEstudiantes() {
-  // BUG CORREGIDO: grado viene del select DENTRO del modal
   const grado   = document.getElementById("import-grado-sel").value;
   const text    = document.getElementById("csv-paste").value.trim();
   const nombres = parseCSVNombres(text);
-
-  if (!grado)  { showToast("⚠ Selecciona el grado destino"); return; }
-  if (!nombres.length) { showToast("⚠ No se encontraron nombres válidos"); return; }
+  if (!grado)          { showToast("⚠ Selecciona el grado"); return; }
+  if (!nombres.length) { showToast("⚠ No se encontraron nombres"); return; }
 
   const existing = Storage.getEstudiantes(grado);
   let count = 0;
   nombres.forEach((nombre, i) => {
-    const yaExiste = existing.find(e => e.nombre.toLowerCase() === nombre.toLowerCase());
-    if (!yaExiste) {
+    if (!existing.find(e => e.nombre.toLowerCase() === nombre.toLowerCase())) {
       Storage.addEstudiante(grado, nombre, existing.length + count + 1);
       count++;
     }
   });
 
   closeModal("modal-import");
-
-  // Actualizar la vista al grado importado
   document.getElementById("grado-select-est").value = grado;
-  renderEstudiantesList();
-  renderGradosResumen();
-
-  if (count > 0) showToast(`✓ ${count} estudiantes importados en ${GRADOS_LABEL[grado]}`);
-  else showToast("ℹ Todos los nombres ya existían en ese grado");
+  renderEstudiantesList(); renderGradosResumen();
+  showToast(count > 0
+    ? `✓ ${count} estudiantes importados en ${GRADOS_LABEL[grado]}`
+    : "ℹ Todos los nombres ya existían");
 }
 
 function exportarEstudiantes(grado) {
   const lista = Storage.getEstudiantes(grado);
-  const csv   = "numero,nombre\n" + lista.map(e => `${e.numero},"${e.nombre}"`).join("\n");
+  const csv   = "numero,nombre\n" + lista.map(e=>`${e.numero},"${e.nombre}"`).join("\n");
   const a     = document.createElement("a");
-  a.href      = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.href      = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
   a.download  = `estudiantes_${grado}_2026.csv`;
   a.click();
   showToast("✓ CSV exportado");
 }
 
 // ============================================================
-// MALLA CURRICULAR (BUG 2 CORREGIDO)
+// MALLA CURRICULAR — por materia sin grado (Bug 3 corregido)
 // ============================================================
+
+function poblarMallaMateriaSel() {
+  const sel = document.getElementById("malla-materia");
+  if (!sel) return;
+  Object.keys(MATERIAS_CONFIG)
+    .filter(m => !["DESCANSO","ALMUERZO"].includes(m))
+    .sort()
+    .forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = `${MATERIAS_CONFIG[m].icon} ${m}`;
+      sel.appendChild(opt);
+    });
+}
 
 function loadMallaData() {
   const materia = document.getElementById("malla-materia").value;
-  const grado   = document.getElementById("malla-grado").value;
+  if (!materia) { showToast("⚠ Selecciona primero un área"); return; }
 
-  if (!materia) {
-    showToast("⚠ Selecciona primero un área");
-    return;
-  }
+  mallaActual = materia;
 
-  // Guardar estado actual
-  mallaActual = { materia, grado };
-
-  // Cargar datos
-  const malla = Storage.getMalla(materia, grado);
+  // Cargar datos (sin grado)
+  const malla = Storage.getMalla(materia);
   document.getElementById("malla-p1").value = malla.p1 || "";
   document.getElementById("malla-p2").value = malla.p2 || "";
   document.getElementById("malla-p3").value = malla.p3 || "";
   document.getElementById("malla-p4").value = malla.p4 || "";
 
-  // Mostrar badge de qué está cargado
-  const cfg    = MATERIAS_CONFIG[materia];
-  const badge  = document.getElementById("malla-current-badge");
-  const editor = document.getElementById("malla-editor");
-  badge.style.display  = "flex";
-  editor.style.display = "block";
+  // Badge de estado
+  const cfg   = MATERIAS_CONFIG[materia];
+  const badge = document.getElementById("malla-current-badge");
+  badge.style.display = "flex";
   badge.innerHTML = `
-    <span class="badge-icon">${cfg?.icon || "📚"}</span>
-    <span>Editando: <strong>${materia}</strong> — <strong>${GRADOS_LABEL[grado]}</strong></span>
-    ${malla.updatedAt ? `<span class="badge-date">Última edición: ${new Date(malla.updatedAt).toLocaleDateString("es-CO")}</span>` : ""}
+    <span class="badge-icon">${cfg?.icon||"📚"}</span>
+    <span>Editando malla de: <strong>${materia}</strong> — aplica para todos los grados</span>
+    ${malla.updatedAt ? `<span class="badge-date">Editada: ${new Date(malla.updatedAt).toLocaleDateString("es-CO")}</span>` : ""}
   `;
 
-  // Actualizar label y preview
-  document.getElementById("malla-materia-label").textContent = `${cfg?.icon||''} ${materia}`;
+  document.getElementById("malla-editor").style.display = "block";
   renderMallaPreview();
-  renderMallasGuardadas(materia);
-
-  showToast(`✓ Malla cargada: ${materia} · ${GRADOS_LABEL[grado]}`);
+  showToast(`✓ Malla de ${materia} cargada`);
 }
 
 function saveMalla() {
-  if (!mallaActual.materia) { showToast("⚠ Primero carga una malla con el botón 'Cargar'"); return; }
-
-  Storage.saveMalla(mallaActual.materia, mallaActual.grado, {
+  if (!mallaActual) { showToast("⚠ Primero carga un área"); return; }
+  // Sin grado en saveMalla
+  Storage.saveMalla(mallaActual, {
     p1: document.getElementById("malla-p1").value,
     p2: document.getElementById("malla-p2").value,
     p3: document.getElementById("malla-p3").value,
     p4: document.getElementById("malla-p4").value,
   });
-
   renderMallaPreview();
-  renderMallasGuardadas(mallaActual.materia);
-  showToast(`✓ Malla guardada: ${mallaActual.materia} · ${GRADOS_LABEL[mallaActual.grado]}`);
+  renderMallasResumen();
+  showToast(`✓ Malla de ${mallaActual} guardada`);
 }
 
 function renderMallaPreview() {
-  if (!mallaActual.materia) return;
-  const temas   = Storage.getTemasList(mallaActual.materia, mallaActual.grado);
-  const preview = document.getElementById("malla-preview-list");
-  preview.innerHTML = temas.length
-    ? temas.map((t, i) => `<div class="preview-tema"><span class="tema-n">${i+1}</span>${t}</div>`).join("")
+  if (!mallaActual) return;
+  const temas = Storage.getTemasList(mallaActual);
+  document.getElementById("malla-preview-list").innerHTML = temas.length
+    ? temas.map((t,i)=>`<div class="preview-tema"><span class="tema-n">${i+1}</span>${t}</div>`).join("")
     : `<div class="empty-state">Sin temas aún</div>`;
 }
 
-// Muestra todas las mallas guardadas para esta materia (todos los grados)
-function renderMallasGuardadas(materia) {
+// Resumen de todas las mallas guardadas
+function renderMallasResumen() {
   const cont = document.getElementById("mallas-guardadas-list");
-  const filas = GRADOS.map(grado => {
-    const malla  = Storage.getMalla(materia, grado);
-    const temas  = Storage.getTemasList(materia, grado);
+  const todasMaterias = Object.keys(MATERIAS_CONFIG)
+    .filter(m => !["DESCANSO","ALMUERZO"].includes(m))
+    .sort();
+
+  cont.innerHTML = todasMaterias.map(materia => {
+    const temas  = Storage.getTemasList(materia);
+    const malla  = Storage.getMalla(materia);
     const hasDat = temas.length > 0;
+    const cfg    = MATERIAS_CONFIG[materia];
     return `
-      <div class="malla-guard-card ${hasDat ? 'has-data' : 'no-data'}">
+      <div class="malla-guard-card ${hasDat?'has-data':'no-data'}">
         <div class="mgc-top">
-          <span class="mgc-grado">${GRADOS_LABEL[grado]}</span>
-          <span class="mgc-count">${temas.length} temas</span>
+          <span class="mgc-grado">${cfg?.icon||''} ${materia}</span>
+          <span class="mgc-count">${hasDat?temas.length+' temas':'—'}</span>
         </div>
         ${hasDat
-          ? `<div class="mgc-temas">${temas.slice(0,3).map(t => `<span class="mgc-tema">• ${t}</span>`).join("")}
-             ${temas.length > 3 ? `<span class="mgc-more">+${temas.length-3} más</span>` : ""}</div>`
-          : `<div class="mgc-empty">Sin malla</div>`
-        }
-        <button class="mgc-edit-btn" onclick="editarMallaGrado('${materia}','${grado}')">
-          ${hasDat ? '✏️ Editar' : '+ Crear'}
+          ? `<div class="mgc-temas">
+               ${temas.slice(0,3).map(t=>`<span class="mgc-tema">• ${t}</span>`).join("")}
+               ${temas.length>3?`<span class="mgc-more">+${temas.length-3} más</span>`:""}
+             </div>`
+          : `<div class="mgc-empty">Sin malla cargada</div>`}
+        ${malla.updatedAt?`<div class="mgc-date">${new Date(malla.updatedAt).toLocaleDateString("es-CO")}</div>`:""}
+        <button class="mgc-edit-btn" onclick="editarMalla('${materia}')">
+          ${hasDat?'✏️ Editar':'+ Crear'}
         </button>
-      </div>
-    `;
+      </div>`;
   }).join("");
-  cont.innerHTML = filas;
 }
 
-function editarMallaGrado(materia, grado) {
+function editarMalla(materia) {
   document.getElementById("malla-materia").value = materia;
-  document.getElementById("malla-grado").value   = grado;
   loadMallaData();
   document.getElementById("sec-malla").scrollIntoView({ behavior: "smooth" });
 }
@@ -573,52 +531,45 @@ function loadMallaFile(event) {
     document.getElementById("malla-p1").value = e.target.result.trim();
     renderMallaPreview();
     closeModal("modal-malla-import");
-    showToast("✓ Temas cargados en Período 1 — recuerda guardar");
+    showToast("✓ Temas cargados en Período 1 — recuerda Guardar");
   };
   reader.readAsText(file, "UTF-8");
 }
 
 // ============================================================
-// RESUMEN GENERAL
+// RESUMEN
 // ============================================================
 function renderResumen() {
-  const diarios = Storage.allDiarios ? Storage.allDiarios() : [];
-  const users   = Auth.getAllUsers().filter(u => u.role === "docente");
-  const cont    = document.getElementById("resumen-content");
+  const diarios  = Storage.allDiarios ? Storage.allDiarios() : [];
+  const users    = Auth.getAllUsers().filter(u => u.role === "docente");
+  const totalEst = GRADOS.reduce((s,g) => s + Storage.getEstudiantes(g).length, 0);
+  const conTema  = diarios.filter(d => d && d.temaVisto).length;
+  const guiasOk  = diarios.filter(d => d && d.guiaTerminada === true).length;
 
-  const conTema = diarios.filter(d => d && d.temaVisto).length;
-  const guiasOk = diarios.filter(d => d && d.guiaTerminada === true).length;
-
-  // Total estudiantes
-  const totalEst = GRADOS.reduce((s, g) => s + Storage.getEstudiantes(g).length, 0);
-
-  cont.innerHTML = `
+  document.getElementById("resumen-content").innerHTML = `
     <div class="stats-grid">
       <div class="stat-card"><span class="stat-num">${diarios.length}</span><span class="stat-label">Clases registradas</span></div>
       <div class="stat-card"><span class="stat-num">${conTema}</span><span class="stat-label">Con tema documentado</span></div>
       <div class="stat-card"><span class="stat-num">${guiasOk}</span><span class="stat-label">Guías terminadas</span></div>
       <div class="stat-card"><span class="stat-num">${users.length}</span><span class="stat-label">Docentes activos</span></div>
-      <div class="stat-card"><span class="stat-num">${totalEst}</span><span class="stat-label">Estudiantes (6°–11°)</span></div>
+      <div class="stat-card"><span class="stat-num">${totalEst}</span><span class="stat-label">Estudiantes 6°–11°</span></div>
     </div>
-
     <h3 class="resumen-sub">Actividad reciente</h3>
     <div class="activity-list">
       ${diarios
         .filter(d => d && d.updatedAt)
-        .sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .sort((a,b) => new Date(b.updatedAt)-new Date(a.updatedAt))
         .slice(0,12)
         .map(d => `
           <div class="activity-item">
             <span class="act-icon">${MATERIAS_CONFIG[d.materia]?.icon||"📋"}</span>
             <div class="act-info">
               <strong>${d.materia||"—"}</strong> · ${GRADOS_LABEL[d.grado]||d.grado} · ${d.dia||""} ${d.hora||""}
-              ${d.temaVisto ? `<br><small>📌 ${d.temaVisto}</small>` : ""}
+              ${d.temaVisto?`<br><small>📌 ${d.temaVisto}</small>`:""}
             </div>
             <span class="act-time">${new Date(d.updatedAt).toLocaleDateString("es-CO")}</span>
-          </div>
-        `).join("") || `<div class="empty-state">Sin actividad registrada aún</div>`}
-    </div>
-  `;
+          </div>`).join("") || `<div class="empty-state">Sin actividad aún</div>`}
+    </div>`;
 }
 
 // ============================================================

@@ -11,7 +11,6 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="header">
     <div class="header-left">
       <a href="index.html" class="logo">
@@ -26,17 +25,16 @@
     </div>
   </header>
 
-  <!-- TABS PRINCIPALES -->
   <div class="admin-nav">
     <button class="anav-btn active" data-sec="docentes"    onclick="showSection('docentes',this)">👤 Docentes</button>
-    <button class="anav-btn"         data-sec="estudiantes" onclick="showSection('estudiantes',this)">🎓 Estudiantes</button>
-    <button class="anav-btn"         data-sec="malla"       onclick="showSection('malla',this)">📚 Malla Curricular</button>
-    <button class="anav-btn"         data-sec="resumen"     onclick="showSection('resumen',this)">📊 Resumen</button>
+    <button class="anav-btn"        data-sec="estudiantes" onclick="showSection('estudiantes',this)">🎓 Estudiantes</button>
+    <button class="anav-btn"        data-sec="malla"       onclick="showSection('malla',this)">📚 Malla Curricular</button>
+    <button class="anav-btn"        data-sec="resumen"     onclick="showSection('resumen',this)">📊 Resumen</button>
   </div>
 
   <main class="admin-main">
 
-    <!-- ==============================  DOCENTES  ============================== -->
+    <!-- DOCENTES -->
     <section id="sec-docentes" class="admin-section">
       <div class="section-top">
         <h2 class="sec-title">Gestión de Docentes</h2>
@@ -45,12 +43,11 @@
       <div class="cards-grid" id="docentes-grid"></div>
     </section>
 
-    <!-- ============================== ESTUDIANTES ============================== -->
+    <!-- ESTUDIANTES -->
     <section id="sec-estudiantes" class="admin-section" style="display:none">
       <div class="section-top">
         <h2 class="sec-title">Gestión de Estudiantes</h2>
         <div class="top-actions">
-          <!-- Selector de grado SIEMPRE visible y prominente -->
           <div class="grado-selector-wrap">
             <label class="sel-label">Grado:</label>
             <select class="form-select grado-select-big" id="grado-select-est" onchange="renderEstudiantesList()">
@@ -66,10 +63,7 @@
           <button class="secondary-btn" onclick="abrirModalImport()">⬆ Importar CSV</button>
         </div>
       </div>
-
-      <!-- Resumen por grados -->
       <div class="grados-resumen" id="grados-resumen"></div>
-
       <div class="est-panel">
         <div class="est-list-wrap">
           <div id="estudiantes-list" class="est-list"></div>
@@ -77,30 +71,20 @@
       </div>
     </section>
 
-    <!-- ============================== MALLA CURRICULAR ============================== -->
+    <!-- MALLA CURRICULAR — sin selector de grado -->
     <section id="sec-malla" class="admin-section" style="display:none">
       <div class="section-top">
         <h2 class="sec-title">Malla Curricular</h2>
+        <p class="sec-subtitle">Una malla por área aplica para todos los grados</p>
       </div>
 
-      <!-- Selector de carga: Materia + Grado + botón Cargar -->
+      <!-- Selector solo de área -->
       <div class="malla-selector-card">
         <div class="malla-sel-row">
-          <div class="malla-sel-group">
-            <label class="form-label">1. Selecciona el área</label>
+          <div class="malla-sel-group" style="flex:2">
+            <label class="form-label">Selecciona el área</label>
             <select class="form-select" id="malla-materia">
               <option value="">— Seleccionar área —</option>
-            </select>
-          </div>
-          <div class="malla-sel-group">
-            <label class="form-label">2. Selecciona el grado</label>
-            <select class="form-select" id="malla-grado">
-              <option value="sexto">Grado 6°</option>
-              <option value="septimo">Grado 7°</option>
-              <option value="octavo">Grado 8°</option>
-              <option value="noveno">Grado 9°</option>
-              <option value="decimo">Grado 10°</option>
-              <option value="once">Grado 11°</option>
             </select>
           </div>
           <div class="malla-sel-group malla-sel-btn-group">
@@ -108,17 +92,16 @@
             <button class="primary-btn malla-load-btn" onclick="loadMallaData()">📂 Cargar malla</button>
           </div>
         </div>
-        <!-- Estado actual cargado -->
         <div class="malla-current-badge" id="malla-current-badge" style="display:none"></div>
       </div>
 
-      <!-- Editor de períodos (aparece solo tras cargar) -->
+      <!-- Editor (aparece tras cargar) -->
       <div id="malla-editor" style="display:none">
         <div class="malla-layout">
           <div class="malla-periods">
             <div class="period-block">
               <h4 class="period-title">📘 Período 1</h4>
-              <textarea class="malla-textarea" id="malla-p1" placeholder="Un tema por línea&#10;Ej:&#10;Introducción al álgebra&#10;Expresiones algebraicas&#10;Factorización"></textarea>
+              <textarea class="malla-textarea" id="malla-p1" placeholder="Un tema por línea&#10;Ej:&#10;Introducción al tema&#10;Conceptos básicos"></textarea>
             </div>
             <div class="period-block">
               <h4 class="period-title">📗 Período 2</h4>
@@ -140,21 +123,21 @@
               <div id="malla-preview-list"><div class="empty-state">Sin temas aún</div></div>
             </div>
             <div class="malla-actions">
-              <button class="save-btn" onclick="saveMalla()">💾 Guardar esta malla</button>
-              <button class="secondary-btn full-w" onclick="openModal('modal-malla-import')">⬆ Subir archivo .txt/.csv</button>
+              <button class="save-btn" onclick="saveMalla()">💾 Guardar malla</button>
+              <button class="secondary-btn full-w" onclick="openModal('modal-malla-import')">⬆ Subir archivo .txt</button>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Mallas guardadas para esta materia -->
-        <div class="mallas-guardadas-section">
-          <h4 class="mallas-guard-title">Mallas guardadas para <span id="malla-materia-label"></span></h4>
-          <div id="mallas-guardadas-list" class="mallas-guardadas-grid"></div>
-        </div>
+      <!-- Resumen de todas las mallas cargadas -->
+      <div class="mallas-guardadas-section" id="mallas-resumen-section">
+        <h4 class="mallas-guard-title">Áreas con malla cargada</h4>
+        <div id="mallas-guardadas-list" class="mallas-guardadas-grid"></div>
       </div>
     </section>
 
-    <!-- ============================== RESUMEN ============================== -->
+    <!-- RESUMEN -->
     <section id="sec-resumen" class="admin-section" style="display:none">
       <div class="section-top"><h2 class="sec-title">Resumen General</h2></div>
       <div id="resumen-content"></div>
@@ -162,11 +145,9 @@
 
   </main>
 
-  <!-- ================================================================
-       MODALES
-       ================================================================ -->
+  <!-- ================================================================ MODALES ================================================================ -->
 
-  <!-- Modal: Crear/Editar Docente — con asignación grado+área -->
+  <!-- Modal: Crear/Editar Docente -->
   <div class="modal-overlay" id="modal-docente" style="display:none">
     <div class="modal-card modal-lg">
       <div class="modal-header">
@@ -175,7 +156,6 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="edit-user-id">
-
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Nombre completo</label>
@@ -197,11 +177,10 @@
           </div>
         </div>
 
-        <!-- ASIGNACIÓN POR GRADO + ÁREA -->
+        <!-- ASIGNACIÓN GRADO + ÁREA -->
         <div class="asignacion-section">
-          <label class="form-label">Asignación académica (Grado + Área)</label>
-          <p class="asig-hint">Selecciona un grado y un área, luego haz clic en "Agregar". Repite hasta completar la carga del docente.</p>
-
+          <label class="form-label">Asignación académica</label>
+          <p class="asig-hint">Selecciona un grado y un área → clic en <strong>+ Agregar</strong>. Repite hasta completar la carga del docente.</p>
           <div class="asig-add-row">
             <select class="form-select asig-sel" id="asig-grado-sel">
               <option value="sexto">Grado 6°</option>
@@ -211,13 +190,9 @@
               <option value="decimo">Grado 10°</option>
               <option value="once">Grado 11°</option>
             </select>
-            <select class="form-select asig-sel" id="asig-area-sel">
-              <!-- Llenado por JS -->
-            </select>
+            <select class="form-select asig-sel" id="asig-area-sel"></select>
             <button class="primary-btn asig-add-btn" onclick="agregarAsignacion()">+ Agregar</button>
           </div>
-
-          <!-- Lista de asignaciones agregadas -->
           <div class="asig-lista" id="asig-lista">
             <div class="asig-empty" id="asig-empty">Sin asignaciones. Agrega al menos una arriba.</div>
           </div>
@@ -232,7 +207,7 @@
     </div>
   </div>
 
-  <!-- Modal: Agregar Estudiante individual -->
+  <!-- Modal: Agregar Estudiante -->
   <div class="modal-overlay" id="modal-estudiante" style="display:none">
     <div class="modal-card modal-sm">
       <div class="modal-header">
@@ -267,7 +242,7 @@
     </div>
   </div>
 
-  <!-- Modal: Importar CSV de estudiantes -->
+  <!-- Modal: Importar CSV -->
   <div class="modal-overlay" id="modal-import" style="display:none">
     <div class="modal-card modal-sm">
       <div class="modal-header">
@@ -275,7 +250,6 @@
         <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
       </div>
       <div class="modal-body">
-        <!-- Selector de grado DENTRO del modal -->
         <div class="form-group">
           <label class="form-label">📌 Grado donde se importarán</label>
           <select class="form-select import-grado-sel" id="import-grado-sel">
@@ -287,33 +261,29 @@
             <option value="once">Grado 11°</option>
           </select>
         </div>
-
-        <p class="import-hint">El archivo debe tener un nombre por línea. También puedes pegar los nombres directamente.</p>
-
+        <p class="import-hint">Un nombre por línea. También puedes pegar los nombres directamente.</p>
         <div class="upload-zone" onclick="document.getElementById('csv-upload').click()">
           <input type="file" id="csv-upload" accept=".csv,.txt" style="display:none" onchange="previewCSV(event)">
           <span class="upload-icon">📋</span>
           <span class="upload-text">Seleccionar archivo CSV o TXT</span>
           <span class="upload-sub">Un nombre por línea</span>
         </div>
-
         <div class="form-group" style="margin-top:12px">
-          <label class="form-label">O pega los nombres aquí (uno por línea)</label>
+          <label class="form-label">O pega los nombres aquí</label>
           <textarea class="form-textarea" id="csv-paste" rows="8"
-            placeholder="Juan Pérez&#10;María López&#10;Carlos García&#10;..."
+            placeholder="Juan Pérez&#10;María López&#10;Carlos García"
             oninput="livePreviewCSV(this.value)"></textarea>
         </div>
-
         <div id="csv-preview" class="csv-preview" style="display:none"></div>
       </div>
       <div class="modal-footer">
         <button class="secondary-btn" onclick="closeModal('modal-import')">Cancelar</button>
-        <button class="primary-btn" onclick="importarEstudiantes()">✓ Importar al grado seleccionado</button>
+        <button class="primary-btn" onclick="importarEstudiantes()">✓ Importar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Subir documento de malla -->
+  <!-- Modal: Subir malla desde archivo -->
   <div class="modal-overlay" id="modal-malla-import" style="display:none">
     <div class="modal-card modal-sm">
       <div class="modal-header">
@@ -321,7 +291,7 @@
         <button class="modal-close" onclick="closeModal('modal-malla-import')">✕</button>
       </div>
       <div class="modal-body">
-        <p class="import-hint">Sube un archivo <strong>.txt</strong> o <strong>.csv</strong> con los temas, uno por línea. Se cargará en el <strong>Período 1</strong>.</p>
+        <p class="import-hint">Archivo <strong>.txt</strong> con los temas, uno por línea. Se cargará en el <strong>Período 1</strong>.</p>
         <div class="upload-zone" onclick="document.getElementById('malla-upload').click()">
           <input type="file" id="malla-upload" accept=".txt,.csv" style="display:none" onchange="loadMallaFile(event)">
           <span class="upload-icon">📚</span>
