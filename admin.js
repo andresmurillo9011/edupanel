@@ -141,7 +141,13 @@ function renderDocentesGrid() {
           <div class="doc-actions">
             <button class="icon-btn edit" onclick="editDocente('${u.id}')">✏️ Editar</button>
             <button class="icon-btn del"  onclick="deleteDocente('${u.id}')">🗑 Eliminar</button>
-          </div>` 
+          </div>
+          ${u.emailEduclass ? `
+          <div style="background:#0A1A0C;border:1px solid #1A3D1E;border-radius:8px;padding:8px 12px;margin-top:4px;font-size:.7rem">
+            <span style="color:#7B9CC8">✨ EduClass:</span>
+            <span style="color:#66BB6A;margin-left:6px">${u.emailEduclass}</span>
+            <span style="color:#3A5580;margin-left:8px">/ ${u.passEduclass||'—'}</span>
+          </div>` : ''}` 
         : `<div class="doc-admin-note">Acceso completo al sistema</div>`}
       </div>`;
   }).join("");
@@ -153,7 +159,7 @@ function closeModal(id) {
   document.getElementById(id).style.display = "none";
   if (id === "modal-docente") {
     editingUserId = null; asignacionesTemp = [];
-    ["doc-name","doc-username","doc-pass","doc-email","edit-user-id"]
+    ["doc-name","doc-username","doc-pass","doc-email","doc-email-educlass","doc-pass-educlass","edit-user-id"]
       .forEach(i => { const el=document.getElementById(i); if(el) el.value=""; });
     document.getElementById("modal-doc-error").style.display = "none";
     renderAsignacionesLista(); renderAreasGrado();
@@ -172,25 +178,29 @@ function editDocente(id) {
   asignacionesTemp = JSON.parse(JSON.stringify(user.asignaciones || []));
   document.getElementById("modal-docente-title").textContent = "Editar docente";
   document.getElementById("edit-user-id").value  = id;
-  document.getElementById("doc-name").value      = user.name;
-  document.getElementById("doc-username").value  = user.username;
-  document.getElementById("doc-pass").value      = user.password;
-  document.getElementById("doc-email").value     = user.email || "";
+  document.getElementById("doc-name").value           = user.name;
+  document.getElementById("doc-username").value       = user.username;
+  document.getElementById("doc-pass").value           = user.password;
+  document.getElementById("doc-email").value          = user.email || "";
+  document.getElementById("doc-email-educlass").value = user.emailEduclass || "";
+  document.getElementById("doc-pass-educlass").value  = user.passEduclass  || "";
   renderAsignacionesLista(); renderAreasGrado();
   openModal("modal-docente");
 }
 
 function saveDocente() {
-  const name     = document.getElementById("doc-name").value.trim();
-  const username = document.getElementById("doc-username").value.trim();
-  const pass     = document.getElementById("doc-pass").value.trim();
-  const email    = document.getElementById("doc-email").value.trim();
-  const errEl    = document.getElementById("modal-doc-error");
+  const name          = document.getElementById("doc-name").value.trim();
+  const username      = document.getElementById("doc-username").value.trim();
+  const pass          = document.getElementById("doc-pass").value.trim();
+  const email         = document.getElementById("doc-email").value.trim();
+  const emailEduclass = document.getElementById("doc-email-educlass").value.trim();
+  const passEduclass  = document.getElementById("doc-pass-educlass").value.trim();
+  const errEl         = document.getElementById("modal-doc-error");
   if (!name||!username||!pass) { errEl.textContent="Nombre, usuario y contraseña son obligatorios"; errEl.style.display="block"; return; }
   errEl.style.display = "none";
   const grados   = [...new Set(asignacionesTemp.map(a=>a.grado))];
   const materias = [...new Set(asignacionesTemp.map(a=>a.area))];
-  const payload  = { name, username, password:pass, email, asignaciones:[...asignacionesTemp], grados, materias };
+  const payload  = { name, username, password:pass, email, emailEduclass, passEduclass, asignaciones:[...asignacionesTemp], grados, materias };
   if (editingUserId) { Auth.updateUser(editingUserId, payload); showToast("✓ Docente actualizado"); }
   else {
     const r = Auth.createUser({ ...payload, role:"docente" });

@@ -203,7 +203,7 @@
           <div class="modulo-btn">Abrir Horario →</div>
         </a>
 
-        <a href="planeacion/index.html" class="modulo-card" style="--c:#2E7D32">
+        <a href="planeacion/index.html" class="modulo-card" id="card-planeacion" style="--c:#2E7D32" onclick="autoLoginEduclass(event)">
           <div class="modulo-icon">✨</div>
           <div class="modulo-titulo">Planeación con IA</div>
           <div class="modulo-desc">Genera guías pedagógicas completas con Inteligencia Artificial. Exporta a Word con un clic.</div>
@@ -273,10 +273,40 @@
 
     function cerrarSesion() {
       Auth.logout();
+      // Limpiar token de EduClass también
+      localStorage.removeItem("edutoken");
+      localStorage.removeItem("educlass_usuario");
       document.getElementById("pantalla-dashboard").style.display = "none";
       document.getElementById("pantalla-login").style.display     = "flex";
       document.getElementById("login-user").value = "";
       document.getElementById("login-pass").value = "";
+    }
+
+    async function autoLoginEduclass(e) {
+      const u = Auth.currentUser();
+      if (!u || !u.emailEduclass || !u.passEduclass) return; // sin credenciales → abre normal
+
+      // Si ya hay token válido de EduClass → no hacer nada, dejar navegar
+      const tok = localStorage.getItem("edutoken");
+      if (tok) return;
+
+      // Intentar auto-login en background
+      e.preventDefault();
+      try {
+        const API = "https://educlass-backend-4kk0.onrender.com";
+        const r   = await fetch(`${API}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: u.emailEduclass, password: u.passEduclass })
+        });
+        const d = await r.json();
+        if (d.token) {
+          localStorage.setItem("edutoken", d.token);
+          localStorage.setItem("educlass_usuario", JSON.stringify(d.usuario));
+        }
+      } catch(_) {}
+      // Navegar a planeación
+      window.location.href = "planeacion/index.html";
     }
 
     document.addEventListener("keydown", e => {
