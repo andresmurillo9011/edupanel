@@ -142,12 +142,11 @@ function renderDocentesGrid() {
             <button class="icon-btn edit" onclick="editDocente('${u.id}')">✏️ Editar</button>
             <button class="icon-btn del"  onclick="deleteDocente('${u.id}')">🗑 Eliminar</button>
           </div>
-          ${u.emailEduclass ? `
-          <div style="background:#0A1A0C;border:1px solid #1A3D1E;border-radius:8px;padding:8px 12px;margin-top:4px;font-size:.7rem">
-            <span style="color:#7B9CC8">✨ EduClass:</span>
-            <span style="color:#66BB6A;margin-left:6px">${u.emailEduclass}</span>
-            <span style="color:#3A5580;margin-left:8px">/ ${u.passEduclass||'—'}</span>
-          </div>` : ''}` 
+          <div style="background:#0A1A0C;border:1px solid #1A3D1E;border-radius:7px;padding:7px 10px;margin-top:4px;font-size:.68rem">
+            ${u.emailEduclass
+              ? `<span style="color:#66BB6A">✨ EduClass:</span> <span style="color:#E8EEF8">${u.emailEduclass}</span> <span style="color:#3A5580">/ ${u.passEduclass||'—'}</span>`
+              : `<span style="color:#3A5580">✨ Sin credenciales EduClass — edita para agregar</span>`}
+          </div>` 
         : `<div class="doc-admin-note">Acceso completo al sistema</div>`}
       </div>`;
   }).join("");
@@ -178,36 +177,71 @@ function editDocente(id) {
   asignacionesTemp = JSON.parse(JSON.stringify(user.asignaciones || []));
   document.getElementById("modal-docente-title").textContent = "Editar docente";
   document.getElementById("edit-user-id").value  = id;
-  document.getElementById("doc-name").value           = user.name;
-  document.getElementById("doc-username").value       = user.username;
-  document.getElementById("doc-pass").value           = user.password;
-  document.getElementById("doc-email").value          = user.email || "";
-  document.getElementById("doc-email-educlass").value = user.emailEduclass || "";
-  document.getElementById("doc-pass-educlass").value  = user.passEduclass  || "";
+  document.getElementById("doc-name").value      = user.name;
+  document.getElementById("doc-username").value  = user.username;
+  document.getElementById("doc-pass").value      = user.password;
+  document.getElementById("doc-email").value     = user.email || "";
+  if(document.getElementById("doc-email-educlass")) document.getElementById("doc-email-educlass").value = user.emailEduclass || "";
+  if(document.getElementById("doc-pass-educlass"))  document.getElementById("doc-pass-educlass").value  = user.passEduclass  || "";
   renderAsignacionesLista(); renderAreasGrado();
   openModal("modal-docente");
 }
 
-function saveDocente() {
+async function saveDocente() {
   const name          = document.getElementById("doc-name").value.trim();
   const username      = document.getElementById("doc-username").value.trim();
   const pass          = document.getElementById("doc-pass").value.trim();
   const email         = document.getElementById("doc-email").value.trim();
-  const emailEduclass = document.getElementById("doc-email-educlass").value.trim();
-  const passEduclass  = document.getElementById("doc-pass-educlass").value.trim();
+  const emailEduclass = document.getElementById("doc-email-educlass")?.value.trim() || "";
+  const passEduclass  = document.getElementById("doc-pass-educlass")?.value.trim()  || "";
   const errEl         = document.getElementById("modal-doc-error");
-  if (!name||!username||!pass) { errEl.textContent="Nombre, usuario y contraseña son obligatorios"; errEl.style.display="block"; return; }
+
+  if (!name||!username||!pass) {
+    errEl.textContent="Nombre, usuario y contraseña son obligatorios";
+    errEl.style.display="block"; return;
+  }
   errEl.style.display = "none";
+
   const grados   = [...new Set(asignacionesTemp.map(a=>a.grado))];
   const materias = [...new Set(asignacionesTemp.map(a=>a.area))];
   const payload  = { name, username, password:pass, email, emailEduclass, passEduclass, asignaciones:[...asignacionesTemp], grados, materias };
-  if (editingUserId) { Auth.updateUser(editingUserId, payload); showToast("✓ Docente actualizado"); }
-  else {
+
+  // Registrar automáticamente en EduClass si tiene correo y contraseña
+  if (emailEduclass && passEduclass) {
+    showToast("⏳ Registrando en EduClass...");
+    try {
+      const r = await fetch("https://educlass-backend-4kk0.onrender.com/auth/registro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre:     name,
+          email:      emailEduclass,
+          password:   passEduclass,
+          institucion:"I.E.R. Santiago de la Selva",
+          cargo:      "Docente",
+          ciudad:     "Valparaíso"
+        })
+      });
+      const d = await r.json();
+      if (r.ok) showToast("✅ Registrado en EduClass");
+      else if ((d.mensaje||"").includes("ya está")) showToast("ℹ️ Correo EduClass ya registrado");
+      else showToast("⚠️ EduClass: " + (d.mensaje||"sin respuesta"));
+    } catch(e) {
+      showToast("⚠️ No se pudo conectar a EduClass — guardando solo en EduPanel");
+    }
+  }
+
+  // Guardar en EduPanel
+  if (editingUserId) {
+    Auth.updateUser(editingUserId, payload);
+    showToast("✓ Docente actualizado");
+  } else {
     const r = Auth.createUser({ ...payload, role:"docente" });
     if (!r.ok) { errEl.textContent=r.message; errEl.style.display="block"; return; }
     showToast("✓ Docente creado");
   }
-  closeModal("modal-docente"); renderDocentesGrid();
+  closeModal("modal-docente");
+  renderDocentesGrid();
 }
 
 function deleteDocente(id) {
