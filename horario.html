@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduPanel · Horario IESS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .spinner{width:18px;height:18px;border:2px solid #1A3D1E;border-top-color:#43A047;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <a href="horario.html" class="logo">
+        <img src="escudo.png" alt="Escudo" class="logo-escudo">
+        <div class="logo-text-block">
+          <span class="logo-title">EduPanel · IESS</span>
+          <span class="logo-sub">Santiago de la Selva</span>
+        </div>
+      </a>
+      <div class="header-info">
+        <span id="current-date"></span>
+        <span class="separator">·</span>
+        <span id="current-time"></span>
+      </div>
+    </div>
+    <div class="header-right">
+      <!-- Toggle solo para docentes -->
+      <div class="vista-toggle" id="vista-toggle">
+        <button class="vista-btn active" id="btn-mi-horario" onclick="setVista('mio',this)">📋 Mi horario</button>
+        <button class="vista-btn" id="btn-completo" onclick="setVista('completo',this)">🏫 Completo</button>
+      </div>
+      <a href="https://educlass-frontend.vercel.app" target="_blank" class="plan-ia-btn" title="Planeación con IA — EduClass">
+        ✨ Planeación IA
+      </a>
+      <a href="admin.html" id="admin-link" class="admin-nav-btn" style="display:none">👑 Admin</a>
+      <div class="teacher-badge">
+        <div class="teacher-avatar" id="user-avatar">DO</div>
+        <div class="teacher-meta">
+          <span class="teacher-name" id="user-name">Cargando...</span>
+          <span class="teacher-role" id="user-role">Docente</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="Auth.logout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <main class="schedule-section">
+      <div class="section-header">
+        <h2 class="section-title" id="schedule-title">📋 Mi Horario</h2>
+        <div class="day-nav">
+          <button class="day-btn active" data-day="Lunes">Lun</button>
+          <button class="day-btn" data-day="Martes">Mar</button>
+          <button class="day-btn" data-day="Miércoles">Mié</button>
+          <button class="day-btn" data-day="Jueves">Jue</button>
+          <button class="day-btn" data-day="Viernes">Vie</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th class="th-hora">Hora</th>
+              <th>6°</th><th>7°</th><th>8°</th>
+              <th>9°</th><th>10°</th><th>11°</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body">
+            <tr><td colspan="7" style="padding:30px;text-align:center;color:#3A5580">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="legend">
+        <span class="legend-title">Áreas:</span>
+        <div class="legend-items" id="legend-items"></div>
+      </div>
+    </main>
+
+    <aside class="side-panel">
+      <div class="panel-empty" id="panel-empty">
+        <div class="empty-icon">
+          <img src="escudo.png" alt="" style="width:55px;opacity:.18;filter:grayscale(1)">
+        </div>
+        <p>Haz clic en una celda del horario para gestionar esa clase</p>
+      </div>
+      <div class="panel-content" id="panel-content" style="display:none;"></div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="data.js"></script>
+  <script src="auth.js"></script>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -185,14 +185,3 @@ const ESTUDIANTES_INICIALES = {
     { numero:15, id:"est_s1115", nombre:"Levi Dromero Rosas" },
   ]
 };
-
-// ============================================================
-// EXPORTACIONES GLOBALES (para que otros scripts los usen)
-// ============================================================
-window.HORARIO = HORARIO;
-window.MATERIAS_CONFIG = MATERIAS_CONFIG;
-window.GRADOS = GRADOS;
-window.GRADOS_LABEL = GRADOS_LABEL;
-window.GRADOS_NUM = GRADOS_NUM;
-window.ESTADOS_CLASE = ESTADOS_CLASE;
-window.ESTUDIANTES_INICIALES = ESTUDIANTES_INICIALES;

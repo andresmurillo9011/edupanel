@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planeación con IA · EduPanel IESS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Georgia&display=swap" rel="stylesheet">
+
+  <!-- React + Babel para JSX sin bundler -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body {
+      font-family: 'Sora', 'Segoe UI', Arial, sans-serif;
+      background: #060E08;
+      color: #F1F5F9;
+      min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1A3D1E; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2E7D32; }
+
+    /* Spinner global */
+    .spin {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #1A3D1E;
+      border-top-color: #43A047;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Animaciones de entrada */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp .35s ease forwards; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+// ============================================================
+// CONFIG — cambia la URL de tu servidor backend aquí
+// ============================================================
+const API = "https://educlass-backend-4kk0.onrender.com"; // ← CAMBIAR por tu URL real
+
+// ============================================================
+// CONSTANTES (igual que el App.js original)
+// ============================================================
+const FT = "Georgia, 'Times New Roman', serif";
+const FC = "'Sora', 'Segoe UI', Arial, sans-serif";
+const GRADOS = ["6°","7°","8°","9°","10°","11°"];
+const TODOS_GRADOS = ["Transición","1°","2°","3°","4°","5°","6°","7°","8°","9°","10°","11°"];
+
+const TIPOS_ACT = [
+  { id:"taller",        label:"📝 Taller",          desc:"Preguntas abiertas" },
+  { id:"evaluacion",    label:"📊 Evaluación",       desc:"Mixta" },
+  { id:"quiz",          label:"⚡ Quiz",             desc:"Selección múltiple" },
+  { id:"completar",     label:"✏️ Completar",        desc:"Espacios en blanco" },
+  { id:"verdadero_falso",label:"✅ Verdadero/Falso", desc:"Afirmaciones" },
+  { id:"relacionar",    label:"🔗 Relacionar",       desc:"Columna A-B" },
+];
+
+const OPT_P_APER=[{id:"cuento_p",label:"📚 Cuento pedagógico"},{id:"cancion",label:"🎵 Canción / rima"},{id:"pregunta",label:"❓ Pregunta impactante"},{id:"video",label:"🎬 Video sugerido"},{id:"imagen",label:"🖼️ Imagen contextual"},{id:"juego_i",label:"🎮 Juego de inicio"}];
+const OPT_P_DES=[{id:"juego_s",label:"🎯 Sopa de letras"},{id:"bingo",label:"🎰 Bingo educativo"},{id:"memoria",label:"🧠 Memoria conceptual"},{id:"manualidad",label:"✂️ Manualidad"},{id:"descubr",label:"🔍 Por descubrimiento"},{id:"rincones",label:"🏫 Rincones"},{id:"roles_p",label:"🎭 Juego de roles"},{id:"lluvia_p",label:"💭 Lluvia de ideas"}];
+const OPT_P_RET=[{id:"vf",label:"✅ V/F"},{id:"completar",label:"📝 Completar"},{id:"dibujo_r",label:"🎨 Dibujo evaluativo"},{id:"preguntas",label:"❓ Preguntas rápidas"},{id:"relacionar",label:"🔗 Relacionar"},{id:"ruleta",label:"🎡 Ruleta"}];
+const OPT_B_APER=[{id:"problema",label:"🧩 Situación problema"},{id:"dato",label:"🔢 Dato curioso"},{id:"pregunta",label:"❓ Pregunta impactante"},{id:"video",label:"🎬 Video sugerido"},{id:"noticia",label:"📰 Noticia actual"},{id:"debate_i",label:"⚖️ Debate inicial"}];
+const OPT_B_DES=[{id:"magistral",label:"🎓 Clase magistral"},{id:"abp",label:"🧩 ABP"},{id:"debate_b",label:"⚖️ Debate académico"},{id:"caso_b",label:"🔬 Estudio de caso"},{id:"proyecto_b",label:"📁 Proyecto"},{id:"invertida",label:"🔄 Clase invertida"},{id:"simulacion",label:"🎮 Simulación"},{id:"mapa_av",label:"🗺️ Mapa conceptual"}];
+const OPT_B_RET=[{id:"caso",label:"🔍 Caso práctico"},{id:"ensayo_c",label:"✍️ Ensayo corto"},{id:"preguntas",label:"❓ Preguntas análisis"},{id:"relacionar",label:"🔗 Relacionar"},{id:"vf",label:"✅ V/F"},{id:"debate_r",label:"💬 Debate corto"}];
+const OPT_CIERRE=[{id:"resumen",label:"📋 Resumen colectivo"},{id:"metacog",label:"💭 Metacognición"},{id:"mapa_c",label:"🗺️ Mapa mental"},{id:"compromiso",label:"🤝 Compromiso"},{id:"ticket",label:"🎫 Ticket de salida"}];
+const OPT_TAREA=[{id:"investiga",label:"🔎 Investigación"},{id:"entrevista",label:"🎤 Entrevista"},{id:"dibujo",label:"🎨 Dibujo"},{id:"redaccion",label:"✏️ Redacción"},{id:"video_c",label:"📱 Video"}];
+const OPT_DUR=[{v:"55",l:"1 hora (55 min)"},{v:"110",l:"2 horas (110 min)"},{v:"165",l:"3 horas (165 min)"},{v:"220",l:"4 horas (220 min)"}];
+
+// Colores institucionales IESS adaptados
+const C = {
+  fondo:   "#060E08",
+  panel:   "#0A1A0C",
+  tarjeta: "#0F2211",
+  borde:   "#1A3D1E",
+  azul:    "#1565C0",
+  azulC:   "#42A5F5",
+  verde:   "#2E7D32",
+  verdeC:  "#66BB6A",
+  texto:   "#E8EEF8",
+  textoS:  "#7B9CC8",
+  err:     "#F87171",
+  ok:      "#4ADE80",
+  naranja: "#F9A825",
+  morado:  "#7C3AED",
+  rojo:    "#DC2626",
+  gold:    "#F9A825",
+};
+
+// Estilos base
+const S = {
+  fondo:    { minHeight:"100vh", background:C.fondo, fontFamily:FC, color:C.texto },
+  pantalla: { minHeight:"100vh", background:C.fondo, display:"flex", justifyContent:"center", alignItems:"center", fontFamily:FC, padding:20 },
+  header:   { background:C.panel, padding:"0 20px", height:54, display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`2px solid ${C.verde}`, position:"sticky", top:0, zIndex:100 },
+  cont:     { maxWidth:960, margin:"0 auto", padding:"20px 16px" },
+  card:     { background:C.tarjeta, padding:"28px 24px", borderRadius:16, width:"100%", maxWidth:460, display:"flex", flexDirection:"column", gap:14, boxShadow:"0 12px 40px rgba(0,0,0,0.6)", border:`1px solid ${C.borde}` },
+  titulo:   { color:C.gold, fontSize:20, fontWeight:"bold", margin:0, textAlign:"center", fontFamily:FT },
+  sub:      { color:C.textoS, textAlign:"center", margin:"0 0 8px", fontSize:12 },
+  lbl:      { color:C.textoS, fontSize:11, marginBottom:4, fontWeight:"600", letterSpacing:"0.04em" },
+  inp:      { padding:"9px 12px", borderRadius:8, border:`1px solid ${C.borde}`, background:"#0A1A0C", color:C.texto, fontSize:13, width:"100%", boxSizing:"border-box", fontFamily:FC, outline:"none" },
+  ta:       { padding:"9px 12px", borderRadius:8, border:`1px solid ${C.borde}`, background:"#0A1A0C", color:C.texto, fontSize:13, width:"100%", boxSizing:"border-box", fontFamily:FC, outline:"none", resize:"vertical", minHeight:80 },
+  sel:      { padding:"9px 12px", borderRadius:8, border:`1px solid ${C.borde}`, background:"#0A1A0C", color:C.texto, fontSize:13, flex:1, fontFamily:FC, outline:"none" },
+  btnA:     { padding:"10px 16px", borderRadius:8, border:"none", background:`linear-gradient(135deg,${C.azul},#0D47A1)`, color:"#fff", fontWeight:"700", fontSize:13, cursor:"pointer", width:"100%", fontFamily:FC },
+  btnG:     { padding:"9px 16px", borderRadius:8, border:`1px solid ${C.borde}`, background:"transparent", color:C.textoS, fontSize:13, cursor:"pointer", width:"100%", fontFamily:FC },
+  btnV:     { padding:"10px 16px", borderRadius:8, border:"none", background:`linear-gradient(135deg,${C.verde},#1B5E20)`, color:"#fff", fontWeight:"700", fontSize:13, cursor:"pointer", width:"100%", fontFamily:FC },
+  btnN:     { padding:"10px 16px", borderRadius:8, border:"none", background:`linear-gradient(135deg,${C.naranja},#E65100)`, color:"#fff", fontWeight:"700", fontSize:13, cursor:"pointer", fontFamily:FC },
+  btnSm:    { padding:"4px 10px", borderRadius:6, border:`1px solid ${C.borde}`, background:"transparent", color:C.textoS, cursor:"pointer", fontSize:11 },
+  fila:     { display:"flex", gap:10 },
+  bloque:   { background:C.tarjeta, padding:18, borderRadius:12, marginBottom:14, border:`1px solid ${C.borde}` },
+  tBloque:  { color:C.gold, fontSize:16, marginBottom:8, marginTop:0, fontFamily:FT, fontWeight:"bold" },
+  grid2:    { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 },
+  grid3:    { display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 },
+  opcion:   (sel) => ({ padding:10, borderRadius:8, border:sel?`2px solid ${C.verdeC}`:`1px solid ${C.borde}`, background:sel?"#142916":"#0A1A0C", cursor:"pointer", transition:"all 0.15s" }),
+  oLbl:     { color:C.texto, fontWeight:"700", fontSize:12, margin:0 },
+  oDesc:    { color:C.textoS, fontSize:11, margin:"2px 0 0" },
+  sep:      { borderTop:`1px solid ${C.borde}`, margin:"12px 0" },
+  chip:     { display:"inline-block", background:"#142916", border:`1px solid ${C.verde}`, color:C.verdeC, padding:"2px 9px", borderRadius:20, fontSize:11, margin:2 },
+  err:      { color:C.err, textAlign:"center", margin:0, fontSize:12 },
+  ok_msg:   { color:C.ok, textAlign:"center", margin:0, fontSize:12 },
+  badge:    (col) => ({ background:col, color:"#fff", fontSize:10, fontWeight:"bold", padding:"2px 6px", borderRadius:20 }),
+  overlay:  { position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  modal:    { background:C.tarjeta, borderRadius:14, border:`1px solid ${C.borde}`, width:"100%", maxWidth:620, maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
+  mHead:    { padding:"16px 20px 12px", borderBottom:`1px solid ${C.borde}`, display:"flex", justifyContent:"space-between", alignItems:"center", background:C.panel },
+  mBody:    { padding:"16px 20px", overflowY:"auto", flex:1 },
+  mFoot:    { padding:"12px 20px", borderTop:`1px solid ${C.borde}`, display:"flex", gap:8 },
+  pre:      { whiteSpace:"pre-wrap", color:"#CBD5E1", fontSize:12, lineHeight:1.9, margin:0, fontFamily:"'Courier New',monospace" },
+  pasoBola: (a,c2) => ({ width:26, height:26, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:"bold", background:c2?C.verde:a?C.azul:"#0F2211", color:(c2||a)?"white":"#4a5a70", border:a?`2px solid ${C.azulC}`:c2?`2px solid ${C.verde}`:`1px solid ${C.borde}` }),
+};
+
+const authH = () => ({ "Content-Type":"application/json", "Authorization":`Bearer ${localStorage.getItem("edutoken")||""}` });
+
+// ── Componentes reutilizables ──────────────────────────
+function Opcs({ lista, val, set }) {
+  return (
+    <div style={S.grid2}>
+      {lista.map(op => (
+        <div key={op.id} style={S.opcion(val===op.id)} onClick={() => set(op.id)}>
+          <p style={S.oLbl}>{op.label}</p>
+          {op.desc && <p style={S.oDesc}>{op.desc}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DashCard({ icon, titulo, desc, color, onClick, badge, disabled }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div onClick={disabled ? null : onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ background:hover&&!disabled?"#142916":"#0F2211", border:`1.5px solid ${hover&&!disabled?color:C.borde}`, borderRadius:12, padding:"16px 14px", cursor:disabled?"not-allowed":"pointer", transition:"all 0.2s", position:"relative", opacity:disabled?0.5:1, boxShadow:hover&&!disabled?`0 4px 20px ${color}33`:"none" }}>
+      {badge && <span style={{ position:"absolute", top:8, right:8, ...S.badge(color) }}>{badge}</span>}
+      <div style={{ fontSize:26, marginBottom:6 }}>{icon}</div>
+      <p style={{ color:C.texto, fontWeight:"bold", fontSize:13, margin:"0 0 3px", fontFamily:FT }}>{titulo}</p>
+      <p style={{ color:C.textoS, fontSize:11, margin:"0 0 8px", lineHeight:1.4 }}>{desc}</p>
+      <div style={{ display:"inline-block", background:disabled?C.borde:color, color:disabled?C.textoS:"#fff", padding:"3px 9px", borderRadius:6, fontSize:10, fontWeight:"bold" }}>
+        {disabled ? "Próximamente" : "Abrir →"}
+      </div>
+    </div>
+  );
+}
+
+function TarjetaClase({ clase, onVer, onEliminar }) {
+  const fecha = new Date(clase.creadaEn).toLocaleDateString("es-CO", { day:"2-digit", month:"short", year:"numeric" });
+  return (
+    <div style={{ background:"#0A1A0C", border:`1px solid ${C.borde}`, borderRadius:8, padding:"10px 14px", marginBottom:6 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+        <div style={{ flex:1 }}>
+          <p style={{ color:C.gold, fontWeight:"bold", margin:"0 0 2px", fontSize:13 }}>{clase.datos?.tema || "Sin título"}</p>
+          <p style={{ color:C.textoS, fontSize:11, margin:0 }}>{clase.datos?.area} · Grado {clase.datos?.grado} · {fecha}</p>
+        </div>
+        <div style={{ display:"flex", gap:5, marginLeft:8 }}>
+          <button style={{ ...S.btnSm, color:C.azulC, borderColor:C.azul }} onClick={() => onVer(clase)}>👁️ Ver</button>
+          <button style={{ ...S.btnSm, color:C.err, borderColor:C.rojo }} onClick={() => onEliminar(clase.id)}>🗑</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── COMPONENTE PRINCIPAL ───────────────────────────────
+function App() {
+  const [vista, setVista]   = useState("login");
+  const [usuario, setUsuario] = useState(null);
+  const [msgAuth, setMsgAuth] = useState("");
+  const [email, setEmail]   = useState("");
+  const [password, setPassword] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [regInst, setRegInst] = useState("I.E.R. Santiago de la Selva");
+  const [regCargo, setRegCargo] = useState("Docente");
+  const [regCiudad, setRegCiudad] = useState("Valparaíso");
+
+  // Flujo de generación
+  const [paso, setPaso]         = useState(1);
+  const [institucion, setInst]  = useState("I.E.R. Santiago de la Selva");
+  const [docente, setDocente]   = useState("");
+  const [area, setArea]         = useState("");
+  const [grado, setGrado]       = useState("");
+  const [periodo, setPeriodo]   = useState("1");
+  const [fecha, setFecha]       = useState("");
+  const [tema, setTema]         = useState("");
+  const [duracion, setDuracion] = useState("55");
+  const [nivelEdu, setNivelEdu] = useState("");
+  const [apertura, setApertura] = useState("");
+  const [desarrollo, setDes]    = useState("");
+  const [retro, setRetro]       = useState("");
+  const [cierre, setCierre]     = useState("");
+  const [dejaTarea, setDejaTarea] = useState(null);
+  const [tarea, setTarea]       = useState("");
+  const [contenido, setContenido] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [descWord, setDescWord] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [guardadoOk, setGuardadoOk] = useState(false);
+
+  const [misClases, setMisClases] = useState([]);
+  const [claseActiva, setClaseActiva] = useState(null);
+
+  const esBach = nivelEdu === "bachillerato" || nivelEdu === "media_tecnica";
+  const optAper = esBach ? OPT_B_APER : OPT_P_APER;
+  const optDes  = esBach ? OPT_B_DES  : OPT_P_DES;
+  const optRet  = esBach ? OPT_B_RET  : OPT_P_RET;
+
+  // Auto-completar datos del usuario EduPanel
+  useEffect(() => {
+    const epUser = sessionStorage.getItem("ep_user");
+    if (epUser) {
+      const u = JSON.parse(epUser);
+      setDocente(u.name || "");
+    }
+    // Si hay token guardado de sesión anterior, restaurar
+    const tok = localStorage.getItem("edutoken");
+    if (tok) {
+      const saved = localStorage.getItem("educlass_usuario");
+      if (saved) {
+        setUsuario(JSON.parse(saved));
+        cargarClases();
+        setVista("dashboard");
+      }
+    }
+  }, []);
+
+  const cargarClases = async () => {
+    try {
+      const r = await fetch(`${API}/mis-clases`, { headers: authH() });
+      const d = await r.json();
+      setMisClases(d.clases || []);
+    } catch(_) {}
+  };
+
+  const cargarPerfil = (u) => { setInst(u.institution?.name || "I.E.R. Santiago de la Selva"); setDocente(u.name || ""); };
+
+  const reset = () => {
+    setPaso(1); setArea(""); setGrado(""); setPeriodo("1"); setFecha(""); setTema("");
+    setDuracion("55"); setNivelEdu(""); setApertura(""); setDes(""); setRetro("");
+    setCierre(""); setDejaTarea(null); setTarea(""); setContenido(""); setGuardadoOk(false); setClaseActiva(null);
+    if (usuario) cargarPerfil(usuario);
+  };
+
+  const login = async () => {
+    if (!email) { setMsgAuth("Ingresa tu correo"); return; }
+    try {
+      const r = await fetch(`${API}/auth/login`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email, password }) });
+      const d = await r.json();
+      if (r.ok) {
+        setUsuario(d.usuario);
+        localStorage.setItem("edutoken", d.token);
+        localStorage.setItem("educlass_usuario", JSON.stringify(d.usuario));
+        cargarPerfil(d.usuario);
+        setVista("dashboard");
+        setMsgAuth("");
+        cargarClases();
+      } else setMsgAuth(d.mensaje || "Error");
+    } catch { setMsgAuth("Sin conexión al servidor"); }
+  };
+
+  const registrar = async () => {
+    if (!nombre || !email || !password || !regInst) { setMsgAuth("Completa todos los campos"); return; }
+    try {
+      const r = await fetch(`${API}/auth/registro`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ nombre, email, password, institucion:regInst, cargo:regCargo, ciudad:regCiudad }) });
+      const d = await r.json();
+      setMsgAuth(d.mensaje);
+      if (r.ok) setTimeout(() => { setVista("login"); setMsgAuth(""); }, 1500);
+    } catch { setMsgAuth("Error en el registro"); }
+  };
+
+  const salir = () => {
+    setVista("login"); setUsuario(null);
+    localStorage.removeItem("edutoken"); localStorage.removeItem("educlass_usuario");
+    reset(); setEmail(""); setPassword(""); setMsgAuth(""); setMisClases([]);
+  };
+
+  const generarGuia = async () => {
+    setCargando(true); setContenido(""); setPaso(7); setGuardadoOk(false);
+    const getLbl = (l, id) => l.find(x => x.id === id)?.label || id;
+    try {
+      const r = await fetch(`${API}/generar-guia`, {
+        method:"POST", headers:authH(),
+        body: JSON.stringify({ institucion, docente, area, grado, periodo, fecha, tema, duracion,
+          cargo:usuario?.cargo||"Docente", ciudad:usuario?.institution?.city||"Valparaíso",
+          nivelEducativo:nivelEdu, tipoApertura:getLbl(optAper,apertura),
+          estratDesarrollo:getLbl(optDes,desarrollo), retroalimentacion:getLbl(optRet,retro),
+          tipoCierre:getLbl(OPT_CIERRE,cierre), dejaTarea, estratTarea:getLbl(OPT_TAREA,tarea) })
+      });
+      const d = await r.json();
+      setContenido(d.contenido || "Sin contenido.");
+    } catch { setContenido("❌ Error de conexión. Verifica la URL del servidor."); }
+    setCargando(false);
+  };
+
+  const guardarClase = async () => {
+    if (!contenido || !usuario) return;
+    setGuardando(true);
+    try {
+      const r = await fetch(`${API}/guardar-clase`, { method:"POST", headers:authH(), body:JSON.stringify({ contenido, datos:{ institucion, docente, area, grado, periodo, fecha, tema, duracion } }) });
+      const d = await r.json();
+      if (r.ok) { setGuardadoOk(true); cargarClases(); }
+      else alert(d.mensaje);
+    } catch { alert("Error guardando"); }
+    setGuardando(false);
+  };
+
+  const exportarWord = async () => {
+    if (!contenido || contenido.startsWith("❌")) { alert("Genera una guía primero"); return; }
+    setDescWord(true);
+    try {
+      const r = await fetch(`${API}/exportar-word`, { method:"POST", headers:authH(), body:JSON.stringify({ contenido, institucion, docente, area, grado, periodo, fecha, tema, duracion, logoPath:"", banderaPath:"", cargo:usuario?.cargo||"Docente", ciudad:usuario?.institution?.city||"Valparaíso", nivelEducativo:nivelEdu }) });
+      if (!r.ok) { alert("Error generando Word"); setDescWord(false); return; }
+      const blob = await r.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = `PlanAula_${area}_Grado${grado}.docx`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert("Error exportando"); }
+    setDescWord(false);
+  };
+
+  const eliminarClase = async (id) => {
+    if (!window.confirm("¿Eliminar esta clase?")) return;
+    try { await fetch(`${API}/clase/${id}`, { method:"DELETE", headers:authH() }); cargarClases(); }
+    catch { alert("Error"); }
+  };
+
+  // ── PASOS ────────────────────────────────────────────
+  const PASOS = ["Nivel","Datos","Apertura","Desarrollo","Verificar","Cierre","Resultado"];
+
+  const Header = () => (
+    <div style={S.header}>
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <a href="horario.html" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
+          <img src="escudo.png" alt="IESS" style={{ width:30, height:30, objectFit:"contain" }}/>
+          <span style={{ color:C.gold, fontSize:15, fontWeight:"800", fontFamily:FT }}>EduPanel · IESS</span>
+        </a>
+        <span style={{ color:C.textoS, fontSize:11 }}>/ Planeación con IA</span>
+      </div>
+      <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+        {usuario && <>
+          <button style={{ ...S.btnSm, color:vista==="dashboard"?C.gold:C.textoS, borderColor:vista==="dashboard"?C.gold:C.borde }} onClick={() => setVista("dashboard")}>🏠 Inicio</button>
+          <button style={{ ...S.btnSm, color:vista==="ia"?C.azulC:C.textoS }} onClick={() => { reset(); setVista("ia"); }}>✨ Nueva guía</button>
+          <button style={{ ...S.btnSm, color:vista==="historial"?C.verdeC:C.textoS }} onClick={() => setVista("historial")}>📂 Mis guías</button>
+          <span style={{ color:C.textoS, fontSize:11, marginLeft:4 }}>{usuario?.name?.split(" ")[0]}</span>
+          <button style={{ ...S.btnSm, color:C.err, borderColor:C.rojo }} onClick={salir}>Salir</button>
+        </>}
+        {!usuario && <span style={{ color:C.textoS, fontSize:12 }}>Plataforma de planeación pedagógica con IA</span>}
+      </div>
+    </div>
+  );
+
+  // ── RENDER PRINCIPAL ──────────────────────────────────
+
+  // LOGIN
+  if (vista === "login") return (
+    <div style={S.fondo}>
+      <Header/>
+      <div style={{ ...S.pantalla, paddingTop:20 }}>
+        <div style={{ ...S.card, maxWidth:440 }} className="fade-up">
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:40, marginBottom:4 }}>✨</div>
+            <h1 style={{ ...S.titulo, fontSize:18 }}>Planeación con IA</h1>
+            <p style={{ ...S.sub, color:C.textoS }}>Genera guías pedagógicas completas en segundos</p>
+          </div>
+          <div>
+            <p style={S.lbl}>CORREO INSTITUCIONAL</p>
+            <input style={S.inp} placeholder="docente@iess.edu.co" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/>
+          </div>
+          <div>
+            <p style={S.lbl}>CONTRASEÑA</p>
+            <input type="password" style={S.inp} placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/>
+          </div>
+          <button style={S.btnA} onClick={login}>Ingresar como docente</button>
+          <button style={{ ...S.btnG, borderColor:C.verde, color:C.verdeC }} onClick={() => { setVista("registro"); setMsgAuth(""); }}>¿Sin cuenta? Crear cuenta →</button>
+          <div style={{ ...S.sep }}/>
+          <p style={{ color:C.textoS, fontSize:11, textAlign:"center" }}>
+            ⚠️ Esta plataforma requiere un servidor backend.<br/>
+            <span style={{ color:C.gold }}>URL actual: {API}</span>
+          </p>
+          {msgAuth && <p style={S.err}>{msgAuth}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
+  // REGISTRO
+  if (vista === "registro") return (
+    <div style={S.fondo}>
+      <Header/>
+      <div style={{ ...S.pantalla, paddingTop:20 }}>
+        <div style={{ ...S.card, maxWidth:480 }} className="fade-up">
+          <h1 style={{ ...S.titulo, color:C.ok, fontSize:18 }}>Crear cuenta docente</h1>
+          <div><p style={S.lbl}>NOMBRE COMPLETO *</p><input style={S.inp} placeholder="Ej: María González" value={nombre} onChange={e=>setNombre(e.target.value)}/></div>
+          <div><p style={S.lbl}>CORREO *</p><input style={S.inp} placeholder="docente@iess.edu.co" value={email} onChange={e=>setEmail(e.target.value)}/></div>
+          <div><p style={S.lbl}>CONTRASEÑA *</p><input type="password" style={S.inp} value={password} onChange={e=>setPassword(e.target.value)}/></div>
+          <div style={S.sep}/>
+          <div><p style={S.lbl}>INSTITUCIÓN *</p><input style={S.inp} value={regInst} onChange={e=>setRegInst(e.target.value)}/></div>
+          <div style={S.fila}>
+            <div style={{ flex:1 }}><p style={S.lbl}>CARGO</p>
+              <select style={S.sel} value={regCargo} onChange={e=>setRegCargo(e.target.value)}>
+                {["Docente","Coordinador/a","Rector/a","Orientador/a"].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{ flex:1 }}><p style={S.lbl}>CIUDAD</p><input style={S.inp} value={regCiudad} onChange={e=>setRegCiudad(e.target.value)}/></div>
+          </div>
+          <button style={S.btnV} onClick={registrar}>Registrarme</button>
+          <button style={S.btnG} onClick={() => { setVista("login"); setMsgAuth(""); }}>← Volver</button>
+          {msgAuth && <p style={msgAuth.includes("exitoso") ? S.ok_msg : S.err}>{msgAuth}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
+  // DASHBOARD
+  if (vista === "dashboard") return (
+    <div style={S.fondo}>
+      <Header/>
+      <div style={S.cont} className="fade-up">
+        {/* Bienvenida */}
+        <div style={{ background:"linear-gradient(135deg,#0F2211,#0A1A0C)", borderRadius:12, padding:"18px 20px", marginBottom:18, border:`1px solid ${C.verde}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
+          <div>
+            <h2 style={{ color:C.texto, fontSize:16, margin:"0 0 2px", fontFamily:FT }}>¡Bienvenido/a, {usuario?.name?.split(" ")[0]}! 👋</h2>
+            <p style={{ color:C.textoS, margin:0, fontSize:12 }}>{usuario?.cargo} · {usuario?.institution?.name}</p>
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <div style={{ background:"#0A1A0C", border:`1px solid ${C.borde}`, borderRadius:8, padding:"7px 14px", textAlign:"center" }}>
+              <p style={{ color:C.gold, fontSize:18, fontWeight:"bold", margin:0 }}>{misClases.length}</p>
+              <p style={{ color:C.textoS, fontSize:10, margin:0 }}>Guías guardadas</p>
+            </div>
+          </div>
+        </div>
+
+        <p style={{ color:C.textoS, fontSize:10, fontWeight:"600", letterSpacing:1, textTransform:"uppercase", margin:"0 0 10px" }}>Módulos</p>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:8, marginBottom:18 }}>
+          <DashCard icon="✨" titulo="Nueva guía" desc="Plan de aula con IA completo" color={C.azul} onClick={() => { reset(); setVista("ia"); }}/>
+          <DashCard icon="📂" titulo="Mis guías" desc="Historial de planeaciones" color={C.verde} onClick={() => setVista("historial")} badge={misClases.length || null}/>
+          <DashCard icon="📋" titulo="Tareas" desc="Asignar actividades a estudiantes" color={C.naranja} onClick={() => alert("Módulo de tareas — requiere backend conectado")} badge="⚠️"/>
+        </div>
+
+        {misClases.length > 0 && (<>
+          <p style={{ color:C.textoS, fontSize:10, fontWeight:"600", letterSpacing:1, textTransform:"uppercase", margin:"0 0 10px" }}>Guías recientes</p>
+          <div style={S.bloque}>
+            {misClases.slice(0,4).map(c => (
+              <TarjetaClase key={c.id} clase={c}
+                onVer={async cl => { try { const r=await fetch(`${API}/clase/${cl.id}`,{headers:authH()}); const d=await r.json(); setClaseActiva(d.clase); setVista("verClase"); } catch{ alert("Error cargando clase"); }}}
+                onEliminar={eliminarClase}/>
+            ))}
+            {misClases.length > 4 && <button style={{ ...S.btnG, marginTop:6 }} onClick={() => setVista("historial")}>Ver todas ({misClases.length}) →</button>}
+          </div>
+        </>)}
+      </div>
+    </div>
+  );
+
+  // GENERADOR IA — pasos 1-7
+  const renderPasoContent = () => {
+    if (paso === 1) return (
+      <div style={{ ...S.bloque }} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:10 }} onClick={() => setVista("dashboard")}>← Inicio</button>
+        <h2 style={S.tBloque}>🎓 Nivel educativo</h2>
+        <div style={S.grid2}>
+          {[{id:"preescolar",label:"🌱 Preescolar",desc:"Transición"},{id:"primaria",label:"🏫 Primaria",desc:"Grados 1° a 5°"},{id:"bachillerato",label:"📚 Bachillerato",desc:"Grados 6° a 11°"},{id:"media_tecnica",label:"🔧 Media Técnica",desc:"Grados 10° y 11°"}].map(n => (
+            <div key={n.id} style={S.opcion(nivelEdu===n.id)} onClick={() => setNivelEdu(n.id)}>
+              <p style={S.oLbl}>{n.label}</p><p style={S.oDesc}>{n.desc}</p>
+            </div>
+          ))}
+        </div>
+        <button style={{ ...S.btnV, marginTop:16 }} onClick={() => { if(!nivelEdu){alert("Selecciona el nivel");return;} setPaso(2); }}>Continuar →</button>
+      </div>
+    );
+
+    if (paso === 2) return (
+      <div style={{ ...S.bloque }} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:10 }} onClick={() => setPaso(1)}>← Volver</button>
+        <h2 style={S.tBloque}>📋 Información de la clase</h2>
+        <div style={{ ...S.fila, marginBottom:8 }}>
+          <div style={{ flex:2 }}><p style={S.lbl}>INSTITUCIÓN</p><input style={S.inp} value={institucion} onChange={e=>setInst(e.target.value)}/></div>
+        </div>
+        <div style={{ ...S.fila, marginBottom:8 }}>
+          <div style={{ flex:2 }}><p style={S.lbl}>DOCENTE</p><input style={S.inp} value={docente} onChange={e=>setDocente(e.target.value)}/></div>
+          <div style={{ flex:1 }}><p style={S.lbl}>PERÍODO</p>
+            <select style={S.sel} value={periodo} onChange={e=>setPeriodo(e.target.value)}>
+              {["1","2","3","4"].map(p=><option key={p}>Periodo {p}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ ...S.fila, marginBottom:8 }}>
+          <div style={{ flex:1 }}><p style={S.lbl}>ÁREA</p>
+            <select style={S.sel} value={area} onChange={e=>setArea(e.target.value)}>
+              <option value="">Seleccionar</option>
+              {["Ciencias Naturales","Ciencias Sociales","Matemáticas","Lengua Castellana","Inglés","Educación Física","Artística","Ética y Valores","Tecnología e Informática","Filosofía","Química","Física","Biología","Agropecuaria"].map(m=><option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div style={{ flex:1 }}><p style={S.lbl}>GRADO</p>
+            <select style={S.sel} value={grado} onChange={e=>setGrado(e.target.value)}>
+              <option value="">Seleccionar</option>
+              {(nivelEdu==="preescolar"?["Transición"]:nivelEdu==="primaria"?["1°","2°","3°","4°","5°"]:nivelEdu==="media_tecnica"?["10°","11°"]:["6°","7°","8°","9°","10°","11°"]).map(g=><option key={g}>{g}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ ...S.fila, marginBottom:8 }}>
+          <div style={{ flex:2 }}><p style={S.lbl}>TEMA</p><input style={S.inp} placeholder="Ej: El verbo to be, Ecosistemas..." value={tema} onChange={e=>setTema(e.target.value)}/></div>
+          <div style={{ flex:1 }}><p style={S.lbl}>DURACIÓN</p>
+            <select style={S.sel} value={duracion} onChange={e=>setDuracion(e.target.value)}>
+              {OPT_DUR.map(d=><option key={d.v} value={d.v}>{d.l}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ marginBottom:16 }}>
+          <p style={S.lbl}>FECHA</p>
+          <input type="date" style={{ ...S.inp, width:"auto" }} value={fecha} onChange={e=>setFecha(e.target.value)}/>
+        </div>
+        <button style={S.btnV} onClick={() => { if(!area||!grado||!tema){alert("Completa área, grado y tema");return;} setPaso(3); }}>Continuar →</button>
+      </div>
+    );
+
+    if (paso === 3) return (
+      <div style={{ ...S.bloque }} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:10 }} onClick={() => setPaso(2)}>← Volver</button>
+        <h2 style={S.tBloque}>🚀 ¿Cómo iniciar la clase?</h2>
+        <p style={{ color:C.textoS, fontSize:12, marginBottom:12 }}>Selecciona la estrategia de apertura / motivación</p>
+        <Opcs lista={optAper} val={apertura} set={setApertura}/>
+        <button style={{ ...S.btnV, marginTop:16 }} onClick={() => { if(!apertura){alert("Selecciona apertura");return;} setPaso(4); }}>Continuar →</button>
+      </div>
+    );
+
+    if (paso === 4) return (
+      <div style={{ ...S.bloque }} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:10 }} onClick={() => setPaso(3)}>← Volver</button>
+        <h2 style={S.tBloque}>⚙️ ¿Cómo desarrollar el contenido?</h2>
+        <p style={{ color:C.textoS, fontSize:12, marginBottom:12 }}>Selecciona la estrategia de desarrollo del tema</p>
+        <Opcs lista={optDes} val={desarrollo} set={setDes}/>
+        <button style={{ ...S.btnV, marginTop:16 }} onClick={() => { if(!desarrollo){alert("Selecciona estrategia");return;} setPaso(5); }}>Continuar →</button>
+      </div>
+    );
+
+    if (paso === 5) return (
+      <div style={{ ...S.bloque }} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:10 }} onClick={() => setPaso(4)}>← Volver</button>
+        <h2 style={S.tBloque}>🔄 ¿Cómo verificar el aprendizaje?</h2>
+        <p style={{ color:C.textoS, fontSize:12, marginBottom:12 }}>Estrategia de retroalimentación</p>
+        <Opcs lista={optRet} val={retro} set={setRetro}/>
+        <button style={{ ...S.btnV, marginTop:16 }} onClick={() => { if(!retro){alert("Selecciona estrategia");return;} setPaso(6); }}>Continuar →</button>
+      </div>
+    );
+
+    if (paso === 6) return (
+      <div style={{ ...S.bloque }} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:10 }} onClick={() => setPaso(5)}>← Volver</button>
+        <h2 style={S.tBloque}>🏁 Cierre y tarea</h2>
+        <p style={{ color:C.texto, fontWeight:"bold", marginBottom:8, fontFamily:FT, fontSize:13 }}>Estrategia de cierre</p>
+        <Opcs lista={OPT_CIERRE} val={cierre} set={setCierre}/>
+        <div style={S.sep}/>
+        <p style={{ color:C.texto, fontWeight:"bold", marginBottom:8, fontFamily:FT, fontSize:13 }}>¿Dejar tarea?</p>
+        <div style={{ ...S.fila, marginBottom:12 }}>
+          <div style={{ ...S.opcion(dejaTarea===true), flex:1 }} onClick={() => setDejaTarea(true)}><p style={S.oLbl}>✅ Sí</p></div>
+          <div style={{ ...S.opcion(dejaTarea===false), flex:1 }} onClick={() => { setDejaTarea(false); setTarea(""); }}><p style={S.oLbl}>❌ No</p></div>
+        </div>
+        {dejaTarea === true && <Opcs lista={OPT_TAREA} val={tarea} set={setTarea}/>}
+        <button style={{ ...S.btnV, marginTop:16, opacity:cargando?0.7:1 }} disabled={cargando}
+          onClick={() => { if(!cierre){alert("Selecciona cierre");return;} if(dejaTarea===null){alert("Indica si hay tarea");return;} if(dejaTarea&&!tarea){alert("Selecciona tipo de tarea");return;} generarGuia(); }}>
+          {cargando ? "⏳ Generando guía con IA..." : "✨ Generar guía completa"}
+        </button>
+      </div>
+    );
+
+    if (paso === 7) return (
+      <div className="fade-up">
+        {cargando && (
+          <div style={{ ...S.bloque, textAlign:"center", padding:48 }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>✨</div>
+            <p style={{ color:C.gold, fontSize:16, fontFamily:FT, marginBottom:8 }}>Generando tu guía pedagógica...</p>
+            <p style={{ color:C.textoS, fontSize:12, marginBottom:20 }}>La IA está construyendo el plan de aula completo</p>
+            <div style={{ display:"flex", justifyContent:"center" }}><div className="spin" style={{ width:24, height:24 }}></div></div>
+          </div>
+        )}
+        {!cargando && contenido && !contenido.startsWith("❌") && (<>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginBottom:10 }}>
+            <span style={S.chip}>📚 {area}</span>
+            <span style={S.chip}>🎓 {grado}</span>
+            <span style={S.chip}>⏱️ {OPT_DUR.find(d=>d.v===duracion)?.l}</span>
+          </div>
+          <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+            <button style={{ ...S.btnA, width:"auto", padding:"9px 16px" }} onClick={exportarWord} disabled={descWord}>
+              {descWord ? "⏳..." : "📥 Descargar Word"}
+            </button>
+            {!guardadoOk
+              ? <button style={{ ...S.btnV, width:"auto", padding:"9px 16px", opacity:guardando?0.7:1 }} onClick={guardarClase} disabled={guardando}>{guardando?"💾...":"💾 Guardar"}</button>
+              : <span style={{ ...S.chip, background:"#0F2211", borderColor:C.ok, color:C.ok, padding:"9px 12px" }}>✅ Guardada</span>
+            }
+            <button style={{ ...S.btnG, width:"auto" }} onClick={() => setVista("dashboard")}>🏠</button>
+            <button style={{ ...S.btnG, width:"auto" }} onClick={reset}>+ Nueva</button>
+          </div>
+        </>)}
+        {!cargando && contenido && (
+          <div style={{ background:C.tarjeta, padding:20, borderRadius:12, border:`1px solid ${C.borde}` }}>
+            <h2 style={{ color:C.gold, fontSize:16, marginBottom:3, marginTop:0, fontFamily:FT }}>📄 {tema}</h2>
+            <p style={{ color:C.textoS, fontSize:11, marginBottom:16 }}>{area} · Grado {grado}</p>
+            <div style={S.sep}/>
+            <pre style={S.pre}>{contenido}</pre>
+          </div>
+        )}
+      </div>
+    );
+
+    return null;
+  };
+
+  if (vista === "ia") return (
+    <div style={S.fondo}>
+      <Header/>
+      <div style={S.cont}>
+        {paso < 7 && (
+          <div style={{ display:"flex", gap:4, marginBottom:20, justifyContent:"center", flexWrap:"wrap" }}>
+            {PASOS.map((p, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:3 }}>
+                <div style={S.pasoBola(paso===i+1, paso>i+1)}>{paso>i+1?"✓":i+1}</div>
+                <span style={{ color:paso===i+1?C.gold:"#4a5a70", fontSize:10 }}>{p}</span>
+                {i < PASOS.length-1 && <span style={{ color:C.borde, margin:"0 1px", fontSize:12 }}>›</span>}
+              </div>
+            ))}
+          </div>
+        )}
+        {renderPasoContent()}
+      </div>
+    </div>
+  );
+
+  // HISTORIAL
+  if (vista === "historial") return (
+    <div style={S.fondo}>
+      <Header/>
+      <div style={S.cont} className="fade-up">
+        <div style={S.bloque}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+            <h2 style={S.tBloque}>📂 Mis guías pedagógicas</h2>
+            <button style={{ ...S.btnV, width:"auto", padding:"8px 14px" }} onClick={() => { reset(); setVista("ia"); }}>+ Nueva</button>
+          </div>
+          {misClases.length === 0
+            ? <p style={{ color:C.textoS, textAlign:"center", padding:24, fontSize:13 }}>Sin guías guardadas. Genera tu primera guía.</p>
+            : misClases.map(c => (
+                <TarjetaClase key={c.id} clase={c}
+                  onVer={async cl => { try { const r=await fetch(`${API}/clase/${cl.id}`,{headers:authH()}); const d=await r.json(); setClaseActiva(d.clase); setVista("verClase"); } catch { alert("Error"); }}}
+                  onEliminar={eliminarClase}/>
+              ))
+          }
+        </div>
+      </div>
+    </div>
+  );
+
+  // VER CLASE
+  if (vista === "verClase" && claseActiva) return (
+    <div style={S.fondo}>
+      <Header/>
+      <div style={S.cont} className="fade-up">
+        <button style={{ ...S.btnSm, marginBottom:12 }} onClick={() => setVista("historial")}>← Volver</button>
+        <div style={{ background:C.tarjeta, padding:20, borderRadius:12, border:`1px solid ${C.borde}` }}>
+          <h2 style={{ color:C.gold, fontSize:17, marginBottom:3, marginTop:0, fontFamily:FT }}>{claseActiva.datos?.tema}</h2>
+          <p style={{ color:C.textoS, fontSize:12, marginBottom:16 }}>{claseActiva.datos?.area} · Grado {claseActiva.datos?.grado}</p>
+          <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+            <button style={{ ...S.btnA, width:"auto", padding:"8px 14px", fontSize:12 }}
+              onClick={async () => {
+                setArea(claseActiva.datos?.area||""); setGrado(claseActiva.datos?.grado||"");
+                setTema(claseActiva.datos?.tema||""); setContenido(claseActiva.contenido||"");
+                setInstitucion(claseActiva.datos?.institucion||""); setDocente(claseActiva.datos?.docente||"");
+                setPeriodo(claseActiva.datos?.periodo||"1"); setFecha(claseActiva.datos?.fecha||"");
+                setDuracion(claseActiva.datos?.duracion||"55"); setGuardadoOk(true); setPaso(7);
+                setVista("ia");
+              }}>✏️ Editar/Reexportar</button>
+          </div>
+          <div style={S.sep}/>
+          <pre style={S.pre}>{claseActiva.contenido}</pre>
+        </div>
+      </div>
+    </div>
+  );
+
+  return null;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
