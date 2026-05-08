@@ -1,327 +1,420 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduPanel · I.E.R. Santiago de la Selva</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Sora', sans-serif;
-      min-height: 100vh;
-      background:
-        radial-gradient(ellipse at 20% 30%, rgba(21,101,192,.22), transparent 55%),
-        radial-gradient(ellipse at 80% 70%, rgba(46,125,50,.16), transparent 55%),
-        linear-gradient(160deg, #060E08, #0A1A0C 50%, #06100E);
-      color: #E8EEF8;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduPanel · I.E.R. Santiago de la Selva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(21,101,192,.22), transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(46,125,50,.16), transparent 55%),
+    linear-gradient(160deg, #060E08, #0A1A0C 50%, #06100E);
+  color: #E8EEF8;
+}
 
-    /* LOGIN */
-    #pantalla-login {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-    .login-wrap { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
-    .brand { text-align: center; padding-bottom: 22px; }
-    .brand-title { font-size: 1.6rem; font-weight: 800; color: #F9A825; letter-spacing: .08em; }
-    .brand-school { font-size: .92rem; font-weight: 600; margin-top: 4px; }
-    .brand-loc { font-size: .72rem; color: #7B9CC8; margin-top: 2px; }
-    .brand-line { width: 56px; height: 3px; background: linear-gradient(90deg,#1565C0,#2E7D32); border-radius: 3px; margin: 8px auto 0; }
-    .card {
-      width: 100%; background: rgba(15,34,17,.95);
-      border: 1px solid #1A3D1E; border-top: 3px solid #1565C0;
-      border-radius: 20px; padding: 28px 26px 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.6);
-      display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px;
-    }
-    .card-title { font-size: 1rem; font-weight: 700; text-align: center; }
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field label { font-size: .72rem; font-weight: 600; color: #7B9CC8; letter-spacing: .04em; text-transform: uppercase; }
-    .field input {
-      padding: 10px 14px; background: #142916;
-      border: 1px solid #1A3D1E; border-radius: 40px;
-      color: #E8EEF8; font-family: 'Sora', sans-serif; font-size: .9rem; outline: none;
-    }
-    .field input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.18); }
-    .pass-row { position: relative; }
-    .pass-row input { padding-right: 42px; width: 100%; }
-    .eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: .95rem; color: #3A5580; }
-    .error-msg { background: rgba(239,68,68,.12); border: 1px solid #ef4444; border-radius: 10px; padding: 8px 12px; font-size: .76rem; color: #f87171; display: none; }
-    .btn-login {
-      width: 100%; padding: 11px;
-      background: linear-gradient(90deg,#1565C0,#1976D2);
-      border: none; border-radius: 40px; color: #fff;
-      font-family: 'Sora', sans-serif; font-size: .92rem; font-weight: 700;
-      cursor: pointer; transition: all .15s; margin-top: 2px;
-    }
-    .btn-login:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(21,101,192,.5); }
-    .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-    .recovery { display: flex; gap: 9px; background: rgba(21,101,192,.08); border: 1px solid rgba(21,101,192,.2); border-radius: 10px; padding: 11px 13px; }
-    .recovery p { font-size: .72rem; color: #7B9CC8; line-height: 1.6; }
-    .recovery strong { color: #F9A825; }
-    .login-footer { display: flex; flex-direction: column; align-items: center; gap: 7px; opacity: .7; }
-    .login-footer img { width: 52px; height: 52px; object-fit: contain; }
-    .login-footer p { font-size: .62rem; color: #3A5580; text-align: center; line-height: 1.5; }
-    .loading { display: none; align-items: center; gap: 8px; font-size: .78rem; color: #66BB6A; }
-    .spinner { width: 16px; height: 16px; border: 2px solid #1A3D1E; border-top-color: #43A047; border-radius: 50%; animation: spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+#pantalla-login {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
 
-    /* DASHBOARD */
-    #pantalla-dashboard { display: none; min-height: 100vh; flex-direction: column; }
+.login-wrap { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
 
-    .dash-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px; height: 56px;
-      background: linear-gradient(90deg,#0D47A1,#0A1A0C);
-      border-bottom: 2px solid #2E7D32; flex-shrink: 0;
-    }
-    .dash-logo { display: flex; align-items: center; gap: 10px; }
-    .dash-logo img { width: 32px; height: 32px; object-fit: contain; }
-    .dash-logo-txt span:first-child { display: block; font-size: .88rem; font-weight: 800; color: #F9A825; }
-    .dash-logo-txt span:last-child  { display: block; font-size: .58rem; color: #7B9CC8; text-transform: uppercase; }
-    .dash-user { display: flex; align-items: center; gap: 10px; }
-    .dash-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#2E7D32,#1565C0); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #fff; border: 2px solid #F9A825; }
-    .dash-meta { display: flex; flex-direction: column; align-items: flex-end; }
-    .dash-meta .dash-name { font-size: .78rem; font-weight: 600; }
-    .dash-meta .dash-rol  { font-size: .65rem; color: #F9A825; }
-    .btn-salir { padding: 5px 11px; border: 1px solid #1A3D1E; border-radius: 6px; background: transparent; color: #3A5580; cursor: pointer; font-family: 'Sora',sans-serif; font-size: .7rem; transition: all .15s; }
-    .btn-salir:hover { border-color: #ef4444; color: #ef4444; }
+.brand { text-align: center; padding-bottom: 22px; }
+.brand-title { font-size: 1.6rem; font-weight: 800; color: #F9A825; letter-spacing: .08em; }
+.brand-school { font-size: .92rem; font-weight: 600; margin-top: 4px; }
+.brand-loc { font-size: .72rem; color: #7B9CC8; margin-top: 2px; }
+.brand-line { width: 56px; height: 3px; background: linear-gradient(90deg,#1565C0,#2E7D32); border-radius: 3px; margin: 8px auto 0; }
 
-    .dash-main {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 40px 20px; gap: 28px;
-    }
-    .dash-bienvenida { text-align: center; }
-    .dash-bienvenida h1 { font-size: 1.4rem; font-weight: 800; color: #F9A825; margin-bottom: 6px; }
-    .dash-bienvenida p { font-size: .88rem; color: #7B9CC8; }
+.card {
+  width: 100%; background: rgba(15,34,17,.95);
+  border: 1px solid #1A3D1E; border-top: 3px solid #1565C0;
+  border-radius: 20px; padding: 28px 26px 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px;
+}
+.card-title { font-size: 1rem; font-weight: 700; text-align: center; }
 
-    .dash-modulos {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px; width: 100%; max-width: 700px;
-    }
+.tabs { display: flex; gap: 6px; background: #0a1a0c; border-radius: 10px; padding: 4px; }
+.tab-btn {
+  flex: 1; padding: 7px; border: none; border-radius: 8px;
+  background: transparent; color: #7B9CC8;
+  font-family: 'Sora', sans-serif; font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.tab-btn.active { background: #1565C0; color: #fff; }
 
-    .modulo-card {
-      background: #0F2211; border: 1.5px solid #1A3D1E;
-      border-radius: 16px; padding: 28px 22px;
-      display: flex; flex-direction: column; align-items: center; gap: 12px;
-      cursor: pointer; text-decoration: none; transition: all .2s;
-      position: relative;
-    }
-    .modulo-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); border-radius: 16px 16px 0 0; }
-    .modulo-card:hover { border-color: var(--c); transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,.4); background: #142916; }
-    .modulo-icon { font-size: 2.8rem; line-height: 1; }
-    .modulo-titulo { font-size: 1.05rem; font-weight: 800; color: #E8EEF8; text-align: center; }
-    .modulo-desc { font-size: .76rem; color: #7B9CC8; text-align: center; line-height: 1.5; }
-    .modulo-btn { margin-top: 4px; padding: 8px 20px; border-radius: 40px; border: none; background: var(--c); color: #fff; font-family: 'Sora',sans-serif; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: .72rem; font-weight: 600; color: #7B9CC8; letter-spacing: .04em; text-transform: uppercase; }
+.field input {
+  padding: 10px 14px; background: #142916;
+  border: 1px solid #1A3D1E; border-radius: 40px;
+  color: #E8EEF8; font-family: 'Sora', sans-serif; font-size: .9rem; outline: none;
+}
+.field input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.18); }
 
-    .dash-footer { text-align: center; padding: 20px; font-size: .65rem; color: #1A3D1E; }
+.pass-row { position: relative; }
+.pass-row input { padding-right: 42px; width: 100%; }
+.eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: .95rem; color: #3A5580; }
 
-    @media (max-width: 500px) {
-      .dash-modulos { grid-template-columns: 1fr; max-width: 320px; }
-      .dash-bienvenida h1 { font-size: 1.1rem; }
-    }
-  </style>
+.error-msg { background: rgba(239,68,68,.12); border: 1px solid #ef4444; border-radius: 10px; padding: 8px 12px; font-size: .76rem; color: #f87171; display: none; }
+.ok-msg { background: rgba(34,197,94,.12); border: 1px solid #22c55e; border-radius: 10px; padding: 8px 12px; font-size: .76rem; color: #4ade80; display: none; }
+
+.btn-login {
+  width: 100%; padding: 11px;
+  background: linear-gradient(90deg,#1565C0,#1976D2);
+  border: none; border-radius: 40px; color: #fff;
+  font-family: 'Sora', sans-serif; font-size: .92rem; font-weight: 700;
+  cursor: pointer; transition: all .15s; margin-top: 2px;
+}
+.btn-login:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(21,101,192,.5); }
+.btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.btn-reg {
+  width: 100%; padding: 11px;
+  background: linear-gradient(90deg,#2E7D32,#388E3C);
+  border: none; border-radius: 40px; color: #fff;
+  font-family: 'Sora', sans-serif; font-size: .92rem; font-weight: 700;
+  cursor: pointer; transition: all .15s; margin-top: 2px;
+}
+.btn-reg:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(46,125,50,.5); }
+.btn-reg:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.loading { display: none; align-items: center; gap: 8px; font-size: .78rem; color: #66BB6A; justify-content: center; }
+.spinner { width: 16px; height: 16px; border: 2px solid #1A3D1E; border-top-color: #43A047; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.recovery { display: flex; gap: 9px; background: rgba(21,101,192,.08); border: 1px solid rgba(21,101,192,.2); border-radius: 10px; padding: 11px 13px; }
+.recovery p { font-size: .72rem; color: #7B9CC8; line-height: 1.6; }
+.recovery strong { color: #F9A825; }
+
+.sep { border: none; border-top: 1px solid #1A3D1E; margin: 2px 0; }
+
+.btn-estudiante {
+  width: 100%; padding: 10px;
+  background: transparent; border: 1px solid #7C3AED;
+  border-radius: 40px; color: #a78bfa;
+  font-family: 'Sora', sans-serif; font-size: .85rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.btn-estudiante:hover { background: rgba(124,58,237,.15); }
+
+.login-footer { display: flex; flex-direction: column; align-items: center; gap: 7px; opacity: .7; }
+.login-footer img { width: 52px; height: 52px; object-fit: contain; }
+.login-footer p { font-size: .62rem; color: #3A5580; text-align: center; line-height: 1.5; }
+
+/* PORTAL ESTUDIANTE */
+#pantalla-estudiante {
+  display: none; min-height: 100vh;
+  justify-content: center; align-items: center; padding: 20px;
+}
+</style>
 </head>
 <body>
 
-  <!-- LOGIN -->
-  <div id="pantalla-login">
-    <div class="login-wrap">
-      <div class="brand">
-        <div class="brand-title">EduPanel</div>
-        <div class="brand-school">I.E.R. Santiago de la Selva</div>
-        <div class="brand-loc">Valparaíso · Caquetá · Colombia · 2026</div>
-        <div class="brand-line"></div>
+<!-- ═══════════════ LOGIN DOCENTE ═══════════════ -->
+<div id="pantalla-login">
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="brand-title">EduPanel</div>
+      <div class="brand-school">I.E.R. Santiago de la Selva</div>
+      <div class="brand-loc">Valparaíso · Caquetá · Colombia · 2026</div>
+      <div class="brand-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Acceso al Sistema Académico</div>
+
+      <!-- Tabs: Ingresar / Registrarse -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">🔑 Ingresar</button>
+        <button class="tab-btn" id="tab-reg" onclick="switchTab('registro')">➕ Crear cuenta</button>
       </div>
-      <div class="card">
-        <div class="card-title">Acceso al Sistema Académico</div>
-        <div class="field">
-          <label>Usuario</label>
-          <input type="text" id="login-user" placeholder="Tu nombre de usuario" autocomplete="username">
-        </div>
-        <div class="field">
-          <label>Contraseña</label>
-          <div class="pass-row">
-            <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
-            <button class="eye" type="button" onclick="togglePass()">👁</button>
+
+      <!-- ── FORMULARIO LOGIN ── -->
+      <div id="form-login">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="field">
+            <label>Correo</label>
+            <input type="email" id="login-email" placeholder="docente@iess.edu.co" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <div class="pass-row">
+              <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+              <button class="eye" type="button" onclick="togglePass('login-pass')">👁</button>
+            </div>
+          </div>
+          <div class="error-msg" id="login-error"></div>
+          <div class="loading" id="login-loading"><div class="spinner"></div> Verificando...</div>
+          <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar →</button>
+          <div class="recovery">
+            <span>🔐</span>
+            <p>¿Olvidaste tu contraseña?<br>Comunícate con el <strong>Administrador</strong>.</p>
           </div>
         </div>
-        <div class="error-msg" id="login-error"></div>
-        <div class="loading" id="login-loading"><div class="spinner"></div> Verificando...</div>
-        <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar →</button>
-        <div class="recovery">
-          <span>🔐</span>
-          <p>¿Olvidaste tu contraseña?<br>Comunícate con el <strong>Administrador</strong>.</p>
+      </div>
+
+      <!-- ── FORMULARIO REGISTRO ── -->
+      <div id="form-registro" style="display:none">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" id="reg-nombre" placeholder="Ej: María González">
+          </div>
+          <div class="field">
+            <label>Correo *</label>
+            <input type="email" id="reg-email" placeholder="docente@iess.edu.co">
+          </div>
+          <div class="field">
+            <label>Contraseña *</label>
+            <div class="pass-row">
+              <input type="password" id="reg-pass" placeholder="••••••••">
+              <button class="eye" type="button" onclick="togglePass('reg-pass')">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Institución *</label>
+            <input type="text" id="reg-inst" placeholder="I.E.R. Santiago de la Selva" value="I.E.R. Santiago de la Selva">
+          </div>
+          <div style="display:flex;gap:8px">
+            <div class="field" style="flex:1">
+              <label>Cargo</label>
+              <select id="reg-cargo" style="padding:10px 14px;background:#142916;border:1px solid #1A3D1E;border-radius:40px;color:#E8EEF8;font-family:'Sora',sans-serif;font-size:.85rem;outline:none">
+                <option>Docente</option>
+                <option>Coordinador/a</option>
+                <option>Rector/a</option>
+                <option>Orientador/a</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1">
+              <label>Ciudad</label>
+              <input type="text" id="reg-ciudad" placeholder="Valparaíso" value="Valparaíso">
+            </div>
+          </div>
+          <div class="error-msg" id="reg-error"></div>
+          <div class="ok-msg" id="reg-ok"></div>
+          <div class="loading" id="reg-loading"><div class="spinner"></div> Creando cuenta...</div>
+          <button class="btn-reg" id="btn-reg" onclick="doRegistro()">Crear cuenta →</button>
         </div>
       </div>
-      <div class="login-footer">
-        <img src="escudo.png" alt="Escudo IESS">
-        <p>Institución Educativa Rural<br>Santiago de la Selva · IESS</p>
-      </div>
+
+      <hr class="sep">
+      <button class="btn-estudiante" onclick="mostrarEstudiante()">📚 Soy estudiante</button>
+    </div>
+
+    <div class="login-footer">
+      <img src="escudo.png" alt="Escudo IESS">
+      <p>Institución Educativa Rural<br>Santiago de la Selva · IESS</p>
     </div>
   </div>
+</div>
 
-  <!-- DASHBOARD -->
-  <div id="pantalla-dashboard">
-    <header class="dash-header">
-      <div class="dash-logo">
-        <img src="escudo.png" alt="IESS">
-        <div class="dash-logo-txt">
-          <span>EduPanel · IESS</span>
-          <span>Santiago de la Selva</span>
+<!-- ═══════════════ PORTAL ESTUDIANTE ═══════════════ -->
+<div id="pantalla-estudiante">
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="brand-title" style="color:#a78bfa">Portal Estudiante</div>
+      <div class="brand-school">I.E.R. Santiago de la Selva</div>
+      <div class="brand-line" style="background:linear-gradient(90deg,#7C3AED,#2563EB)"></div>
+    </div>
+    <div class="card" style="border-top-color:#7C3AED">
+      <div class="card-title">Acceso Estudiante</div>
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="est-usuario" placeholder="tuusuario">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <div class="pass-row">
+          <input type="password" id="est-pass" placeholder="••••••••">
+          <button class="eye" type="button" onclick="togglePass('est-pass')">👁</button>
         </div>
       </div>
-      <div class="dash-user">
-        <div class="dash-meta">
-          <span class="dash-name" id="dash-nombre">Docente</span>
-          <span class="dash-rol"  id="dash-rol">👤 Docente</span>
-        </div>
-        <div class="dash-avatar" id="dash-avatar">DO</div>
-        <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
-      </div>
-    </header>
-
-    <main class="dash-main">
-      <div class="dash-bienvenida">
-        <h1>¡Bienvenido/a, <span id="dash-nombre2">Docente</span>! 👋</h1>
-        <p>Selecciona el módulo que deseas usar</p>
-      </div>
-
-      <div class="dash-modulos">
-
-        <a href="horario.html" class="modulo-card" style="--c:#1565C0">
-          <div class="modulo-icon">📅</div>
-          <div class="modulo-titulo">Horario &amp; Clases</div>
-          <div class="modulo-desc">Gestiona el horario semanal, registra diarios, califica estudiantes y hace seguimiento académico.</div>
-          <div class="modulo-btn">Abrir Horario →</div>
-        </a>
-
-        <a href="planeacion.html" class="modulo-card" id="card-planeacion" style="--c:#2E7D32" onclick="autoLoginEduclass(event)">
-          <div class="modulo-icon">✨</div>
-          <div class="modulo-titulo">Planeación con IA</div>
-          <div class="modulo-desc">Genera guías pedagógicas completas con Inteligencia Artificial. Exporta a Word con un clic.</div>
-          <div class="modulo-btn">Abrir Planeación →</div>
-        </a>
-
-        <a href="admin.html" class="modulo-card" id="card-admin" style="--c:#F9A825;display:none">
-          <div class="modulo-icon">👑</div>
-          <div class="modulo-titulo">Administración</div>
-          <div class="modulo-desc">Gestiona docentes, estudiantes, malla curricular y el resumen general de la institución.</div>
-          <div class="modulo-btn">Abrir Admin →</div>
-        </a>
-
-        <a href="panel-gestion.html" class="modulo-card" id="card-panel" style="--c:#7C3AED;display:none">
-          <div class="modulo-icon">🔐</div>
-          <div class="modulo-titulo">Panel de Gestión</div>
-          <div class="modulo-desc">Visualiza y gestiona todas las credenciales de EduPanel y EduClass. Exporta a CSV.</div>
-          <div class="modulo-btn">Abrir Panel →</div>
-        </a>
-
-      </div>
-    </main>
-
-    <footer class="dash-footer">
-      I.E.R. Santiago de la Selva · Valparaíso, Caquetá · 2026 · EduPanel v2.0
-    </footer>
+      <div class="error-msg" id="est-error"></div>
+      <div class="loading" id="est-loading"><div class="spinner"></div> Verificando...</div>
+      <button class="btn-login" onclick="doLoginEst()">Ingresar →</button>
+      <button class="btn-estudiante" onclick="mostrarRegistroEst()" style="margin-top:4px">¿Sin cuenta? Regístrate</button>
+      <button class="btn-login" onclick="volverDocente()" style="background:transparent;border:1px solid #1A3D1E;color:#7B9CC8;margin-top:4px">← Soy docente</button>
+    </div>
   </div>
+</div>
 
-  <script src="data.js"></script>
-  <script src="auth.js"></script>
-  <script>
-    // Sesión activa → ir directo al dashboard
-    (function() {
-      const u = Auth.currentUser();
-      if (u) mostrarDashboard(u);
-    })();
+<script>
+  const API = "https://educlass-backend-4kk0.onrender.com";
 
-    function togglePass() {
-      const i = document.getElementById("login-pass");
-      i.type = i.type === "password" ? "text" : "password";
+  // ── Al cargar: si ya hay token válido ir directo al horario ──
+  (function(){
+    const tok = localStorage.getItem("edutoken");
+    const usr = localStorage.getItem("educlass_usuario");
+    if (tok && usr) {
+      window.location.href = "horario.html";
     }
+  })();
 
-    function doLogin() {
-      const user  = document.getElementById("login-user").value.trim();
-      const pass  = document.getElementById("login-pass").value;
-      const errEl = document.getElementById("login-error");
-      const load  = document.getElementById("login-loading");
-      const btn   = document.getElementById("btn-login");
-      errEl.style.display = "none";
-      if (!user || !pass) { errEl.textContent = "Ingresa tu usuario y contraseña"; errEl.style.display = "block"; return; }
-      load.style.display = "flex"; btn.disabled = true;
-      setTimeout(() => {
-        const r = Auth.login(user, pass);
-        load.style.display = "none"; btn.disabled = false;
-        if (r.ok) {
-          mostrarDashboard(r.user);
-        } else {
-          errEl.textContent = r.message; errEl.style.display = "block";
-          document.getElementById("login-pass").value = "";
-        }
-      }, 300);
-    }
+  // ── Tabs ──
+  function switchTab(tab) {
+    document.getElementById("form-login").style.display    = tab === "login"    ? "block" : "none";
+    document.getElementById("form-registro").style.display = tab === "registro" ? "block" : "none";
+    document.getElementById("tab-login").classList.toggle("active", tab === "login");
+    document.getElementById("tab-reg").classList.toggle("active",   tab === "registro");
+  }
 
-    function mostrarDashboard(user) {
-      document.getElementById("pantalla-login").style.display     = "none";
-      document.getElementById("pantalla-dashboard").style.display = "flex";
-      const ini = user.name.split(" ").map(n=>n[0]).join("").substring(0,2).toUpperCase();
-      document.getElementById("dash-avatar").textContent   = ini;
-      document.getElementById("dash-nombre").textContent   = user.name;
-      document.getElementById("dash-nombre2").textContent  = user.name.split(" ")[0];
-      document.getElementById("dash-rol").textContent      = user.role === "admin" ? "👑 Administrador" : "👤 Docente";
-      if (user.role === "admin") {
-        document.getElementById("card-admin").style.display = "flex";
-        document.getElementById("card-panel").style.display = "flex";
+  function togglePass(id) {
+    const i = document.getElementById(id);
+    i.type = i.type === "password" ? "text" : "password";
+  }
+
+  // ── LOGIN DOCENTE ──
+  async function doLogin() {
+    const email = document.getElementById("login-email").value.trim();
+    const pass  = document.getElementById("login-pass").value;
+    const errEl = document.getElementById("login-error");
+    const load  = document.getElementById("login-loading");
+    const btn   = document.getElementById("btn-login");
+
+    errEl.style.display = "none";
+    if (!email || !pass) { mostrarError("login-error", "Ingresa tu correo y contraseña"); return; }
+
+    load.style.display = "flex"; btn.disabled = true;
+
+    try {
+      const r = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const d = await r.json();
+
+      if (r.ok && d.token) {
+        localStorage.setItem("edutoken", d.token);
+        localStorage.setItem("educlass_usuario", JSON.stringify(d.usuario));
+        window.location.href = "horario.html";
+      } else {
+        mostrarError("login-error", d.mensaje || "Correo o contraseña incorrectos");
       }
+    } catch(_) {
+      mostrarError("login-error", "Sin conexión al servidor. Intenta de nuevo.");
     }
 
-    function cerrarSesion() {
-      Auth.logout();
-      // Limpiar token de EduClass también
-      localStorage.removeItem("edutoken");
-      localStorage.removeItem("educlass_usuario");
-      document.getElementById("pantalla-dashboard").style.display = "none";
-      document.getElementById("pantalla-login").style.display     = "flex";
-      document.getElementById("login-user").value = "";
-      document.getElementById("login-pass").value = "";
+    load.style.display = "none"; btn.disabled = false;
+  }
+
+  // ── REGISTRO DOCENTE ──
+  async function doRegistro() {
+    const nombre  = document.getElementById("reg-nombre").value.trim();
+    const email   = document.getElementById("reg-email").value.trim();
+    const pass    = document.getElementById("reg-pass").value;
+    const inst    = document.getElementById("reg-inst").value.trim();
+    const cargo   = document.getElementById("reg-cargo").value;
+    const ciudad  = document.getElementById("reg-ciudad").value.trim();
+    const load    = document.getElementById("reg-loading");
+    const btn     = document.getElementById("btn-reg");
+
+    document.getElementById("reg-error").style.display = "none";
+    document.getElementById("reg-ok").style.display    = "none";
+
+    if (!nombre || !email || !pass || !inst) {
+      mostrarError("reg-error", "Completa todos los campos obligatorios"); return;
     }
 
-    async function autoLoginEduclass(e) {
-      const u = Auth.currentUser();
-      if (!u || !u.emailEduclass || !u.passEduclass) return; // sin credenciales → abre normal
+    load.style.display = "flex"; btn.disabled = true;
 
-      // Si ya hay token válido de EduClass → no hacer nada, dejar navegar
-      const tok = localStorage.getItem("edutoken");
-      if (tok) return;
+    try {
+      const r = await fetch(`${API}/auth/registro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, email, password: pass, institucion: inst, cargo, ciudad })
+      });
+      const d = await r.json();
 
-      // Intentar auto-login en background
-      e.preventDefault();
-      try {
-        const API = "https://educlass-backend-4kk0.onrender.com";
-        const r   = await fetch(`${API}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: u.emailEduclass, password: u.passEduclass })
-        });
-        const d = await r.json();
-        if (d.token) {
-          localStorage.setItem("edutoken", d.token);
-          localStorage.setItem("educlass_usuario", JSON.stringify(d.usuario));
-        }
-      } catch(_) {}
-      // Navegar a planeación
-      window.location.href = "planeacion.html";
+      if (r.ok) {
+        const okEl = document.getElementById("reg-ok");
+        okEl.textContent = "✅ Cuenta creada. Ahora inicia sesión.";
+        okEl.style.display = "block";
+        setTimeout(() => switchTab("login"), 1800);
+      } else {
+        mostrarError("reg-error", d.mensaje || "Error al crear cuenta");
+      }
+    } catch(_) {
+      mostrarError("reg-error", "Sin conexión al servidor");
     }
 
-    document.addEventListener("keydown", e => {
-      if (e.key === "Enter") doLogin();
-    });
-  </script>
+    load.style.display = "none"; btn.disabled = false;
+  }
+
+  // ── PORTAL ESTUDIANTE ──
+  function mostrarEstudiante() {
+    document.getElementById("pantalla-login").style.display      = "none";
+    document.getElementById("pantalla-estudiante").style.display = "flex";
+  }
+
+  function volverDocente() {
+    document.getElementById("pantalla-estudiante").style.display = "none";
+    document.getElementById("pantalla-login").style.display      = "flex";
+  }
+
+  async function doLoginEst() {
+    const usuario = document.getElementById("est-usuario").value.trim();
+    const pass    = document.getElementById("est-pass").value;
+    const load    = document.getElementById("est-loading");
+
+    document.getElementById("est-error").style.display = "none";
+    if (!usuario || !pass) { mostrarError("est-error", "Ingresa usuario y contraseña"); return; }
+
+    load.style.display = "flex";
+
+    try {
+      const r = await fetch(`${API}/auth/login-estudiante`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, password: pass })
+      });
+      const d = await r.json();
+
+      if (r.ok && d.token) {
+        localStorage.setItem("edutokenest", d.token);
+        localStorage.setItem("educlass_estudiante", JSON.stringify(d.estudiante));
+        // Ir a planeacion en modo estudiante
+        window.location.href = "planeacion/index.html?portal=estudiante";
+      } else {
+        mostrarError("est-error", d.mensaje || "Usuario o contraseña incorrectos");
+      }
+    } catch(_) {
+      mostrarError("est-error", "Sin conexión al servidor");
+    }
+
+    load.style.display = "none";
+  }
+
+  function mostrarRegistroEst() {
+    // Redirige a planeacion que ya tiene el registro de estudiante integrado
+    window.location.href = "planeacion/index.html?registro=estudiante";
+  }
+
+  // ── Helpers ──
+  function mostrarError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  // Enter para login
+  document.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      const tabLogin = document.getElementById("tab-login").classList.contains("active");
+      if (tabLogin) doLogin(); else doRegistro();
+    }
+  });
+</script>
+
 </body>
 </html>
