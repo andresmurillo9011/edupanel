@@ -3,41 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planeación con IA · EduPanel IESS</title>
+  <title>Planeacion con IA - EduPanel IESS</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0e1420; color: #F1F5F9; font-family: 'Segoe UI', Arial, sans-serif; }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 3px; }
-    .back-btn {
-      position: fixed; top: 10px; left: 10px; z-index: 9999;
-      padding: 6px 12px; border-radius: 6px;
-      background: rgba(21,101,192,.25); border: 1px solid #1565C0;
-      color: #60A5FA; font-size: .72rem; cursor: pointer;
-      text-decoration: none; font-family: 'Segoe UI', sans-serif;
-      transition: all .15s;
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0e1420;color:#F1F5F9;font-family:"Segoe UI",Arial,sans-serif}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-thumb{background:#1e2d45;border-radius:3px}
+    .back-btn{
+      position:fixed;top:10px;left:10px;z-index:9999;
+      padding:6px 12px;border-radius:6px;
+      background:rgba(21,101,192,.25);border:1px solid #1565C0;
+      color:#60A5FA;font-size:.72rem;cursor:pointer;
+      text-decoration:none;font-family:"Segoe UI",sans-serif;transition:all .15s
     }
-    .back-btn:hover { background: #1565C0; color: #fff; }
+    .back-btn:hover{background:#1565C0;color:#fff}
   </style>
 </head>
 <body>
-  <a href="login.html" class="back-btn">← Volver a EduPanel</a>
-  <div id="root"></div>
+  <a href="login.html" class="back-btn">&#8592; Volver a EduPanel</a>
+  <div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px">
+    <div style="width:32px;height:32px;border:3px solid #1e2d45;border-top-color:#2563EB;border-radius:50%;animation:spin .8s linear infinite"></div>
+    <p style="color:#64748B;font-size:.82rem">Cargando EduClass...</p>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div></div>
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
-
-// Auto-login desde sesión de EduPanel
-const _epUser = (function() {
-  try { return JSON.parse(sessionStorage.getItem('ep_user') || 'null'); } catch { return null; }
-})();
+    
 const _ecToken = localStorage.getItem('edutoken');
-const _ecUser  = (function() {
-  try { return JSON.parse(localStorage.getItem('educlass_usuario') || 'null'); } catch { return null; }
-})();
-
+const _ecUser = (function(){ try{ return JSON.parse(localStorage.getItem('educlass_usuario')||'null'); }catch{ return null; } })();
 
 const API = "https://educlass-backend-4kk0.onrender.com";
 const FT = "Georgia, 'Times New Roman', serif";
@@ -85,7 +81,7 @@ return(<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()
 <div style={S.mFoot}>{paso===1?(<><button style={S.btnG} onClick={onCerrar}>Cancelar</button><button style={{...S.btnV,flex:1}} onClick={()=>{if(!titulo){setErr("Completa el título");return;}setErr("");setPaso(2);}}>Siguiente →</button></>):(<><button style={{...S.btnG,width:"auto",padding:"10px 16px"}} onClick={()=>setPaso(1)}>← Volver</button><button style={{...S.btnV,flex:1,opacity:creando?0.7:1}} disabled={creando} onClick={crear}>{creando?"⏳ Creando...":"✅ Crear y asignar"}</button></>)}</div>
 </div></div>);}
 
-export default function App(){
+function App(){
 const urlParams=new URLSearchParams(window.location.search);const codigoUrl=urlParams.get("codigo");
 const[vista,setVista]=useState(codigoUrl?"portal":(_ecToken&&_ecUser)?"dashboard":"login");const[usuario,setUsuario]=useState((_ecToken&&_ecUser)?_ecUser:null);const[msgAuth,setMsgAuth]=useState("");const[nombre,setNombre]=useState("");const[email,setEmail]=useState("");const[password,setPassword]=useState("");const[regInst,setRegInst]=useState("");const[regCargo,setRegCargo]=useState("Docente");const[regCiudad,setRegCiudad]=useState("");const[logoPreview,setLogoPreview]=useState("");const[banderaPreview,setBanderaPreview]=useState("");const[logoFile,setLogoFile]=useState(null);const[banderaFile,setBanderaFile]=useState(null);const logoRef=useRef();const banderaRef=useRef();
 const[paso,setPaso]=useState(1);const[institucion,setInstitucion]=useState("");const[docente,setDocente]=useState("");const[area,setArea]=useState("");const[grado,setGrado]=useState("");const[periodo,setPeriodo]=useState("1");const[fecha,setFecha]=useState("");const[tema,setTema]=useState("");const[duracion,setDuracion]=useState("55");const[nivelEdu,setNivelEdu]=useState("");const[apertura,setApertura]=useState("");const[desarrollo,setDesarrollo]=useState("");const[retro,setRetro]=useState("");const[cierre,setCierre]=useState("");const[dejaTarea,setDejaTarea]=useState(null);const[tarea,setTarea]=useState("");const[contenido,setContenido]=useState("");const[cargando,setCargando]=useState(false);const[descWord,setDescWord]=useState(false);const[descPdf,setDescPdf]=useState(false);const[guardando,setGuardando]=useState(false);const[guardadoOk,setGuardadoOk]=useState(false);
@@ -313,7 +309,7 @@ function ModalAsignacionGrado({ instituciones, docentes, onCerrar, onDone }) {
 }
 
 // ── Panel principal Super Admin ───────────────────────
-export default function SuperAdmin({ usuario, onSalir }) {
+function SuperAdmin({ usuario, onSalir }) {
   const [seccion, setSeccion] = useState("dashboard");
   const [stats, setStats] = useState({});
   const [instituciones, setInstituciones] = useState([]);
