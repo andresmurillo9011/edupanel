@@ -1,38 +1,59 @@
 // ============================================================
 // APP.JS — Horario interactivo I.E.R. Santiago de la Selva
-// Usa: Auth (auth.js) · DB (db.js) · HORARIO/MATERIAS (data.js)
+// Usa: DB (db.js) · HORARIO/MATERIAS (data.js)
 // ============================================================
 
 let selectedDay      = "Lunes";
 let activeCell       = null;
 let panelTab         = "diario";
 let currentUser      = null;
-let vistaMode        = "mio";
+let vistaMode        = "completo";
 let guiaTerminadaVal = null;
 
 // ============================================================
 // INIT
 // ============================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Verificar sesión
-  currentUser = Auth.require("login.html");
-  if (!currentUser) return;
+
+  // ── Verificar sesión con EduClass ──
+  const tok = localStorage.getItem("edutoken");
+  const raw = localStorage.getItem("educlass_usuario");
+
+  if (!tok || !raw) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const eduUser = JSON.parse(raw);
+  currentUser = {
+    id:           eduUser.id,
+    name:         eduUser.name,
+    role:         eduUser.rol || "docente",
+    email:        eduUser.email,
+    asignaciones: [],
+    grados:       [],
+    materias:     [],
+  };
 
   // Header
-  const initials = currentUser.name.split(" ").map(n=>n[0]).join("").substring(0,2).toUpperCase();
+  const initials = currentUser.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
   document.getElementById("user-avatar").textContent = initials;
   document.getElementById("user-name").textContent   = currentUser.name;
   document.getElementById("user-role").textContent   = currentUser.role === "admin" ? "👑 Administrador" : "👤 Docente";
 
-  if (currentUser.role === "admin") {
-    document.getElementById("admin-link").style.display = "inline-flex";
-    document.getElementById("vista-toggle").style.display = "none";
-    vistaMode = "completo";
-  } else if ((currentUser.asignaciones || []).length === 0) {
-    // Sin asignaciones: mostrar horario completo de solo lectura
-    vistaMode = "completo";
-    document.getElementById("btn-completo").classList.add("active");
-    document.getElementById("btn-mi-horario").classList.remove("active");
+  // Logout limpio
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      localStorage.removeItem("edutoken");
+      localStorage.removeItem("educlass_usuario");
+      window.location.href = "login.html";
+    };
+  }
+
+  if (currentUser.role === "admin" || currentUser.role === "superadmin") {
+    const adminLink = document.getElementById("admin-link");
+    if (adminLink) adminLink.style.display = "inline-flex";
   }
 
   initClock();
@@ -143,16 +164,9 @@ async function renderSchedule(day) {
       const materia = fila[grado] || "";
       const td      = document.createElement("td");
       const cfg     = MATERIAS_CONFIG[materia];
-      const canSee  = Auth.canAccess(currentUser, grado, materia);
 
       if (materia && cfg && !["DESCANSO","ALMUERZO"].includes(materia)) {
-        // Vista "Mi horario": celdas no asignadas → vacías
-        if (vistaMode === "mio" && !canSee && currentUser.role !== "admin") {
-          td.className = "empty-cell"; td.style.background="transparent"; td.innerHTML="";
-          tr.appendChild(td); return;
-        }
-
-        td.className = `class-cell ${!canSee && vistaMode==="completo" ? "cell-locked" : ""}`;
+        td.className = "class-cell";
         td.style.setProperty("--cell-color", cfg.color);
         td.setAttribute("data-dia", day);
         td.setAttribute("data-hora", fila.hora);
@@ -165,9 +179,8 @@ async function renderSchedule(day) {
           <span class="cell-icon">${cfg.icon}</span>
           <span class="cell-materia">${materia}</span>
           ${hasDot ? `<span class="saved-dot" title="Clase registrada">●</span>` : ""}
-          ${!canSee && vistaMode==="completo" ? `<span class="lock-icon">🔒</span>` : ""}
         `;
-        if (canSee) td.addEventListener("click", () => onCellClick(td, day, fila.hora, grado, materia));
+        td.addEventListener("click", () => onCellClick(td, day, fila.hora, grado, materia));
       } else {
         td.className = "empty-cell"; td.innerHTML = "—";
       }
@@ -316,7 +329,6 @@ async function saveDiario() {
   }, currentUser.id);
   showToast("✓ Diario guardado");
   await renderSchedule(dia);
-  // Restaurar selección
   setTimeout(() => {
     document.querySelectorAll(".class-cell").forEach(td => {
       if (td.dataset.dia===dia && td.dataset.hora===hora && td.dataset.grado===grado)
