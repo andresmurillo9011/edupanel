@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Gestión · EduPanel IESS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: linear-gradient(160deg, #060E08, #0A1A0C 50%, #06100E);
+      min-height: 100vh; color: #E8EEF8;
+    }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 54px;
+      background: linear-gradient(90deg, #0D47A1, #0A1A0C);
+      border-bottom: 2px solid #2E7D32;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .logo img { width: 30px; height: 30px; object-fit: contain; }
+    .logo span { font-size: .88rem; font-weight: 800; color: #F9A825; }
+    .back-btn {
+      padding: 5px 12px; border: 1px solid #1A3D1E; border-radius: 6px;
+      background: transparent; color: #7B9CC8; cursor: pointer;
+      font-family: 'Sora', sans-serif; font-size: .72rem; text-decoration: none;
+      transition: all .15s;
+    }
+    .back-btn:hover { border-color: #1565C0; color: #42A5F5; }
+    .main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+    .page-title { font-size: 1.2rem; font-weight: 800; color: #F9A825; margin-bottom: 4px; }
+    .page-sub { font-size: .78rem; color: #3A5580; margin-bottom: 20px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #0F2211; border: 1px solid #1A3D1E; border-radius: 10px; padding: 4px; width: fit-content; }
+    .tab { padding: 7px 16px; border-radius: 7px; border: none; background: transparent; color: #3A5580; cursor: pointer; font-family: 'Sora', sans-serif; font-size: .78rem; font-weight: 600; transition: all .15s; }
+    .tab.active { background: #1565C0; color: #fff; }
+    .tab:hover:not(.active) { color: #7B9CC8; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .stat { background: #0F2211; border: 1px solid #1A3D1E; border-radius: 10px; padding: 14px 16px; }
+    .stat-n { font-size: 1.8rem; font-weight: 800; color: #F9A825; font-family: 'JetBrains Mono', monospace; }
+    .stat-l { font-size: .7rem; color: #3A5580; margin-top: 2px; }
+
+    /* Table */
+    .table-wrap { background: #0F2211; border: 1px solid #1A3D1E; border-radius: 12px; overflow: hidden; }
+    .table-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #1A3D1E; background: #0A1A0C; }
+    .table-title { font-size: .84rem; font-weight: 700; color: #E8EEF8; }
+    .search-inp { padding: 6px 12px; background: #142916; border: 1px solid #1A3D1E; border-radius: 20px; color: #E8EEF8; font-family: 'Sora', sans-serif; font-size: .76rem; outline: none; width: 200px; }
+    .search-inp:focus { border-color: #1565C0; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #060E08; color: #3A5580; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 10px 14px; border-bottom: 1px solid #1A3D1E; text-align: left; }
+    td { padding: 10px 14px; border-bottom: 1px solid #0A1A0C; font-size: .78rem; vertical-align: middle; }
+    tr:hover td { background: rgba(21,101,192,.06); }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: .65rem; font-weight: 700; }
+    .badge-admin { background: rgba(249,168,37,.15); color: #F9A825; border: 1px solid rgba(249,168,37,.3); }
+    .badge-docente { background: rgba(21,101,192,.15); color: #42A5F5; border: 1px solid rgba(21,101,192,.3); }
+    .badge-ok { background: rgba(102,187,106,.15); color: #66BB6A; border: 1px solid rgba(102,187,106,.3); }
+    .badge-no { background: rgba(58,85,128,.1); color: #3A5580; border: 1px solid #1A3D1E; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: #E8EEF8; }
+    .pass-hidden { font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: #3A5580; cursor: pointer; letter-spacing: .1em; }
+    .pass-hidden:hover { color: #66BB6A; }
+    .actions { display: flex; gap: 5px; }
+    .btn-sm { padding: 3px 9px; border-radius: 5px; border: 1px solid #1A3D1E; background: transparent; color: #3A5580; cursor: pointer; font-size: .66rem; font-family: 'Sora', sans-serif; transition: all .12s; }
+    .btn-sm:hover { border-color: #1565C0; color: #42A5F5; }
+    .btn-sm.danger:hover { border-color: #ef4444; color: #ef4444; }
+    .empty { padding: 40px; text-align: center; color: #3A5580; font-size: .82rem; }
+
+    /* EduClass status */
+    .ec-status { display: flex; flex-direction: column; gap: 2px; }
+    .ec-email { font-family: 'JetBrains Mono', monospace; font-size: .68rem; color: #66BB6A; }
+    .ec-none { font-size: .7rem; color: #3A5580; font-style: italic; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(16px); background: #0D47A1; border: 1px solid #2E7D32; color: #66BB6A; padding: 8px 18px; border-radius: 20px; font-size: .78rem; opacity: 0; pointer-events: none; transition: all .3s; z-index: 100; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a href="login.html" class="logo">
+      <img src="escudo.png" alt="IESS">
+      <span>EduPanel · IESS</span>
+    </a>
+    <span style="color:#3A5580;font-size:.7rem">/ Panel de Gestión</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="admin-name" style="font-size:.78rem;color:#7B9CC8"></span>
+    <a href="login.html" class="back-btn">← Volver</a>
+  </div>
+</header>
+
+<main class="main">
+  <div class="page-title">🔐 Panel de Gestión de Usuarios</div>
+  <p class="page-sub">Visualiza y administra las credenciales de acceso a EduPanel y EduClass</p>
+
+  <!-- Stats -->
+  <div class="stats" id="stats-grid"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('edupanel',this)">🌿 EduPanel</button>
+    <button class="tab" onclick="showTab('educlass',this)">✨ EduClass</button>
+    <button class="tab" onclick="showTab('completo',this)">📋 Vista completa</button>
+  </div>
+
+  <!-- Tabla EduPanel -->
+  <div id="tab-edupanel" class="table-wrap">
+    <div class="table-header">
+      <span class="table-title">Usuarios EduPanel</span>
+      <input class="search-inp" type="text" placeholder="🔍 Buscar..." oninput="filtrar('ep',this.value)">
+    </div>
+    <div style="overflow-x:auto">
+      <table id="table-ep">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Usuario</th>
+            <th>Contraseña</th>
+            <th>Rol</th>
+            <th>Grados</th>
+            <th>EduClass</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-ep"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tabla EduClass -->
+  <div id="tab-educlass" class="table-wrap" style="display:none">
+    <div class="table-header">
+      <span class="table-title">Usuarios EduClass (Planeación IA)</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="search-inp" type="text" placeholder="🔍 Buscar..." oninput="filtrar('ec',this.value)">
+        <button onclick="cargarEduClass()" style="padding:5px 12px;border:1px solid #2E7D32;border-radius:6px;background:rgba(46,125,50,.15);color:#66BB6A;cursor:pointer;font-size:.72rem;font-family:'Sora',sans-serif">🔄 Actualizar</button>
+      </div>
+    </div>
+    <div id="ec-loading" style="padding:30px;text-align:center;color:#3A5580">Cargando usuarios de EduClass...</div>
+    <div style="overflow-x:auto;display:none" id="ec-table-wrap">
+      <table id="table-ec">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Cargo</th>
+            <th>Institución</th>
+            <th>Ciudad</th>
+            <th>Registrado</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-ec"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Vista completa -->
+  <div id="tab-completo" class="table-wrap" style="display:none">
+    <div class="table-header">
+      <span class="table-title">Vista completa — EduPanel + EduClass</span>
+      <button onclick="exportarCSV()" style="padding:5px 12px;border:1px solid #2E7D32;border-radius:6px;background:rgba(46,125,50,.15);color:#66BB6A;cursor:pointer;font-size:.72rem;font-family:'Sora',sans-serif">⬇ Exportar CSV</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="table-completo">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Usuario EP</th>
+            <th>Contraseña EP</th>
+            <th>Correo EduClass</th>
+            <th>Pass EduClass</th>
+            <th>Rol</th>
+            <th>Grados asignados</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-completo"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="auth.js"></script>
+<script>
+// ── Verificar acceso admin ──────────────────────────
+const currentUser = Auth.requireAdmin();
+if (currentUser) {
+  document.getElementById("admin-name").textContent = currentUser.name;
+}
+
+let ecUsers = [];
+let epUsers = [];
+
+// ── Inicializar ─────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  epUsers = Auth.getAllUsers();
+  renderStats();
+  renderEPTable(epUsers);
+  renderCompletaTable(epUsers);
+  cargarEduClass();
+});
+
+// ── Stats ───────────────────────────────────────────
+function renderStats() {
+  const docentes    = epUsers.filter(u => u.role === "docente");
+  const conEduclass = epUsers.filter(u => u.emailEduclass);
+  const sinEduclass = docentes.length - conEduclass.filter(u => u.role !== "admin").length;
+
+  document.getElementById("stats-grid").innerHTML = `
+    <div class="stat"><div class="stat-n">${epUsers.length}</div><div class="stat-l">Usuarios EduPanel</div></div>
+    <div class="stat"><div class="stat-n">${docentes.length}</div><div class="stat-l">Docentes</div></div>
+    <div class="stat"><div class="stat-n" style="color:#66BB6A">${conEduclass.length}</div><div class="stat-l">Con acceso EduClass</div></div>
+    <div class="stat"><div class="stat-n" style="color:#ef4444">${sinEduclass}</div><div class="stat-l">Sin configurar EduClass</div></div>
+  `;
+}
+
+// ── Tabla EduPanel ──────────────────────────────────
+function renderEPTable(users) {
+  const tbody = document.getElementById("tbody-ep");
+  if (!users.length) { tbody.innerHTML = `<tr><td colspan="7" class="empty">Sin usuarios</td></tr>`; return; }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.name}</strong></td>
+      <td><span class="mono">${u.username}</span></td>
+      <td>
+        <span class="pass-hidden" title="Clic para ver" onclick="togglePass(this,'${u.password}')">••••••••</span>
+      </td>
+      <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-docente'}">${u.role==='admin'?'👑 Admin':'👤 Docente'}</span></td>
+      <td style="font-size:.7rem;color:#7B9CC8">
+        ${u.role==='admin' ? 'Todos' : (u.grados||[]).map(g=>GRADOS_LABEL[g]||g).join(', ')||'—'}
+      </td>
+      <td>
+        <div class="ec-status">
+          ${u.emailEduclass
+            ? `<span class="badge badge-ok">✅ Configurado</span><span class="ec-email">${u.emailEduclass}</span>`
+            : u.role==='admin' ? '<span style="font-size:.7rem;color:#3A5580">N/A</span>'
+            : '<span class="badge badge-no">⚠ Sin configurar</span>'}
+        </div>
+      </td>
+      <td>
+        <div class="actions">
+          <button class="btn-sm" onclick="irAEditar('${u.id}')">✏️ Editar</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+// ── Tabla EduClass ──────────────────────────────────
+async function cargarEduClass() {
+  const loading = document.getElementById("ec-loading");
+  const wrap    = document.getElementById("ec-table-wrap");
+  loading.style.display = "block";
+  wrap.style.display    = "none";
+
+  // Obtener token admin de EduClass (usando las credenciales del admin de EduPanel)
+  const adminEP = Auth.getAllUsers().find(u => u.role === "admin");
+  const ecEmail = adminEP?.emailEduclass;
+  const ecPass  = adminEP?.passEduclass;
+
+  if (!ecEmail || !ecPass) {
+    loading.innerHTML = `<p style="color:#ef4444">⚠️ El administrador no tiene credenciales EduClass configuradas.<br><small>Ve a Admin → Docentes → editar Administrador → agregar correo EduClass.</small></p>`;
+    return;
+  }
+
+  try {
+    // Login como admin en EduClass
+    const loginR = await fetch("https://educlass-backend-4kk0.onrender.com/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: ecEmail, password: ecPass })
+    });
+    const loginD = await loginR.json();
+
+    if (!loginR.ok || !loginD.token) {
+      loading.innerHTML = `<p style="color:#ef4444">⚠️ No se pudo iniciar sesión en EduClass: ${loginD.mensaje||"error"}</p>`;
+      return;
+    }
+
+    // Obtener usuarios (si el backend tiene endpoint de admin)
+    const usersR = await fetch("https://educlass-backend-4kk0.onrender.com/admin/users", {
+      headers: { "Authorization": `Bearer ${loginD.token}` }
+    });
+
+    if (usersR.ok) {
+      const usersD = await usersR.json();
+      ecUsers = usersD.usuarios || usersD.users || [];
+    } else {
+      // Fallback: mostrar solo los usuarios que tenemos en EduPanel con credenciales
+      ecUsers = Auth.getAllUsers()
+        .filter(u => u.emailEduclass)
+        .map(u => ({
+          name:      u.name,
+          email:     u.emailEduclass,
+          cargo:     "Docente",
+          city:      "Valparaíso",
+          institution: "I.E.R. Santiago de la Selva",
+          createdAt: u.createdAt || "—"
+        }));
+    }
+
+    renderECTable(ecUsers);
+    loading.style.display = "none";
+    wrap.style.display    = "block";
+  } catch(e) {
+    // Fallback offline: mostrar usuarios con credenciales configuradas
+    ecUsers = Auth.getAllUsers()
+      .filter(u => u.emailEduclass)
+      .map(u => ({
+        name:        u.name,
+        email:       u.emailEduclass,
+        cargo:       "Docente",
+        city:        "Valparaíso",
+        institution: "I.E.R. Santiago de la Selva",
+        createdAt:   u.createdAt || "—"
+      }));
+    renderECTable(ecUsers);
+    loading.style.display = "none";
+    wrap.style.display    = "block";
+    showToast("⚠ Mostrando datos locales (sin conexión al backend)");
+  }
+}
+
+function renderECTable(users) {
+  const tbody = document.getElementById("tbody-ec");
+  if (!users.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty">Sin usuarios registrados en EduClass</td></tr>`; return; }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.name||u.nombre||'—'}</strong></td>
+      <td><span class="mono">${u.email||'—'}</span></td>
+      <td>${u.cargo||'Docente'}</td>
+      <td style="font-size:.72rem">${u.institution?.name||u.institution||'—'}</td>
+      <td>${u.city||u.institution?.city||'—'}</td>
+      <td style="font-size:.7rem;color:#3A5580">${u.createdAt ? new Date(u.createdAt).toLocaleDateString("es-CO") : '—'}</td>
+    </tr>
+  `).join("");
+}
+
+// ── Vista completa ──────────────────────────────────
+function renderCompletaTable(users) {
+  const tbody = document.getElementById("tbody-completo");
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.name}</strong></td>
+      <td><span class="mono">${u.username}</span></td>
+      <td><span class="pass-hidden" onclick="togglePass(this,'${u.password}')">••••••••</span></td>
+      <td><span class="mono" style="color:${u.emailEduclass?'#66BB6A':'#3A5580'}">${u.emailEduclass||'—'}</span></td>
+      <td>
+        ${u.passEduclass
+          ? `<span class="pass-hidden" onclick="togglePass(this,'${u.passEduclass}')">••••••••</span>`
+          : '<span style="color:#3A5580;font-size:.7rem">—</span>'}
+      </td>
+      <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-docente'}">${u.role==='admin'?'👑 Admin':'👤 Docente'}</span></td>
+      <td style="font-size:.7rem;color:#7B9CC8">
+        ${u.role==='admin' ? 'Todos' : (u.grados||[]).map(g=>GRADOS_LABEL[g]||g).join(', ')||'Sin asignar'}
+      </td>
+    </tr>
+  `).join("");
+}
+
+// ── Helpers ─────────────────────────────────────────
+function togglePass(el, pass) {
+  if (el.textContent === "••••••••") {
+    el.textContent = pass;
+    el.style.color = "#E8EEF8";
+    setTimeout(() => { el.textContent = "••••••••"; el.style.color = ""; }, 5000);
+  } else {
+    el.textContent = "••••••••";
+    el.style.color = "";
+  }
+}
+
+function showTab(tab, btn) {
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("tab-edupanel").style.display  = tab==="edupanel"  ? "block" : "none";
+  document.getElementById("tab-educlass").style.display  = tab==="educlass"  ? "block" : "none";
+  document.getElementById("tab-completo").style.display  = tab==="completo"  ? "block" : "none";
+}
+
+function filtrar(tipo, q) {
+  const tbody = document.getElementById(`tbody-${tipo}`);
+  const rows  = tbody.querySelectorAll("tr");
+  rows.forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q.toLowerCase()) ? "" : "none";
+  });
+}
+
+function irAEditar(id) {
+  window.location.href = `admin.html#docente-${id}`;
+}
+
+function exportarCSV() {
+  const users = Auth.getAllUsers();
+  let csv = "Nombre,Usuario,Contraseña EP,Correo EduClass,Contraseña EduClass,Rol,Grados\n";
+  users.forEach(u => {
+    const grados = u.role==='admin' ? 'Todos' : (u.grados||[]).map(g=>GRADOS_LABEL[g]||g).join(' | ');
+    csv += `"${u.name}","${u.username}","${u.password}","${u.emailEduclass||''}","${u.passEduclass||''}","${u.role}","${grados}"\n`;
+  });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+  a.download = "usuarios_edupanel_" + new Date().toLocaleDateString("es-CO").replace(/\//g,"-") + ".csv";
+  a.click();
+  showToast("✓ CSV exportado");
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>

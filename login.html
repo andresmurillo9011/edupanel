@@ -203,7 +203,7 @@
           <div class="modulo-btn">Abrir Horario →</div>
         </a>
 
-        <a href="planeacion/index.html" class="modulo-card" id="card-planeacion" style="--c:#2E7D32" onclick="autoLoginEduclass(event)">
+        <a href="planeacion.html" class="modulo-card" id="card-planeacion" style="--c:#2E7D32" onclick="autoLoginEduclass(event)">
           <div class="modulo-icon">✨</div>
           <div class="modulo-titulo">Planeación con IA</div>
           <div class="modulo-desc">Genera guías pedagógicas completas con Inteligencia Artificial. Exporta a Word con un clic.</div>
@@ -215,6 +215,13 @@
           <div class="modulo-titulo">Administración</div>
           <div class="modulo-desc">Gestiona docentes, estudiantes, malla curricular y el resumen general de la institución.</div>
           <div class="modulo-btn">Abrir Admin →</div>
+        </a>
+
+        <a href="panel-gestion.html" class="modulo-card" id="card-panel" style="--c:#7C3AED;display:none">
+          <div class="modulo-icon">🔐</div>
+          <div class="modulo-titulo">Panel de Gestión</div>
+          <div class="modulo-desc">Visualiza y gestiona todas las credenciales de EduPanel y EduClass. Exporta a CSV.</div>
+          <div class="modulo-btn">Abrir Panel →</div>
         </a>
 
       </div>
@@ -268,7 +275,10 @@
       document.getElementById("dash-nombre").textContent   = user.name;
       document.getElementById("dash-nombre2").textContent  = user.name.split(" ")[0];
       document.getElementById("dash-rol").textContent      = user.role === "admin" ? "👑 Administrador" : "👤 Docente";
-      if (user.role === "admin") document.getElementById("card-admin").style.display = "flex";
+      if (user.role === "admin") {
+        document.getElementById("card-admin").style.display = "flex";
+        document.getElementById("card-panel").style.display = "flex";
+      }
     }
 
     function cerrarSesion() {
@@ -306,7 +316,7 @@
         }
       } catch(_) {}
       // Navegar a planeación
-      window.location.href = "planeacion/index.html";
+      window.location.href = "planeacion.html";
     }
 
     document.addEventListener("keydown", e => {
