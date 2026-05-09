@@ -309,12 +309,8 @@ body {
     const tokDoc = localStorage.getItem("edutoken");
     const usrDoc = localStorage.getItem("educlass_usuario");
     if (tokDoc && usrDoc) { window.location.href = "horario.html"; return; }
-
-    const tokEst = localStorage.getItem("edutokenest");
-    const usrEst = localStorage.getItem("educlass_estudiante");
-    if (tokEst && usrEst) { window.location.href = "planeacion/index.html"; return; }
-  })();
-
+    // NO redirigir estudiante automáticamente desde login.html
+})();
   function switchTab(tab) {
     document.getElementById("form-login").style.display    = tab === "login"    ? "block" : "none";
     document.getElementById("form-registro").style.display = tab === "registro" ? "block" : "none";
