@@ -116,6 +116,12 @@ body {
   display: none; min-height: 100vh;
   justify-content: center; align-items: center; padding: 20px;
 }
+
+/* REGISTRO ESTUDIANTE */
+#pantalla-registro-est {
+  display: none; min-height: 100vh;
+  justify-content: center; align-items: center; padding: 20px;
+}
 </style>
 </head>
 <body>
@@ -133,13 +139,12 @@ body {
     <div class="card">
       <div class="card-title">Acceso al Sistema Académico</div>
 
-      <!-- Tabs: Ingresar / Registrarse -->
       <div class="tabs">
         <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">🔑 Ingresar</button>
         <button class="tab-btn" id="tab-reg" onclick="switchTab('registro')">➕ Crear cuenta</button>
       </div>
 
-      <!-- ── FORMULARIO LOGIN ── -->
+      <!-- LOGIN DOCENTE -->
       <div id="form-login">
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="field">
@@ -163,7 +168,7 @@ body {
         </div>
       </div>
 
-      <!-- ── FORMULARIO REGISTRO ── -->
+      <!-- REGISTRO DOCENTE -->
       <div id="form-registro" style="display:none">
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="field">
@@ -208,7 +213,7 @@ body {
       </div>
 
       <hr class="sep">
-      <button class="btn-estudiante" onclick="mostrarEstudiante()">📚 Soy estudiante</button>
+      <button class="btn-estudiante" onclick="mostrarEstudiante()">🎓 Soy estudiante</button>
     </div>
 
     <div class="login-footer">
@@ -248,19 +253,68 @@ body {
   </div>
 </div>
 
+<!-- ═══════════════ REGISTRO ESTUDIANTE ═══════════════ -->
+<div id="pantalla-registro-est">
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="brand-title" style="color:#4ade80">Crear cuenta</div>
+      <div class="brand-school">I.E.R. Santiago de la Selva</div>
+      <div class="brand-line" style="background:linear-gradient(90deg,#059669,#2563EB)"></div>
+    </div>
+    <div class="card" style="border-top-color:#059669">
+      <div class="card-title">Registro Estudiante</div>
+      <div class="field">
+        <label>Nombre completo *</label>
+        <input type="text" id="est-reg-nombre" placeholder="Ej: Juan Pérez">
+      </div>
+      <div class="field">
+        <label>Usuario * (sin espacios)</label>
+        <input type="text" id="est-reg-usuario" placeholder="juanperez">
+      </div>
+      <div class="field">
+        <label>Contraseña *</label>
+        <div class="pass-row">
+          <input type="password" id="est-reg-pass" placeholder="••••••••">
+          <button class="eye" type="button" onclick="togglePass('est-reg-pass')">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="field" style="flex:1">
+          <label>Grado</label>
+          <select id="est-reg-grado" style="padding:10px 14px;background:#142916;border:1px solid #1A3D1E;border-radius:40px;color:#E8EEF8;font-family:'Sora',sans-serif;font-size:.85rem;outline:none">
+            <option value="">Seleccionar</option>
+            <option>6°</option><option>7°</option><option>8°</option>
+            <option>9°</option><option>10°</option><option>11°</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1">
+          <label>Institución *</label>
+          <input type="text" id="est-reg-inst" placeholder="Nombre del colegio" value="I.E.R. Santiago de la Selva">
+        </div>
+      </div>
+      <div class="error-msg" id="est-reg-error"></div>
+      <div class="ok-msg" id="est-reg-ok"></div>
+      <div class="loading" id="est-reg-loading"><div class="spinner"></div> Creando cuenta...</div>
+      <button class="btn-reg" onclick="doRegistroEst()">Crear cuenta →</button>
+      <button class="btn-login" onclick="mostrarEstudiante()" style="background:transparent;border:1px solid #1A3D1E;color:#7B9CC8;margin-top:4px">← Ya tengo cuenta</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const API = "https://educlass-backend-4kk0.onrender.com";
 
-  // ── Al cargar: si ya hay token válido ir directo al horario ──
+  // ── Al cargar: redirigir si ya hay sesión activa ──
   (function(){
-    const tok = localStorage.getItem("edutoken");
-    const usr = localStorage.getItem("educlass_usuario");
-    if (tok && usr) {
-      window.location.href = "horario.html";
-    }
+    const tokDoc = localStorage.getItem("edutoken");
+    const usrDoc = localStorage.getItem("educlass_usuario");
+    if (tokDoc && usrDoc) { window.location.href = "horario.html"; return; }
+
+    const tokEst = localStorage.getItem("edutokenest");
+    const usrEst = localStorage.getItem("educlass_estudiante");
+    if (tokEst && usrEst) { window.location.href = "planeacion/index.html"; return; }
   })();
 
-  // ── Tabs ──
   function switchTab(tab) {
     document.getElementById("form-login").style.display    = tab === "login"    ? "block" : "none";
     document.getElementById("form-registro").style.display = tab === "registro" ? "block" : "none";
@@ -277,23 +331,19 @@ body {
   async function doLogin() {
     const email = document.getElementById("login-email").value.trim();
     const pass  = document.getElementById("login-pass").value;
-    const errEl = document.getElementById("login-error");
     const load  = document.getElementById("login-loading");
     const btn   = document.getElementById("btn-login");
 
-    errEl.style.display = "none";
+    document.getElementById("login-error").style.display = "none";
     if (!email || !pass) { mostrarError("login-error", "Ingresa tu correo y contraseña"); return; }
 
     load.style.display = "flex"; btn.disabled = true;
-
     try {
       const r = await fetch(`${API}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password: pass })
       });
       const d = await r.json();
-
       if (r.ok && d.token) {
         localStorage.setItem("edutoken", d.token);
         localStorage.setItem("educlass_usuario", JSON.stringify(d.usuario));
@@ -301,65 +351,58 @@ body {
       } else {
         mostrarError("login-error", d.mensaje || "Correo o contraseña incorrectos");
       }
-    } catch(_) {
-      mostrarError("login-error", "Sin conexión al servidor. Intenta de nuevo.");
-    }
-
+    } catch(_) { mostrarError("login-error", "Sin conexión al servidor."); }
     load.style.display = "none"; btn.disabled = false;
   }
 
   // ── REGISTRO DOCENTE ──
   async function doRegistro() {
-    const nombre  = document.getElementById("reg-nombre").value.trim();
-    const email   = document.getElementById("reg-email").value.trim();
-    const pass    = document.getElementById("reg-pass").value;
-    const inst    = document.getElementById("reg-inst").value.trim();
-    const cargo   = document.getElementById("reg-cargo").value;
-    const ciudad  = document.getElementById("reg-ciudad").value.trim();
-    const load    = document.getElementById("reg-loading");
-    const btn     = document.getElementById("btn-reg");
+    const nombre = document.getElementById("reg-nombre").value.trim();
+    const email  = document.getElementById("reg-email").value.trim();
+    const pass   = document.getElementById("reg-pass").value;
+    const inst   = document.getElementById("reg-inst").value.trim();
+    const cargo  = document.getElementById("reg-cargo").value;
+    const ciudad = document.getElementById("reg-ciudad").value.trim();
+    const load   = document.getElementById("reg-loading");
+    const btn    = document.getElementById("btn-reg");
 
     document.getElementById("reg-error").style.display = "none";
     document.getElementById("reg-ok").style.display    = "none";
-
-    if (!nombre || !email || !pass || !inst) {
-      mostrarError("reg-error", "Completa todos los campos obligatorios"); return;
-    }
+    if (!nombre || !email || !pass || !inst) { mostrarError("reg-error", "Completa todos los campos"); return; }
 
     load.style.display = "flex"; btn.disabled = true;
-
     try {
       const r = await fetch(`${API}/auth/registro`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre, email, password: pass, institucion: inst, cargo, ciudad })
       });
       const d = await r.json();
-
       if (r.ok) {
-        const okEl = document.getElementById("reg-ok");
-        okEl.textContent = "✅ Cuenta creada. Ahora inicia sesión.";
-        okEl.style.display = "block";
+        const ok = document.getElementById("reg-ok");
+        ok.textContent = "✅ Cuenta creada. Ahora inicia sesión.";
+        ok.style.display = "block";
         setTimeout(() => switchTab("login"), 1800);
-      } else {
-        mostrarError("reg-error", d.mensaje || "Error al crear cuenta");
-      }
-    } catch(_) {
-      mostrarError("reg-error", "Sin conexión al servidor");
-    }
-
+      } else { mostrarError("reg-error", d.mensaje || "Error al crear cuenta"); }
+    } catch(_) { mostrarError("reg-error", "Sin conexión al servidor"); }
     load.style.display = "none"; btn.disabled = false;
   }
 
   // ── PORTAL ESTUDIANTE ──
   function mostrarEstudiante() {
-    document.getElementById("pantalla-login").style.display      = "none";
-    document.getElementById("pantalla-estudiante").style.display = "flex";
+    document.getElementById("pantalla-login").style.display          = "none";
+    document.getElementById("pantalla-registro-est").style.display   = "none";
+    document.getElementById("pantalla-estudiante").style.display     = "flex";
   }
 
   function volverDocente() {
-    document.getElementById("pantalla-estudiante").style.display = "none";
-    document.getElementById("pantalla-login").style.display      = "flex";
+    document.getElementById("pantalla-estudiante").style.display     = "none";
+    document.getElementById("pantalla-registro-est").style.display   = "none";
+    document.getElementById("pantalla-login").style.display          = "flex";
+  }
+
+  function mostrarRegistroEst() {
+    document.getElementById("pantalla-estudiante").style.display     = "none";
+    document.getElementById("pantalla-registro-est").style.display   = "flex";
   }
 
   async function doLoginEst() {
@@ -371,43 +414,57 @@ body {
     if (!usuario || !pass) { mostrarError("est-error", "Ingresa usuario y contraseña"); return; }
 
     load.style.display = "flex";
-
     try {
       const r = await fetch(`${API}/auth/login-estudiante`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ usuario, password: pass })
       });
       const d = await r.json();
-
       if (r.ok && d.token) {
         localStorage.setItem("edutokenest", d.token);
         localStorage.setItem("educlass_estudiante", JSON.stringify(d.estudiante));
-        // Ir a planeacion en modo estudiante
-        window.location.href = "planeacion/index.html?portal=estudiante";
-      } else {
-        mostrarError("est-error", d.mensaje || "Usuario o contraseña incorrectos");
-      }
-    } catch(_) {
-      mostrarError("est-error", "Sin conexión al servidor");
-    }
-
+        window.location.href = "planeacion/index.html";
+      } else { mostrarError("est-error", d.mensaje || "Usuario o contraseña incorrectos"); }
+    } catch(_) { mostrarError("est-error", "Sin conexión al servidor"); }
     load.style.display = "none";
   }
 
-  function mostrarRegistroEst() {
-    // Redirige a planeacion que ya tiene el registro de estudiante integrado
-    window.location.href = "planeacion/index.html?registro=estudiante";
+  // ── REGISTRO ESTUDIANTE ──
+  async function doRegistroEst() {
+    const nombre  = document.getElementById("est-reg-nombre").value.trim();
+    const usuario = document.getElementById("est-reg-usuario").value.trim().toLowerCase().replace(/\s+/g,"");
+    const pass    = document.getElementById("est-reg-pass").value;
+    const grado   = document.getElementById("est-reg-grado").value;
+    const inst    = document.getElementById("est-reg-inst").value.trim();
+    const load    = document.getElementById("est-reg-loading");
+
+    document.getElementById("est-reg-error").style.display = "none";
+    document.getElementById("est-reg-ok").style.display    = "none";
+    if (!nombre || !usuario || !pass || !inst) { mostrarError("est-reg-error", "Completa todos los campos"); return; }
+
+    load.style.display = "flex";
+    try {
+      const r = await fetch(`${API}/auth/registro-estudiante`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, usuario, password: pass, grado, institucion: inst })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        const ok = document.getElementById("est-reg-ok");
+        ok.textContent = "✅ Cuenta creada. Ahora inicia sesión.";
+        ok.style.display = "block";
+        setTimeout(() => mostrarEstudiante(), 1800);
+      } else { mostrarError("est-reg-error", d.mensaje || "Error al crear cuenta"); }
+    } catch(_) { mostrarError("est-reg-error", "Sin conexión al servidor"); }
+    load.style.display = "none";
   }
 
-  // ── Helpers ──
   function mostrarError(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg;
     el.style.display = "block";
   }
 
-  // Enter para login
   document.addEventListener("keydown", e => {
     if (e.key === "Enter") {
       const tabLogin = document.getElementById("tab-login").classList.contains("active");
