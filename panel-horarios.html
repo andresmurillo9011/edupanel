@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asignar Horarios · EduPanel IESS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Sora', sans-serif;
+  background: linear-gradient(160deg, #060E08, #0A1A0C 50%, #06100E);
+  min-height: 100vh; color: #E8EEF8;
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; height: 54px;
+  background: linear-gradient(90deg, #0D47A1, #0A1A0C);
+  border-bottom: 2px solid #2E7D32;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.logo img { width: 30px; height: 30px; object-fit: contain; }
+.logo-txt { font-size: .88rem; font-weight: 800; color: #F9A825; }
+.back-btn {
+  padding: 5px 12px; border: 1px solid #1A3D1E; border-radius: 6px;
+  background: transparent; color: #7B9CC8; cursor: pointer;
+  font-family: 'Sora', sans-serif; font-size: .72rem; text-decoration: none;
+  transition: all .15s;
+}
+.back-btn:hover { border-color: #1565C0; color: #42A5F5; }
+.main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+.page-title { font-size: 1.2rem; font-weight: 800; color: #F9A825; margin-bottom: 4px; }
+.page-sub { font-size: .78rem; color: #3A5580; margin-bottom: 20px; }
+
+/* Layout */
+.layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
+@media(max-width:768px) { .layout { grid-template-columns: 1fr; } }
+
+/* Panel izquierdo */
+.panel-left { display: flex; flex-direction: column; gap: 12px; }
+.card { background: #0F2211; border: 1px solid #1A3D1E; border-radius: 12px; padding: 16px; }
+.card-title { font-size: .84rem; font-weight: 700; color: #E8EEF8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.docente-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent; transition: all .15s; margin-bottom: 4px;
+}
+.docente-item:hover { background: rgba(21,101,192,.1); border-color: #1A3D1E; }
+.docente-item.activo { background: #0F2A47; border-color: #1565C0; }
+.doc-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #2E7D32, #1565C0);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .68rem; font-weight: 700; color: #fff;
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: .8rem; font-weight: 600; color: #E8EEF8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-cargo { font-size: .65rem; color: #3A5580; }
+.doc-horas { font-size: .65rem; color: #F9A825; font-weight: 700; }
+
+/* Panel derecho */
+.panel-right { display: flex; flex-direction: column; gap: 12px; }
+.horario-grid {
+  display: grid;
+  grid-template-columns: 90px repeat(5, 1fr);
+  gap: 2px;
+  background: #060E08;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #1A3D1E;
+}
+.hg-head {
+  background: #0A1A0C; padding: 8px 6px;
+  font-size: .65rem; font-weight: 700; color: #3A5580;
+  text-align: center; text-transform: uppercase; letter-spacing: .04em;
+}
+.hg-hora {
+  background: #060E08; padding: 6px 8px;
+  font-size: .68rem; color: #3A5580;
+  display: flex; flex-direction: column; gap: 1px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.hg-hora .n { color: #F9A825; font-weight: 700; font-size: .72rem; }
+.hg-hora .t { font-size: .6rem; }
+.hg-celda {
+  background: #0A1A0C; min-height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px; cursor: pointer; transition: all .12s; position: relative;
+}
+.hg-celda:hover { background: rgba(21,101,192,.15); }
+.hg-celda.asignada {
+  background: rgba(21,101,192,.18);
+  border: 1px solid rgba(21,101,192,.4);
+}
+.hg-celda.descanso { background: rgba(46,125,50,.1); cursor: default; }
+.celda-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 100%; text-align: center;
+}
+.celda-materia { font-size: .62rem; font-weight: 700; color: #42A5F5; line-height: 1.2; }
+.celda-grado { font-size: .58rem; color: #7B9CC8; }
+.celda-empty { font-size: .7rem; color: #1A3D1E; }
+.hg-break { grid-column: 1 / -1; background: rgba(46,125,50,.08); padding: 4px 12px; display: flex; align-items: center; gap: 8px; }
+.hg-break-label { font-size: .68rem; color: #2E7D32; font-weight: 600; }
+.hg-break-time { font-size: .62rem; color: #3A5580; font-family: 'JetBrains Mono', monospace; }
+
+/* Modal asignar */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+.overlay.open { display: flex; }
+.modal { background: #0F2211; border: 1px solid #1A3D1E; border-radius: 14px; width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-head { padding: 16px 20px 12px; border-bottom: 1px solid #1A3D1E; display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: .92rem; font-weight: 700; color: #42A5F5; }
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.modal-foot { padding: 12px 20px; border-top: 1px solid #1A3D1E; display: flex; gap: 8px; justify-content: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: .7rem; font-weight: 600; color: #7B9CC8; text-transform: uppercase; letter-spacing: .04em; }
+.field select, .field input {
+  padding: 8px 12px; background: #060E08; border: 1px solid #1A3D1E;
+  border-radius: 8px; color: #E8EEF8; font-family: 'Sora', sans-serif; font-size: .82rem; outline: none;
+}
+.field select:focus, .field input:focus { border-color: #1565C0; }
+.btn { padding: 8px 18px; border-radius: 8px; border: none; font-family: 'Sora', sans-serif; font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .12s; }
+.btn-primary { background: linear-gradient(90deg, #1565C0, #1976D2); color: #fff; }
+.btn-danger { background: rgba(239,68,68,.15); border: 1px solid #ef4444; color: #f87171; }
+.btn-ghost { background: transparent; border: 1px solid #1A3D1E; color: #3A5580; }
+.btn:hover { opacity: .85; transform: translateY(-1px); }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: #060E08; border: 1px solid #1A3D1E; border-radius: 8px; padding: 10px 12px; text-align: center; }
+.stat-n { font-size: 1.4rem; font-weight: 800; color: #F9A825; font-family: 'JetBrains Mono', monospace; }
+.stat-l { font-size: .62rem; color: #3A5580; }
+
+/* Selector docente vacío */
+.empty-state { text-align: center; padding: 40px 20px; color: #3A5580; font-size: .82rem; }
+.empty-state span { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(16px); background: #0D47A1; border: 1px solid #2E7D32; color: #66BB6A; padding: 8px 18px; border-radius: 20px; font-size: .78rem; opacity: 0; pointer-events: none; transition: all .3s; z-index: 300; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.loading-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #1A3D1E; border-top-color: #43A047; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a href="login.html" class="logo">
+      <img src="escudo.png" alt="IESS">
+      <span class="logo-txt">EduPanel · IESS</span>
+    </a>
+    <span style="color:#3A5580;font-size:.7rem">/ Asignar Horarios</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="admin-name" style="font-size:.78rem;color:#7B9CC8"></span>
+    <a href="login.html" class="back-btn">← Volver</a>
+  </div>
+</header>
+
+<main class="main">
+  <div class="page-title">🗓️ Asignación de Horarios</div>
+  <p class="page-sub">Selecciona un docente y asigna sus horas de clase por día, materia y grado</p>
+
+  <div class="layout">
+    <!-- Panel izquierdo: lista de docentes -->
+    <div class="panel-left">
+      <div class="card">
+        <div class="card-title">👨‍🏫 Docentes</div>
+        <div id="lista-docentes">
+          <div style="color:#3A5580;font-size:.78rem;text-align:center;padding:20px">
+            <div class="loading-spin"></div> Cargando...
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Resumen</div>
+        <div class="stats">
+          <div class="stat"><div class="stat-n" id="stat-total">0</div><div class="stat-l">Docentes</div></div>
+          <div class="stat"><div class="stat-n" id="stat-horas">0</div><div class="stat-l">Horas asig.</div></div>
+          <div class="stat"><div class="stat-n" id="stat-grados">0</div><div class="stat-l">Grados</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Guía rápida</div>
+        <p style="font-size:.72rem;color:#3A5580;line-height:1.7">
+          1. Selecciona un docente<br>
+          2. Haz clic en cualquier celda del horario<br>
+          3. Asigna materia, grado y tipo<br>
+          4. Guarda — el horario se actualiza automáticamente
+        </p>
+      </div>
+    </div>
+
+    <!-- Panel derecho: horario -->
+    <div class="panel-right">
+      <div class="card" id="panel-horario">
+        <div id="horario-empty" class="empty-state">
+          <span>👈</span>
+          Selecciona un docente para ver y editar su horario
+        </div>
+        <div id="horario-contenido" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="card-title" id="horario-titulo" style="margin-bottom:2px">Horario</div>
+              <div style="font-size:.7rem;color:#3A5580" id="horario-subtitulo"></div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="font-size:.72rem" onclick="limpiarHorario()">🗑 Limpiar todo</button>
+              <button class="btn btn-primary" style="font-size:.72rem" onclick="guardarHorario()">💾 Guardar horario</button>
+            </div>
+          </div>
+          <div id="grilla-horario" style="overflow-x:auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal asignar celda -->
+<div class="overlay" id="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-titulo">Asignar clase</div>
+      <button onclick="cerrarModal()" style="background:none;border:none;color:#3A5580;cursor:pointer;font-size:1.1rem">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Materia</label>
+        <select id="modal-materia">
+          <option value="">— Sin clase —</option>
+          <option value="MATEMATICAS">Matemáticas</option>
+          <option value="ESPAÑOL">Español / Lengua Castellana</option>
+          <option value="CIENCIAS NATURALES">Ciencias Naturales</option>
+          <option value="CIENCIAS SOCIALES">Ciencias Sociales</option>
+          <option value="INGLES">Inglés</option>
+          <option value="EDUCACION FISICA">Educación Física</option>
+          <option value="ARTES">Artística / Artes</option>
+          <option value="ETICA">Ética y Valores</option>
+          <option value="TECNOLOGIA">Tecnología e Informática</option>
+          <option value="FILOSOFIA">Filosofía</option>
+          <option value="QUIMICA">Química</option>
+          <option value="FISICA">Física</option>
+          <option value="BIOLOGIA">Biología</option>
+          <option value="AGROPECUARIA">Agropecuaria</option>
+          <option value="LECTURA CRITICA">Lectura Crítica</option>
+          <option value="ESTADISTICA">Estadística</option>
+          <option value="CATEDRA AMBIENTAL">Cátedra Ambiental</option>
+          <option value="GEOMETRIA">Geometría</option>
+          <option value="RELIGION">Religión</option>
+          <option value="EMPRENDIMIENTO">Emprendimiento</option>
+          <option value="PROYECTO CIENCIA">Proyecto Ciencia</option>
+          <option value="PROYECTO ARTES">Proyecto Artes</option>
+          <option value="PROYECTO DEPORTE">Proyecto Deporte</option>
+          <option value="ECOPOL">Ecopolítica</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Grado</label>
+        <select id="modal-grado">
+          <option value="">— Seleccionar —</option>
+          <option value="sexto">Sexto (6°)</option>
+          <option value="septimo">Séptimo (7°)</option>
+          <option value="octavo">Octavo (8°)</option>
+          <option value="noveno">Noveno (9°)</option>
+          <option value="decimo">Décimo (10°)</option>
+          <option value="once">Once (11°)</option>
+          <option value="quinto">Quinto (5°)</option>
+          <option value="cuarto">Cuarto (4°)</option>
+          <option value="tercero">Tercero (3°)</option>
+          <option value="segundo">Segundo (2°)</option>
+          <option value="primero">Primero (1°)</option>
+          <option value="transicion">Transición</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo de bloque</label>
+        <select id="modal-tipo">
+          <option value="clase">📚 Clase normal</option>
+          <option value="proyecto">📁 Proyecto</option>
+          <option value="libre">🕐 Hora libre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notas (opcional)</label>
+        <input type="text" id="modal-notas" placeholder="Ej: Lab. 2, Sala de informática...">
+      </div>
+      <div id="modal-info" style="background:rgba(21,101,192,.1);border:1px solid rgba(21,101,192,.2);border-radius:8px;padding:10px 12px;font-size:.72rem;color:#7B9CC8;display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="btn-limpiar-celda" onclick="limpiarCelda()" style="display:none">🗑 Quitar clase</button>
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCelda()">✅ Asignar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://educlass-backend-4kk0.onrender.com';
+const authH = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('edutoken') || ''}` });
+
+// Verificar acceso admin
+const rawUser = localStorage.getItem('educlass_usuario');
+if (!rawUser) { window.location.href = 'login.html'; }
+const currentUser = JSON.parse(rawUser || '{}');
+if (currentUser.rol !== 'admin' && currentUser.rol !== 'superadmin') {
+  alert('Solo los administradores pueden acceder a este panel.');
+  window.location.href = 'login.html';
+}
+document.getElementById('admin-name').textContent = currentUser.name || '';
+
+// ── Estado global ──
+let docentes = [];
+let docenteActivo = null;
+let horarioActivo = {}; // { "Lunes_1": { materia, grado, tipo, notas }, ... }
+let celdaEditando = null; // { dia, slot }
+
+const DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+const DIAS_CORTOS = ['Lun','Mar','Mié','Jue','Vie'];
+const SLOTS = [
+  { n:1, hora:'7:15 - 8:10' },
+  { n:2, hora:'8:10 - 9:05' },
+  { n:'D', hora:'9:05 - 9:20', descanso: true, label: '☕ Descanso' },
+  { n:3, hora:'9:20 - 10:15' },
+  { n:4, hora:'10:15 - 11:10' },
+  { n:5, hora:'11:10 - 12:05' },
+  { n:'A', hora:'12:05 - 12:25', descanso: true, label: '🍽 Almuerzo' },
+  { n:6, hora:'12:25 - 13:10' },
+  { n:7, hora:'13:10 - 14:05' },
+];
+
+const GRADO_LABELS = {
+  sexto:'6°', septimo:'7°', octavo:'8°', noveno:'9°',
+  decimo:'10°', once:'11°', quinto:'5°', cuarto:'4°',
+  tercero:'3°', segundo:'2°', primero:'1°', transicion:'Trans.'
+};
+
+// ── Cargar docentes ──
+async function cargarDocentes() {
+  try {
+    const r = await fetch(`${API}/superadmin/teachers`, { headers: authH() });
+    const d = await r.json();
+    docentes = d.docentes || [];
+  } catch(_) {
+    // Fallback: intentar usuarios normales
+    try {
+      const r = await fetch(`${API}/superadmin/stats`, { headers: authH() });
+      const d = await r.json();
+    } catch(__) {}
+  }
+
+  // Si el backend no devuelve docentes, crear lista de prueba
+  if (!docentes.length) {
+    docentes = [
+      { id: 'demo1', name: currentUser.name || 'Docente Demo', cargo: currentUser.cargo || 'Docente', email: currentUser.email }
+    ];
+  }
+
+  document.getElementById('stat-total').textContent = docentes.length;
+  renderListaDocentes();
+}
+
+function renderListaDocentes() {
+  const el = document.getElementById('lista-docentes');
+  if (!docentes.length) {
+    el.innerHTML = '<p style="color:#3A5580;font-size:.76rem;text-align:center;padding:16px">No hay docentes registrados</p>';
+    return;
+  }
+  el.innerHTML = docentes.map(d => {
+    const ini = (d.name || 'D').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    const horas = contarHorasDocente(d.id);
+    const activo = docenteActivo?.id === d.id;
+    return `
+      <div class="docente-item ${activo?'activo':''}" onclick="seleccionarDocente('${d.id}')">
+        <div class="doc-avatar">${ini}</div>
+        <div class="doc-info">
+          <div class="doc-name">${d.name}</div>
+          <div class="doc-cargo">${d.cargo || 'Docente'}</div>
+        </div>
+        <div class="doc-horas">${horas}h</div>
+      </div>`;
+  }).join('');
+}
+
+function contarHorasDocente(id) {
+  const h = cargarHorarioLocal(id);
+  return Object.values(h).filter(v => v && v.materia).length;
+}
+
+// ── Seleccionar docente ──
+function seleccionarDocente(id) {
+  docenteActivo = docentes.find(d => d.id === id);
+  if (!docenteActivo) return;
+
+  horarioActivo = cargarHorarioLocal(id);
+
+  // Actualizar UI
+  renderListaDocentes();
+  document.getElementById('horario-empty').style.display = 'none';
+  document.getElementById('horario-contenido').style.display = 'block';
+  document.getElementById('horario-titulo').textContent = `Horario — ${docenteActivo.name}`;
+  document.getElementById('horario-subtitulo').textContent = `${docenteActivo.cargo || 'Docente'} · ${contarHorasDocente(id)} horas asignadas`;
+
+  renderGrilla();
+  actualizarStats();
+}
+
+// ── Render de la grilla ──
+function renderGrilla() {
+  const cont = document.getElementById('grilla-horario');
+
+  let html = `<div class="horario-grid">`;
+  // Cabecera
+  html += `<div class="hg-head">Hora</div>`;
+  DIAS_CORTOS.forEach(d => { html += `<div class="hg-head">${d}</div>`; });
+
+  SLOTS.forEach(slot => {
+    if (slot.descanso) {
+      html += `<div class="hg-break" style="grid-column:1/-1">
+        <span class="hg-break-label">${slot.label}</span>
+        <span class="hg-break-time">${slot.hora}</span>
+      </div>`;
+      return;
+    }
+    // Celda hora
+    html += `<div class="hg-hora"><span class="n">${slot.n}</span><span class="t">${slot.hora.split(' - ')[0]}</span></div>`;
+    // Celdas por día
+    DIAS.forEach(dia => {
+      const key = `${dia}_${slot.n}`;
+      const dato = horarioActivo[key];
+      if (dato && dato.materia) {
+        html += `<div class="hg-celda asignada" onclick="abrirModal('${dia}',${slot.n})">
+          <div class="celda-inner">
+            <div class="celda-materia">${abreviar(dato.materia)}</div>
+            <div class="celda-grado">${GRADO_LABELS[dato.grado] || dato.grado}</div>
+          </div>
+        </div>`;
+      } else {
+        html += `<div class="hg-celda" onclick="abrirModal('${dia}',${slot.n})">
+          <span class="celda-empty">+</span>
+        </div>`;
+      }
+    });
+  });
+
+  html += `</div>`;
+  cont.innerHTML = html;
+}
+
+function abreviar(mat) {
+  const abrev = {
+    'MATEMATICAS':'Mate.','ESPAÑOL':'Español','CIENCIAS NATURALES':'C.Nat.',
+    'CIENCIAS SOCIALES':'C.Soc.','INGLES':'Inglés','EDUCACION FISICA':'Ed.Fís.',
+    'ARTES':'Artes','ETICA':'Ética','TECNOLOGIA':'Tecno.','FILOSOFIA':'Filos.',
+    'QUIMICA':'Quím.','FISICA':'Física','BIOLOGIA':'Bio.','AGROPECUARIA':'Agro.',
+    'LECTURA CRITICA':'L.Crít.','ESTADISTICA':'Estad.','CATEDRA AMBIENTAL':'Cat.Amb.',
+    'GEOMETRIA':'Geom.','RELIGION':'Relig.','EMPRENDIMIENTO':'Empr.',
+    'PROYECTO CIENCIA':'Py.Cie.','PROYECTO ARTES':'Py.Art.','PROYECTO DEPORTE':'Py.Dep.','ECOPOL':'Ecop.'
+  };
+  return abrev[mat] || mat.substring(0,6);
+}
+
+// ── Modal ──
+function abrirModal(dia, slot) {
+  if (!docenteActivo) return;
+  celdaEditando = { dia, slot };
+  const key = `${dia}_${slot}`;
+  const dato = horarioActivo[key] || {};
+
+  document.getElementById('modal-titulo').textContent = `${dia} · Hora ${slot}`;
+  document.getElementById('modal-materia').value = dato.materia || '';
+  document.getElementById('modal-grado').value = dato.grado || '';
+  document.getElementById('modal-tipo').value = dato.tipo || 'clase';
+  document.getElementById('modal-notas').value = dato.notas || '';
+
+  const info = document.getElementById('modal-info');
+  info.style.display = 'block';
+  info.textContent = `Docente: ${docenteActivo.name} · ${dia} · ${SLOTS.find(s=>s.n===slot)?.hora || ''}`;
+
+  const btnLimpiar = document.getElementById('btn-limpiar-celda');
+  btnLimpiar.style.display = dato.materia ? 'block' : 'none';
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function cerrarModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+  celdaEditando = null;
+}
+
+function guardarCelda() {
+  if (!celdaEditando) return;
+  const key = `${celdaEditando.dia}_${celdaEditando.slot}`;
+  const materia = document.getElementById('modal-materia').value;
+  const grado   = document.getElementById('modal-grado').value;
+
+  if (materia && !grado) { showToast('⚠️ Selecciona el grado'); return; }
+
+  if (materia) {
+    horarioActivo[key] = {
+      materia,
+      grado,
+      tipo:  document.getElementById('modal-tipo').value,
+      notas: document.getElementById('modal-notas').value.trim()
+    };
+  } else {
+    delete horarioActivo[key];
+  }
+
+  document.getElementById('modal-overlay').classList.remove('open');
+  celdaEditando = null;
+  renderGrilla();
+  actualizarStats();
+  document.getElementById('horario-subtitulo').textContent =
+    `${docenteActivo.cargo || 'Docente'} · ${contarHorasDocente(docenteActivo.id)} horas asignadas`;
+}
+
+function limpiarCelda() {
+  if (!celdaEditando) return;
+  const key = `${celdaEditando.dia}_${celdaEditando.slot}`;
+  delete horarioActivo[key];
+  document.getElementById('modal-overlay').classList.remove('open');
+  celdaEditando = null;
+  renderGrilla();
+  actualizarStats();
+}
+
+function limpiarHorario() {
+  if (!docenteActivo) return;
+  if (!confirm(`¿Limpiar TODO el horario de ${docenteActivo.name}? Esta acción no se puede deshacer.`)) return;
+  horarioActivo = {};
+  renderGrilla();
+  actualizarStats();
+  showToast('✓ Horario limpiado');
+}
+
+// ── Guardar ──
+function guardarHorario() {
+  if (!docenteActivo) return;
+  // Guardar en localStorage
+  guardarHorarioLocal(docenteActivo.id, horarioActivo);
+
+  // Intentar guardar en backend si existe el endpoint
+  intentarGuardarBackend(docenteActivo.id, horarioActivo);
+
+  showToast(`✅ Horario de ${docenteActivo.name.split(' ')[0]} guardado`);
+  renderListaDocentes();
+  document.getElementById('horario-subtitulo').textContent =
+    `${docenteActivo.cargo || 'Docente'} · ${contarHorasDocente(docenteActivo.id)} horas asignadas`;
+}
+
+async function intentarGuardarBackend(docenteId, horario) {
+  try {
+    await fetch(`${API}/horarios/${docenteId}`, {
+      method: 'PUT',
+      headers: authH(),
+      body: JSON.stringify({ horario })
+    });
+  } catch(_) {
+    // El endpoint no existe aún — solo localStorage por ahora
+  }
+}
+
+// ── localStorage helpers ──
+function guardarHorarioLocal(docenteId, horario) {
+  localStorage.setItem(`horario_docente_${docenteId}`, JSON.stringify(horario));
+}
+
+function cargarHorarioLocal(docenteId) {
+  try {
+    return JSON.parse(localStorage.getItem(`horario_docente_${docenteId}`) || '{}');
+  } catch(_) { return {}; }
+}
+
+// ── Stats ──
+function actualizarStats() {
+  const total = Object.values(horarioActivo).filter(v => v && v.materia).length;
+  const grados = new Set(Object.values(horarioActivo).filter(v=>v&&v.grado).map(v=>v.grado)).size;
+  document.getElementById('stat-horas').textContent = total;
+  document.getElementById('stat-grados').textContent = grados;
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Init ──
+cargarDocentes();
+</script>
+</body>
+</html>
