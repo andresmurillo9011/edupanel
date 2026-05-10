@@ -52,7 +52,7 @@ const Auth = (() => {
         username:     u.email,
         password:     "",
         name:         u.name || u.nombre || "Docente",
-        role:         (u.rol === "admin" || u.rol === "superadmin") ? "admin" : "docente",
+        role:         (u.rol === 'admin' || u.rol === 'superadmin' || u.cargo === 'admin' || u.cargo === 'superadmin') ? 'admin' : 'docente',
         email:        u.email,
         asignaciones: [],
         grados:       [],
