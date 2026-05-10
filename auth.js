@@ -1,6 +1,7 @@
 // ============================================================
 // AUTH.JS — I.E.R. Santiago de la Selva
 // Autenticación con localStorage · sesión en sessionStorage
+// Compatible con EduClass (JWT token)
 // ============================================================
 
 const Auth = (() => {
@@ -37,6 +38,30 @@ const Auth = (() => {
     localStorage.setItem(USERS_KEY, JSON.stringify(u));
   }
 
+  // ── Construir usuario desde sesión EduClass ──────────────
+  function _usuarioDesdeEduClass() {
+    try {
+      const tok = localStorage.getItem("edutoken");
+      const raw = localStorage.getItem("educlass_usuario");
+      if (!tok || !raw) return null;
+      const u = JSON.parse(raw);
+      if (!u || !u.email) return null;
+      // Mapear al formato EduPanel
+      return {
+        id:           u.id || "ec_" + u.email,
+        username:     u.email,
+        password:     "",
+        name:         u.name || u.nombre || "Docente",
+        role:         (u.rol === "admin" || u.rol === "superadmin") ? "admin" : "docente",
+        email:        u.email,
+        asignaciones: [],
+        grados:       [],
+        materias:     [],
+        _desdeEduClass: true
+      };
+    } catch(_) { return null; }
+  }
+
   // ---- LOGIN / LOGOUT / SESIÓN ----
   function login(username, password) {
     const user = _getUsers().find(u => u.username === username && u.password === password);
@@ -47,20 +72,25 @@ const Auth = (() => {
 
   function logout() {
     sessionStorage.removeItem("ep_user");
+    localStorage.removeItem("edutoken");
+    localStorage.removeItem("educlass_usuario");
     window.location.href = "login.html";
   }
 
   function currentUser() {
+    // 1. Intentar sesión local (sessionStorage)
     const raw = sessionStorage.getItem("ep_user");
-    if (!raw) return null;
-    const u = JSON.parse(raw);
-    // Refrescar desde localStorage para tener asignaciones actualizadas
-    const fresh = _getUsers().find(x => x.id === u.id);
-    if (fresh) {
-      sessionStorage.setItem("ep_user", JSON.stringify(fresh));
-      return fresh;
+    if (raw) {
+      const u = JSON.parse(raw);
+      const fresh = _getUsers().find(x => x.id === u.id);
+      if (fresh) {
+        sessionStorage.setItem("ep_user", JSON.stringify(fresh));
+        return fresh;
+      }
+      return u;
     }
-    return u;
+    // 2. Fallback: sesión de EduClass (localStorage)
+    return _usuarioDesdeEduClass();
   }
 
   function require(redirect = "login.html") {
@@ -71,8 +101,12 @@ const Auth = (() => {
 
   function requireAdmin() {
     const u = require();
-    if (u && u.role !== "admin") { window.location.href = "index.html"; return null; }
-    return u;
+    if (!u) return null;
+    // Si viene de EduClass con rol admin/superadmin → permitir
+    if (u.role === "admin") return u;
+    // Docente sin permisos admin → redirigir al horario
+    window.location.href = "horario.html";
+    return null;
   }
 
   function canAccess(user, grado, materia) {
