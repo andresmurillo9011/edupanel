@@ -137,14 +137,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  // Leer asignaciones desde EduPanel local si existen
+  let asignacionesDocente = [];
+  let gradosDocente = [];
+  let materiasDocente = [];
+  try {
+    const epUsers = JSON.parse(localStorage.getItem("edupanel_users") || "[]");
+    const epUser  = epUsers.find(u => u.email === eduUser.email || u.username === eduUser.email);
+    if (epUser) {
+      asignacionesDocente = epUser.asignaciones || [];
+      gradosDocente       = epUser.grados       || [];
+      materiasDocente     = epUser.materias      || [];
+    }
+  } catch(_) {}
+
   currentUser = {
     id:           eduUser.id,
     name:         eduUser.name,
-    role:         eduUser.rol || "docente",
+    role:         eduUser.rol || eduUser.cargo || "docente",
     email:        eduUser.email,
-    asignaciones: [],
-    grados:       [],
-    materias:     [],
+    asignaciones: asignacionesDocente,
+    grados:       gradosDocente,
+    materias:     materiasDocente,
   };
 
   // Header
@@ -277,6 +291,17 @@ async function renderSchedule(day) {
       const td  = document.createElement("td");
       const cfg = MATERIAS_CONFIG[materia];
       if (materia && cfg && !["DESCANSO","ALMUERZO"].includes(materia)) {
+        // En "Mi Horario": mostrar solo celdas asignadas al docente
+        const tieneAsignaciones = currentUser.asignaciones && currentUser.asignaciones.length > 0;
+        const esMiHorario = vistaMode === "mio";
+        const esMiMateria = !tieneAsignaciones || !esMiHorario ||
+          currentUser.asignaciones.some(a => a.grado === grado && a.area === materia);
+
+        if (!esMiMateria) {
+          td.className = "empty-cell locked-cell"; td.innerHTML = "—";
+          tr.appendChild(td); return;
+        }
+
         td.className = "class-cell";
         td.style.setProperty("--cell-color", cfg.color);
         td.setAttribute("data-dia",   day);
