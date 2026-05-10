@@ -249,14 +249,44 @@ async function saveDocente() {
   }
 
   // Guardar en EduPanel (siempre con role:"docente")
+  let savedUserId = editingUserId;
   if (editingUserId) {
     Auth.updateUser(editingUserId, { ...payload, role: "docente" });
     showToast("✓ Docente actualizado");
   } else {
     const r = Auth.createUser({ ...payload, role:"docente" });
     if (!r.ok) { errEl.textContent=r.message; errEl.style.display="block"; return; }
+    savedUserId = r.user.id;
     showToast("✓ Docente creado");
   }
+
+  // Guardar asignaciones en el backend de EduClass para que el docente las vea en su horario
+  if (emailEduclass && asignacionesTemp.length > 0) {
+    try {
+      // Primero obtener el ID del usuario en EduClass
+      const API = "https://educlass-backend-4kk0.onrender.com";
+      const tok = localStorage.getItem("edutoken") || "";
+      // Buscar el usuario por email en EduClass
+      const rUsers = await fetch(`${API}/todos-docentes-asignaciones`, {
+        headers: { "Authorization": `Bearer ${tok}` }
+      });
+      if (rUsers.ok) {
+        const dUsers = await rUsers.json();
+        const ecUser = (dUsers.docentes || []).find(u => u.email === emailEduclass);
+        if (ecUser) {
+          await fetch(`${API}/asignaciones/${ecUser.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${tok}` },
+            body: JSON.stringify({ asignaciones: asignacionesTemp })
+          });
+          showToast("✅ Asignaciones sincronizadas en EduClass");
+        }
+      }
+    } catch(e) {
+      console.warn("No se pudieron sincronizar asignaciones:", e.message);
+    }
+  }
+
   closeModal("modal-docente");
   renderDocentesGrid();
 }

@@ -137,19 +137,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Leer asignaciones desde EduPanel local si existen
+  // Leer asignaciones desde backend EduClass
   let asignacionesDocente = [];
   let gradosDocente = [];
   let materiasDocente = [];
   try {
-    const epUsers = JSON.parse(localStorage.getItem("edupanel_users") || "[]");
-    const epUser  = epUsers.find(u => u.email === eduUser.email || u.username === eduUser.email);
-    if (epUser) {
-      asignacionesDocente = epUser.asignaciones || [];
-      gradosDocente       = epUser.grados       || [];
-      materiasDocente     = epUser.materias      || [];
+    const rAsig = await fetch(`https://educlass-backend-4kk0.onrender.com/asignaciones/${eduUser.id}`, {
+      headers: { "Authorization": `Bearer ${tok}` }
+    });
+    if (rAsig.ok) {
+      const dAsig = await rAsig.json();
+      asignacionesDocente = dAsig.asignaciones || [];
+      gradosDocente       = [...new Set(asignacionesDocente.map(a => a.grado))];
+      materiasDocente     = [...new Set(asignacionesDocente.map(a => a.area))];
     }
-  } catch(_) {}
+  } catch(_) {
+    // Fallback: leer desde localStorage del admin
+    try {
+      const epUsers = JSON.parse(localStorage.getItem("edupanel_users") || "[]");
+      const epUser  = epUsers.find(u => u.email === eduUser.email);
+      if (epUser) {
+        asignacionesDocente = epUser.asignaciones || [];
+        gradosDocente       = epUser.grados       || [];
+        materiasDocente     = epUser.materias      || [];
+      }
+    } catch(__) {}
+  }
 
   currentUser = {
     id:           eduUser.id,
