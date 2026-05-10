@@ -83,7 +83,6 @@ body {
   text-decoration: none;
   color: var(--text-primary);
 }
-.header-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 .logo-escudo {
   width: 36px;
   height: 36px;
@@ -980,3 +979,82 @@ body {
 /* PLANEACIÓN IA BUTTON */
 .plan-ia-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border:1px solid var(--iess-azul);border-radius:var(--radius-sm);background:color-mix(in srgb,var(--iess-azul) 15%,transparent);color:var(--iess-azul-light);font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;text-decoration:none;transition:all .15s;letter-spacing:.02em}
 .plan-ia-btn:hover{background:var(--iess-azul);color:#fff;box-shadow:0 3px 12px color-mix(in srgb,var(--iess-azul) 35%,transparent)}
+
+/* ============================================================
+   HORARIO.HTML — Clases adicionales
+   ============================================================ */
+
+/* Header del horario */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px; height: 54px; flex-shrink: 0; z-index: 10; gap: 12px;
+  background: linear-gradient(90deg, var(--iess-azul-dark) 0%, var(--bg-surface) 100%);
+  border-bottom: 2px solid var(--iess-verde);
+}
+.header-logo {
+  width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+.header-title { display: flex; flex-direction: column; line-height: 1.2; }
+.school-name { font-size: .84rem; font-weight: 800; color: var(--gold); }
+.school-sub  { font-size: .58rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
+.header-center { flex: 1; display: flex; justify-content: center; }
+.clock-block { display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: 'JetBrains Mono', monospace; }
+.clock-block span:first-child { font-size: .68rem; color: var(--text-muted); }
+.clock-block span:last-child  { font-size: .82rem; font-weight: 600; color: var(--text-secondary); }
+.user-info    { display: flex; align-items: center; gap: 8px; }
+.user-avatar  {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--iess-verde), var(--iess-azul));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .68rem; font-weight: 700; color: #fff;
+  border: 2px solid var(--gold); flex-shrink: 0;
+}
+.user-details { display: flex; flex-direction: column; gap: 1px; }
+.user-details span:first-child { font-size: .78rem; font-weight: 600; color: var(--text-primary); }
+.user-role-badge { font-size: .6rem; color: var(--gold); }
+.admin-link-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1px solid var(--gold); border-radius: var(--radius-sm);
+  background: var(--gold-dim); color: var(--gold); text-decoration: none;
+  font-size: .7rem; font-weight: 600; transition: all .15s;
+}
+.admin-link-btn:hover { background: var(--gold); color: #000; }
+.home-link-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-secondary); text-decoration: none;
+  font-size: .7rem; font-weight: 600; transition: all .15s;
+}
+.home-link-btn:hover { border-color: var(--iess-verde); color: var(--iess-verde-bright); }
+
+/* Vista bar */
+.vista-bar {
+  display: flex; align-items: center; gap: 3px; flex-shrink: 0;
+  padding: 4px 14px; background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Main layout — horario + panel lateral en fila */
+.main-layout {
+  flex: 1; display: flex; flex-direction: row;
+  overflow: hidden; min-height: 0;
+}
+
+/* Leyenda */
+.legend-bar {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 6px 0; flex-shrink: 0;
+}
+
+/* Toast del horario */
+.toast {
+  position: fixed; bottom: 18px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--iess-azul-dark); border: 1px solid var(--iess-verde);
+  color: var(--iess-verde-bright); padding: 7px 18px; border-radius: 20px;
+  font-size: .78rem; opacity: 0; pointer-events: none;
+  transition: all .3s; z-index: 300; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.hidden { display: none; }

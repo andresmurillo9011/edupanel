@@ -24,7 +24,8 @@
     </div>
     <div class="header-right">
       <span id="admin-name" class="teacher-name"></span>
-      <button class="logout-btn" onclick="Auth.logout()">Salir →</button>
+      <a href="login.html" class="home-link-btn" style="margin-right:6px">🏠 Inicio</a>
+      <button class="logout-btn" onclick="localStorage.removeItem('edutoken');localStorage.removeItem('educlass_usuario');window.location.href='login.html'">Salir →</button>
     </div>
   </header>
 
