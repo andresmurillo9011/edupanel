@@ -83,6 +83,7 @@ body {
   text-decoration: none;
   color: var(--text-primary);
 }
+.header-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 .logo-escudo {
   width: 36px;
   height: 36px;
