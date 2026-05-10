@@ -308,7 +308,8 @@ const authH = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bea
 const rawUser = localStorage.getItem('educlass_usuario');
 if (!rawUser) { window.location.href = 'login.html'; }
 const currentUser = JSON.parse(rawUser || '{}');
-if (currentUser.rol !== 'admin' && currentUser.rol !== 'superadmin') {
+const rolU = currentUser.rol || currentUser.cargo || currentUser.role || '';
+if (!['admin','superadmin'].includes(rolU)) {
   alert('Solo los administradores pueden acceder a este panel.');
   window.location.href = 'login.html';
 }

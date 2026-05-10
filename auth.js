@@ -45,18 +45,20 @@ const Auth = (() => {
       const raw = localStorage.getItem("educlass_usuario");
       if (!tok || !raw) return null;
       const u = JSON.parse(raw);
-      if (!u || !u.email) return null;
-      // Mapear al formato EduPanel
+      if (!u || (!u.email && !u.id)) return null;
+      // Determinar rol — leer todos los campos posibles
+      const rolRaw = u.rol || u.role || u.cargo || "";
+      const esAdmin = ["admin","superadmin"].includes(rolRaw.toLowerCase());
       return {
-        id:           u.id || "ec_" + u.email,
-        username:     u.email,
+        id:           u.id || "ec_" + (u.email||""),
+        username:     u.email || u.username || u.id,
         password:     "",
         name:         u.name || u.nombre || "Docente",
-        role:         (u.rol === 'admin' || u.rol === 'superadmin' || u.cargo === 'admin' || u.cargo === 'superadmin') ? 'admin' : 'docente',
-        email:        u.email,
-        asignaciones: [],
-        grados:       [],
-        materias:     [],
+        role:         esAdmin ? "admin" : "docente",
+        email:        u.email || "",
+        asignaciones: u.asignaciones || [],
+        grados:       u.grados || [],
+        materias:     u.materias || [],
         _desdeEduClass: true
       };
     } catch(_) { return null; }
