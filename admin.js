@@ -49,20 +49,35 @@ function renderAreasGrado() {
     .map(m => {
       const cfg = MATERIAS_CONFIG[m];
       const sel = yaAsig.includes(m);
-      return `<label class="asig-area-chk ${sel?'selected':''}" onclick="toggleAreaChk(this)">
-        <input type="checkbox" ${sel?'checked':''} style="display:none">
+      return `<label class="asig-area-chk ${sel?'selected':''}" data-area="${m}">
+        <input type="checkbox" ${sel?'checked':''} onchange="toggleAreaChk(this)">
         <span>${cfg.icon}</span><span>${m}</span></label>`;
     }).join("");
 }
 
-function toggleAreaChk(el) { el.classList.toggle("selected"); }
-function seleccionarTodasAreas()   { document.querySelectorAll(".asig-area-chk").forEach(el=>el.classList.add("selected")); }
-function deseleccionarTodasAreas() { document.querySelectorAll(".asig-area-chk").forEach(el=>el.classList.remove("selected")); }
+// FIX: toggleAreaChk ahora usa el checkbox correctamente
+function toggleAreaChk(checkbox) {
+  const label = checkbox.closest('.asig-area-chk');
+  label.classList.toggle("selected", checkbox.checked);
+}
+
+function seleccionarTodasAreas() {
+  document.querySelectorAll(".asig-area-chk").forEach(el => {
+    el.classList.add("selected");
+    el.querySelector("input").checked = true;
+  });
+}
+function deseleccionarTodasAreas() {
+  document.querySelectorAll(".asig-area-chk").forEach(el => {
+    el.classList.remove("selected");
+    el.querySelector("input").checked = false;
+  });
+}
 
 function agregarGradoCompleto() {
   const grado = document.getElementById("asig-grado-sel").value;
-  const areas = [...document.querySelectorAll(".asig-area-chk.selected")]
-    .map(el => el.querySelector("span:last-child").textContent.trim());
+  const areas = [...document.querySelectorAll(".asig-area-chk input:checked")]
+    .map(el => el.closest('.asig-area-chk').dataset.area);
   if (!areas.length) { showToast("⚠ Selecciona al menos un área"); return; }
   asignacionesTemp = asignacionesTemp.filter(a => a.grado !== grado);
   areas.forEach(area => asignacionesTemp.push({ grado, area }));
@@ -144,9 +159,9 @@ function renderDocentesGrid() {
           </div>
           <div style="background:#0A1A0C;border:1px solid #1A3D1E;border-radius:7px;padding:7px 10px;margin-top:4px;font-size:.68rem">
             ${u.emailEduclass
-              ? `<span style="color:#66BB6A">✨ EduClass:</span> <span style="color:#E8EEF8">${u.emailEduclass}</span> <span style="color:#3A5580">/ ${u.passEduclass||'—'}</span>`
-              : `<span style="color:#3A5580">✨ Sin credenciales EduClass — edita para agregar</span>`}
-          </div>` 
+              ? `<span style="color:#66BB6A">✨ EduClass:</span> <span style="color:#E8EEF8">${u.emailEduclass}</span>`
+              : `<span style="color:#3A5580">✨ Sin credenciales EduClass</span>`}
+          </div>`
         : `<div class="doc-admin-note">Acceso completo al sistema</div>`}
       </div>`;
   }).join("");
@@ -181,8 +196,10 @@ function editDocente(id) {
   document.getElementById("doc-username").value  = user.username;
   document.getElementById("doc-pass").value      = user.password;
   document.getElementById("doc-email").value     = user.email || "";
-  if(document.getElementById("doc-email-educlass")) document.getElementById("doc-email-educlass").value = user.emailEduclass || "";
-  if(document.getElementById("doc-pass-educlass"))  document.getElementById("doc-pass-educlass").value  = user.passEduclass  || "";
+  const ecEmail = document.getElementById("doc-email-educlass");
+  const ecPass  = document.getElementById("doc-pass-educlass");
+  if(ecEmail) ecEmail.value = user.emailEduclass || "";
+  if(ecPass)  ecPass.value  = user.passEduclass  || "";
   renderAsignacionesLista(); renderAreasGrado();
   openModal("modal-docente");
 }
@@ -206,8 +223,8 @@ async function saveDocente() {
   const materias = [...new Set(asignacionesTemp.map(a=>a.area))];
   const payload  = { name, username, password:pass, email, emailEduclass, passEduclass, asignaciones:[...asignacionesTemp], grados, materias };
 
-  // Registrar automáticamente en EduClass si tiene correo y contraseña
-  if (emailEduclass && passEduclass) {
+  // Registrar en EduClass si tiene credenciales
+  if (emailEduclass && passEduclass && !editingUserId) {
     showToast("⏳ Registrando en EduClass...");
     try {
       const r = await fetch("https://educlass-backend-4kk0.onrender.com/auth/registro", {
@@ -224,16 +241,16 @@ async function saveDocente() {
       });
       const d = await r.json();
       if (r.ok) showToast("✅ Registrado en EduClass");
-      else if ((d.mensaje||"").includes("ya está")) showToast("ℹ️ Correo EduClass ya registrado");
+      else if ((d.mensaje||"").includes("ya")) showToast("ℹ️ Correo EduClass ya registrado");
       else showToast("⚠️ EduClass: " + (d.mensaje||"sin respuesta"));
     } catch(e) {
-      showToast("⚠️ No se pudo conectar a EduClass — guardando solo en EduPanel");
+      showToast("⚠️ No se pudo conectar a EduClass");
     }
   }
 
-  // Guardar en EduPanel
+  // Guardar en EduPanel (siempre con role:"docente")
   if (editingUserId) {
-    Auth.updateUser(editingUserId, payload);
+    Auth.updateUser(editingUserId, { ...payload, role: "docente" });
     showToast("✓ Docente actualizado");
   } else {
     const r = Auth.createUser({ ...payload, role:"docente" });

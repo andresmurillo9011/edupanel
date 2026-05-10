@@ -8,109 +8,72 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Sora', sans-serif;
-  min-height: 100vh;
-  background:
-    radial-gradient(ellipse at 20% 30%, rgba(21,101,192,.22), transparent 55%),
+  font-family: 'Sora', sans-serif; min-height: 100vh;
+  background: radial-gradient(ellipse at 20% 30%, rgba(21,101,192,.22), transparent 55%),
     radial-gradient(ellipse at 80% 70%, rgba(46,125,50,.16), transparent 55%),
     linear-gradient(160deg, #060E08, #0A1A0C 50%, #06100E);
   color: #E8EEF8;
 }
-#pantalla-login {
-  min-height: 100vh; display: flex;
-  justify-content: center; align-items: center; padding: 20px;
-}
-.login-wrap { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
-.brand { text-align: center; padding-bottom: 22px; }
-.brand-logo { width: 64px; height: 64px; object-fit: contain; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
-.brand-title { font-size: 1.6rem; font-weight: 800; color: #F9A825; letter-spacing: .08em; }
-.brand-school { font-size: .92rem; font-weight: 600; margin-top: 4px; }
-.brand-loc { font-size: .72rem; color: #7B9CC8; margin-top: 2px; }
-.brand-line { width: 56px; height: 3px; background: linear-gradient(90deg,#1565C0,#2E7D32); border-radius: 3px; margin: 8px auto 0; }
-.card {
-  width: 100%; background: rgba(15,34,17,.95);
-  border: 1px solid #1A3D1E; border-top: 3px solid #1565C0;
-  border-radius: 20px; padding: 28px 26px 24px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.6);
-  display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px;
-}
-.card-title { font-size: 1rem; font-weight: 700; text-align: center; }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: .72rem; font-weight: 600; color: #7B9CC8; letter-spacing: .04em; text-transform: uppercase; }
-.field input {
-  padding: 10px 14px; background: #142916;
-  border: 1px solid #1A3D1E; border-radius: 40px;
-  color: #E8EEF8; font-family: 'Sora', sans-serif; font-size: .9rem; outline: none;
-}
-.field input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.18); }
-.pass-row { position: relative; }
-.pass-row input { padding-right: 42px; width: 100%; }
-.eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: .95rem; color: #3A5580; }
-.error-msg { background: rgba(239,68,68,.12); border: 1px solid #ef4444; border-radius: 10px; padding: 8px 12px; font-size: .76rem; color: #f87171; display: none; }
-.btn-login {
-  width: 100%; padding: 11px;
-  background: linear-gradient(90deg,#1565C0,#1976D2);
-  border: none; border-radius: 40px; color: #fff;
-  font-family: 'Sora', sans-serif; font-size: .92rem; font-weight: 700;
-  cursor: pointer; transition: all .15s; margin-top: 2px;
-}
-.btn-login:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(21,101,192,.5); }
-.btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-.recovery { display: flex; gap: 9px; background: rgba(21,101,192,.08); border: 1px solid rgba(21,101,192,.2); border-radius: 10px; padding: 11px 13px; }
-.recovery p { font-size: .72rem; color: #7B9CC8; line-height: 1.6; }
-.recovery strong { color: #F9A825; }
-.loading { display: none; align-items: center; gap: 8px; font-size: .78rem; color: #66BB6A; }
-.spinner { width: 16px; height: 16px; border: 2px solid #1A3D1E; border-top-color: #43A047; border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* DASHBOARD */
-#pantalla-dashboard { display: none; min-height: 100vh; flex-direction: column; }
-.dash-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px; height: 56px;
-  background: linear-gradient(90deg,#0D47A1,#0A1A0C);
-  border-bottom: 2px solid #2E7D32; flex-shrink: 0;
-}
-.dash-logo { display: flex; align-items: center; gap: 10px; }
-.dash-logo img { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
-.dash-logo-txt span:first-child { display: block; font-size: .88rem; font-weight: 800; color: #F9A825; }
-.dash-logo-txt span:last-child { display: block; font-size: .58rem; color: #7B9CC8; text-transform: uppercase; }
-.dash-user { display: flex; align-items: center; gap: 10px; }
-.dash-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#2E7D32,#1565C0); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #fff; border: 2px solid #F9A825; flex-shrink: 0; }
-.dash-meta { display: flex; flex-direction: column; align-items: flex-end; }
-.dash-meta .dash-name { font-size: .78rem; font-weight: 600; }
-.dash-meta .dash-rol { font-size: .65rem; color: #F9A825; }
-.btn-salir { padding: 5px 11px; border: 1px solid #1A3D1E; border-radius: 6px; background: transparent; color: #3A5580; cursor: pointer; font-family: 'Sora',sans-serif; font-size: .7rem; transition: all .15s; }
-.btn-salir:hover { border-color: #ef4444; color: #ef4444; }
-.dash-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 28px; }
-.dash-bienvenida { text-align: center; }
-.dash-bienvenida h1 { font-size: 1.4rem; font-weight: 800; color: #F9A825; margin-bottom: 6px; }
-.dash-bienvenida p { font-size: .88rem; color: #7B9CC8; }
-.dash-modulos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; width: 100%; max-width: 860px; }
-.modulo-card {
-  background: #0F2211; border: 1.5px solid #1A3D1E;
-  border-radius: 16px; padding: 24px 20px;
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  cursor: pointer; text-decoration: none; transition: all .2s; position: relative;
-}
-.modulo-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); border-radius: 16px 16px 0 0; }
-.modulo-card:hover { border-color: var(--c); transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,.4); background: #142916; }
-.modulo-card.solo-admin { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-.modulo-icon { font-size: 2.4rem; line-height: 1; }
-.modulo-titulo { font-size: .98rem; font-weight: 800; color: #E8EEF8; text-align: center; }
-.modulo-desc { font-size: .73rem; color: #7B9CC8; text-align: center; line-height: 1.5; }
-.modulo-btn { margin-top: 4px; padding: 7px 18px; border-radius: 40px; border: none; background: var(--c); color: #fff; font-family: 'Sora',sans-serif; font-size: .78rem; font-weight: 700; cursor: pointer; }
-.badge-admin { position: absolute; top: 10px; right: 10px; background: rgba(249,168,37,.2); border: 1px solid #F9A825; color: #F9A825; font-size: .6rem; padding: 2px 7px; border-radius: 20px; font-weight: 700; }
-.dash-footer { text-align: center; padding: 20px; font-size: .65rem; color: #1A3D1E; }
-@media (max-width: 500px) {
-  .dash-modulos { grid-template-columns: 1fr; max-width: 320px; }
-  .dash-bienvenida h1 { font-size: 1.1rem; }
-}
+#pantalla-login { min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+.login-wrap { width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; }
+.brand { text-align:center; padding-bottom:22px; }
+.brand-logo { width:72px; height:72px; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto; }
+.brand-title { font-size:1.6rem; font-weight:800; color:#F9A825; letter-spacing:.08em; }
+.brand-school { font-size:.92rem; font-weight:600; margin-top:4px; }
+.brand-loc { font-size:.72rem; color:#7B9CC8; margin-top:2px; }
+.brand-line { width:56px; height:3px; background:linear-gradient(90deg,#1565C0,#2E7D32); border-radius:3px; margin:8px auto 0; }
+.card { width:100%; background:rgba(15,34,17,.95); border:1px solid #1A3D1E; border-top:3px solid #1565C0; border-radius:20px; padding:28px 26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; gap:14px; margin-bottom:22px; }
+.card-title { font-size:1rem; font-weight:700; text-align:center; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:.72rem; font-weight:600; color:#7B9CC8; letter-spacing:.04em; text-transform:uppercase; }
+.field input { padding:10px 14px; background:#142916; border:1px solid #1A3D1E; border-radius:40px; color:#E8EEF8; font-family:'Sora',sans-serif; font-size:.9rem; outline:none; }
+.field input:focus { border-color:#1565C0; box-shadow:0 0 0 3px rgba(21,101,192,.18); }
+.pass-row { position:relative; }
+.pass-row input { padding-right:42px; width:100%; }
+.eye { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:.95rem; color:#3A5580; }
+.error-msg { background:rgba(239,68,68,.12); border:1px solid #ef4444; border-radius:10px; padding:8px 12px; font-size:.76rem; color:#f87171; display:none; }
+.btn-login { width:100%; padding:11px; background:linear-gradient(90deg,#1565C0,#1976D2); border:none; border-radius:40px; color:#fff; font-family:'Sora',sans-serif; font-size:.92rem; font-weight:700; cursor:pointer; transition:all .15s; margin-top:2px; }
+.btn-login:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(21,101,192,.5); }
+.btn-login:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.recovery { display:flex; gap:9px; background:rgba(21,101,192,.08); border:1px solid rgba(21,101,192,.2); border-radius:10px; padding:11px 13px; }
+.recovery p { font-size:.72rem; color:#7B9CC8; line-height:1.6; }
+.recovery strong { color:#F9A825; }
+.loading { display:none; align-items:center; gap:8px; font-size:.78rem; color:#66BB6A; }
+.spinner { width:16px; height:16px; border:2px solid #1A3D1E; border-top-color:#43A047; border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+#pantalla-dashboard { display:none; min-height:100vh; flex-direction:column; }
+.dash-header { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:56px; background:linear-gradient(90deg,#0D47A1,#0A1A0C); border-bottom:2px solid #2E7D32; flex-shrink:0; }
+.dash-logo { display:flex; align-items:center; gap:10px; }
+.dash-logo img { width:32px; height:32px; object-fit:contain; flex-shrink:0; }
+.dash-logo-txt span:first-child { display:block; font-size:.88rem; font-weight:800; color:#F9A825; }
+.dash-logo-txt span:last-child { display:block; font-size:.58rem; color:#7B9CC8; text-transform:uppercase; }
+.dash-user { display:flex; align-items:center; gap:10px; }
+.dash-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#2E7D32,#1565C0); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:700; color:#fff; border:2px solid #F9A825; flex-shrink:0; }
+.dash-meta { display:flex; flex-direction:column; align-items:flex-end; }
+.dash-meta .dash-name { font-size:.78rem; font-weight:600; }
+.dash-meta .dash-rol { font-size:.65rem; color:#F9A825; }
+.btn-salir { padding:5px 11px; border:1px solid #1A3D1E; border-radius:6px; background:transparent; color:#3A5580; cursor:pointer; font-family:'Sora',sans-serif; font-size:.7rem; transition:all .15s; }
+.btn-salir:hover { border-color:#ef4444; color:#ef4444; }
+.dash-main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:28px; }
+.dash-bienvenida { text-align:center; }
+.dash-bienvenida h1 { font-size:1.4rem; font-weight:800; color:#F9A825; margin-bottom:6px; }
+.dash-bienvenida p { font-size:.88rem; color:#7B9CC8; }
+.dash-modulos { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; width:100%; max-width:860px; }
+.modulo-card { background:#0F2211; border:1.5px solid #1A3D1E; border-radius:16px; padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; text-decoration:none; transition:all .2s; position:relative; }
+.modulo-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c); border-radius:16px 16px 0 0; }
+.modulo-card:hover { border-color:var(--c); transform:translateY(-4px); box-shadow:0 8px 32px rgba(0,0,0,.4); background:#142916; }
+.modulo-card.solo-admin { opacity:0.5; cursor:not-allowed; pointer-events:none; }
+.modulo-icon { font-size:2.4rem; line-height:1; }
+.modulo-titulo { font-size:.98rem; font-weight:800; color:#E8EEF8; text-align:center; }
+.modulo-desc { font-size:.73rem; color:#7B9CC8; text-align:center; line-height:1.5; }
+.modulo-btn { margin-top:4px; padding:7px 18px; border-radius:40px; border:none; background:var(--c); color:#fff; font-family:'Sora',sans-serif; font-size:.78rem; font-weight:700; cursor:pointer; }
+.badge-admin { position:absolute; top:10px; right:10px; background:rgba(249,168,37,.2); border:1px solid #F9A825; color:#F9A825; font-size:.6rem; padding:2px 7px; border-radius:20px; font-weight:700; }
+.dash-footer { text-align:center; padding:20px; font-size:.65rem; color:#1A3D1E; }
+@media(max-width:500px){ .dash-modulos{grid-template-columns:1fr;max-width:320px;} }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="pantalla-login">
   <div class="login-wrap">
     <div class="brand">
@@ -123,8 +86,8 @@ body {
     <div class="card">
       <div class="card-title">Acceso al Sistema Académico</div>
       <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="login-user" placeholder="docente@iess.edu.co" autocomplete="username">
+        <label>Correo o usuario</label>
+        <input type="text" id="login-user" placeholder="correo@iess.edu.co o usuario" autocomplete="username">
       </div>
       <div class="field">
         <label>Contraseña</label>
@@ -144,7 +107,6 @@ body {
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="pantalla-dashboard">
   <header class="dash-header">
     <div class="dash-logo">
@@ -163,7 +125,6 @@ body {
       <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
     </div>
   </header>
-
   <main class="dash-main">
     <div class="dash-bienvenida">
       <h1>¡Bienvenido/a, <span id="dash-nombre2">Docente</span>! 👋</h1>
@@ -206,18 +167,18 @@ body {
   <div class="dash-footer">EduPanel IESS · Sistema Académico Integrado · 2026</div>
 </div>
 
+<script src="auth.js"></script>
 <script>
-// ── API del backend local (el server.js que subiste) ──
 const API = 'https://educlass-backend-4kk0.onrender.com';
 
-// ── Verificar sesión al cargar ──
+// Verificar sesión al cargar
 (function() {
   const tok = localStorage.getItem('edutoken');
   const raw = localStorage.getItem('educlass_usuario');
   if (tok && raw) {
     try {
       const u = JSON.parse(raw);
-      if (u && u.email) { mostrarDashboard(u); return; }
+      if (u && (u.email || u.id)) { mostrarDashboard(u); return; }
     } catch(_) {}
   }
   localStorage.removeItem('edutoken');
@@ -230,40 +191,55 @@ function togglePass() {
 }
 
 async function doLogin() {
-  const email    = document.getElementById('login-user').value.trim();
+  const input    = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value;
   const errEl    = document.getElementById('login-error');
   const loadEl   = document.getElementById('login-loading');
   const btnEl    = document.getElementById('btn-login');
 
   errEl.style.display = 'none';
-  if (!email || !password) {
-    errEl.textContent = 'Ingresa correo y contraseña';
+  if (!input || !password) {
+    errEl.textContent = 'Ingresa correo/usuario y contraseña';
     errEl.style.display = 'block'; return;
   }
 
   btnEl.disabled = true;
   loadEl.style.display = 'flex';
 
+  // 1. Intentar login local con EduPanel (auth.js)
+  if (typeof Auth !== 'undefined') {
+    const localResult = Auth.login(input, password);
+    if (localResult.ok) {
+      const u = localResult.user;
+      const fakeToken = 'local_' + btoa(u.id + ':' + Date.now());
+      const usuarioObj = { id:u.id, name:u.name, email:u.email||input, rol:u.role, cargo:u.role, nombre:u.name };
+      localStorage.setItem('edutoken', fakeToken);
+      localStorage.setItem('educlass_usuario', JSON.stringify(usuarioObj));
+      btnEl.disabled = false;
+      loadEl.style.display = 'none';
+      mostrarDashboard(usuarioObj);
+      return;
+    }
+  }
+
+  // 2. Intentar login EduClass (backend Render)
   try {
     const r = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email: input, password })
     });
     const d = await r.json();
-
     if (r.ok && d.token) {
-      // Guardar sesión — compatible con horario.html Y planeacion/index.html
       localStorage.setItem('edutoken', d.token);
       localStorage.setItem('educlass_usuario', JSON.stringify(d.usuario));
       mostrarDashboard(d.usuario);
     } else {
-      errEl.textContent = d.mensaje || 'Correo o contraseña incorrectos';
+      errEl.textContent = d.mensaje || 'Correo/usuario o contraseña incorrectos';
       errEl.style.display = 'block';
     }
   } catch(e) {
-    errEl.textContent = 'Sin conexión al servidor. Verifica tu internet.';
+    errEl.textContent = 'Sin conexión al servidor.';
     errEl.style.display = 'block';
   } finally {
     btnEl.disabled = false;
@@ -274,17 +250,14 @@ async function doLogin() {
 function mostrarDashboard(usuario) {
   document.getElementById('pantalla-login').style.display = 'none';
   document.getElementById('pantalla-dashboard').style.display = 'flex';
-
-  const nombre   = usuario.name || usuario.nombre || 'Docente';
-  const iniciales = nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+  const nombre = usuario.name || usuario.nombre || 'Docente';
+  const iniciales = nombre.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
   document.getElementById('dash-nombre').textContent  = nombre;
   document.getElementById('dash-nombre2').textContent = nombre.split(' ')[0];
   document.getElementById('dash-avatar').textContent  = iniciales;
-
-  const rol     = usuario.rol || usuario.role || 'docente';
-  const esAdmin = rol === 'admin' || rol === 'superadmin';
+  const rol = usuario.rol || usuario.role || usuario.cargo || 'docente';
+  const esAdmin = ['admin','superadmin'].includes(rol);
   document.getElementById('dash-rol').textContent = esAdmin ? '👑 Administrador' : '👤 Docente';
-
   const modHorarios = document.getElementById('modulo-horarios');
   if (esAdmin) {
     modHorarios.classList.remove('solo-admin');
@@ -305,7 +278,7 @@ function cerrarSesion() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
+  if (e.key === 'Enter' && document.getElementById('pantalla-login').style.display !== 'none') doLogin();
 });
 </script>
 </body>
