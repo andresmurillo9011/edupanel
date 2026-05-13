@@ -200,7 +200,7 @@ try {
   if (tok && raw) {
     const u = JSON.parse(raw);
     if (u && (u.email || u.id)) {
-      const rol = u.rol || u.role || u.cargo || "";
+      const rol = (u.rol || u.role || u.cargo || "").toLowerCase();
       currentUser = {
         id: u.id, name: u.name || u.nombre || "Admin",
         email: u.email, role: ["admin","superadmin"].includes(rol) ? "admin" : "docente",
@@ -211,7 +211,7 @@ try {
 } catch(_) {}
 if (!currentUser) currentUser = Auth.requireAdmin();
 if (!currentUser) { window.location.href = "login.html"; }
-if (currentUser.role !== "admin") { window.location.href = "login.html"; }
+// Panel accesible para admin y docentes con sesión válida
 if (currentUser) {
   document.getElementById("admin-name").textContent = currentUser.name;
 }
