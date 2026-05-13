@@ -193,6 +193,7 @@
 <script>
 // ── Verificar acceso admin ──────────────────────────
 // Verificar sesión — primero EduClass, luego EduPanel local
+// Verificar sesión — cualquier usuario con sesión válida puede entrar
 let currentUser = null;
 try {
   const tok = localStorage.getItem("edutoken");
@@ -202,16 +203,17 @@ try {
     if (u && (u.email || u.id)) {
       const rol = (u.rol || u.role || u.cargo || "").toLowerCase();
       currentUser = {
-        id: u.id, name: u.name || u.nombre || "Admin",
+        id: u.id, name: u.name || u.nombre || "Docente",
         email: u.email, role: ["admin","superadmin"].includes(rol) ? "admin" : "docente",
         _desdeEduClass: true
       };
     }
   }
 } catch(_) {}
-if (!currentUser) currentUser = Auth.requireAdmin();
+// Fallback: sesión local EduPanel
+if (!currentUser) { const u = Auth.currentUser(); if (u) currentUser = u; }
+// Sin sesión → redirigir al login
 if (!currentUser) { window.location.href = "login.html"; }
-// Panel accesible para admin y docentes con sesión válida
 if (currentUser) {
   document.getElementById("admin-name").textContent = currentUser.name;
 }
