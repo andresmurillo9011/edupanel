@@ -192,7 +192,26 @@
 <script src="auth.js"></script>
 <script>
 // ── Verificar acceso admin ──────────────────────────
-const currentUser = Auth.requireAdmin();
+// Verificar sesión — primero EduClass, luego EduPanel local
+let currentUser = null;
+try {
+  const tok = localStorage.getItem("edutoken");
+  const raw = localStorage.getItem("educlass_usuario");
+  if (tok && raw) {
+    const u = JSON.parse(raw);
+    if (u && (u.email || u.id)) {
+      const rol = u.rol || u.role || u.cargo || "";
+      currentUser = {
+        id: u.id, name: u.name || u.nombre || "Admin",
+        email: u.email, role: ["admin","superadmin"].includes(rol) ? "admin" : "docente",
+        _desdeEduClass: true
+      };
+    }
+  }
+} catch(_) {}
+if (!currentUser) currentUser = Auth.requireAdmin();
+if (!currentUser) { window.location.href = "login.html"; }
+if (currentUser.role !== "admin") { window.location.href = "login.html"; }
 if (currentUser) {
   document.getElementById("admin-name").textContent = currentUser.name;
 }
@@ -262,38 +281,18 @@ async function cargarEduClass() {
   loading.style.display = "block";
   wrap.style.display    = "none";
 
-  // Obtener token admin de EduClass (usando las credenciales del admin de EduPanel)
-  const adminEP = Auth.getAllUsers().find(u => u.role === "admin");
-  const ecEmail = adminEP?.emailEduclass;
-  const ecPass  = adminEP?.passEduclass;
-
-  if (!ecEmail || !ecPass) {
-    loading.innerHTML = `<p style="color:#ef4444">⚠️ El administrador no tiene credenciales EduClass configuradas.<br><small>Ve a Admin → Docentes → editar Administrador → agregar correo EduClass.</small></p>`;
-    return;
-  }
+  // Usar el token de EduClass ya guardado en localStorage
+  const ecTok = localStorage.getItem("edutoken");
 
   try {
-    // Login como admin en EduClass
-    const loginR = await fetch("https://educlass-backend-4kk0.onrender.com/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: ecEmail, password: ecPass })
-    });
-    const loginD = await loginR.json();
-
-    if (!loginR.ok || !loginD.token) {
-      loading.innerHTML = `<p style="color:#ef4444">⚠️ No se pudo iniciar sesión en EduClass: ${loginD.mensaje||"error"}</p>`;
-      return;
-    }
-
-    // Obtener usuarios (si el backend tiene endpoint de admin)
-    const usersR = await fetch("https://educlass-backend-4kk0.onrender.com/admin/users", {
-      headers: { "Authorization": `Bearer ${loginD.token}` }
+    // Obtener usuarios de EduClass con el token actual
+    const usersR = await fetch("https://educlass-backend-4kk0.onrender.com/todos-docentes-asignaciones", {
+      headers: { "Authorization": `Bearer ${ecTok}` }
     });
 
     if (usersR.ok) {
       const usersD = await usersR.json();
-      ecUsers = usersD.usuarios || usersD.users || [];
+      ecUsers = usersD.docentes || usersD.usuarios || usersD.users || [];
     } else {
       // Fallback: mostrar solo los usuarios que tenemos en EduPanel con credenciales
       ecUsers = Auth.getAllUsers()
