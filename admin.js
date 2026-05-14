@@ -592,7 +592,11 @@ async function renderResumen() {
 // ============================================================
 // CREAR CREDENCIALES DE ESTUDIANTE
 // ============================================================
-async function crearCredencialesEst(estId, nombre) {
+async function crearCredencialesEst(btn) {
+  // Obtener nombre e ID desde el DOM
+  const fila = btn.closest("tr");
+  const nombre = fila ? (fila.querySelector(".est-name-cell span")?.textContent?.trim() || "estudiante") : "estudiante";
+  const estId = fila ? fila.querySelector(".est-name-cell span")?.id?.replace("dn-","") : Date.now().toString();
   const usuario = nombre.toLowerCase()
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/\s+/g, ".").replace(/[^a-z0-9.]/g, "")
