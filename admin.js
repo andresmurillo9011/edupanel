@@ -338,7 +338,7 @@ async function renderEstudiantesList() {
               onkeydown="if(event.key==='Enter')confirmEditEst('${e.id}');if(event.key==='Escape')cancelEditEst('${e.id}')">
           </td>
           <td class="est-acts">
-            <button class="icon-btn-sm" style="color:#34D399;border-color:#059669" onclick="crearCredencialesEst('${e.id}','${e.nombre.replace(/'/g,\"\\'\")}')">🔑</button>
+            <button class="icon-btn-sm" style="color:#34D399;border-color:#059669" onclick="crearCredencialesEst(this)">🔑</button>
             <button class="icon-btn-sm edit" onclick="toggleEditEst('${e.id}')">✏️</button>
             <button class="icon-btn-sm del"  onclick="delEst('${e.id}')">🗑</button>
           </td>
