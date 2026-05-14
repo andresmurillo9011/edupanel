@@ -338,6 +338,7 @@ async function renderEstudiantesList() {
               onkeydown="if(event.key==='Enter')confirmEditEst('${e.id}');if(event.key==='Escape')cancelEditEst('${e.id}')">
           </td>
           <td class="est-acts">
+            <button class="icon-btn-sm" style="color:#34D399;border-color:#059669" onclick="crearCredencialesEst('${e.id}','${e.nombre.replace(/'/g,\"\\'\")}')">🔑</button>
             <button class="icon-btn-sm edit" onclick="toggleEditEst('${e.id}')">✏️</button>
             <button class="icon-btn-sm del"  onclick="delEst('${e.id}')">🗑</button>
           </td>
@@ -585,6 +586,50 @@ async function renderResumen() {
           <span class="act-time">${new Date(d.updatedAt).toLocaleDateString("es-CO")}</span>
         </div>`).join("")||`<div class="empty-state">Sin actividad aún</div>`}
     </div>`;
+}
+
+
+// ============================================================
+// CREAR CREDENCIALES DE ESTUDIANTE
+// ============================================================
+async function crearCredencialesEst(estId, nombre) {
+  const usuario = nombre.toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, ".").replace(/[^a-z0-9.]/g, "")
+    .substring(0, 20);
+  const password = Math.random().toString(36).substring(2, 8);
+
+  try {
+    const r = await fetch("https://educlass-backend-4kk0.onrender.com/auth/registro-estudiante", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre, usuario, password,
+        grado: document.getElementById("grado-select-est")?.value || "",
+        institucion: "I.E.R. Santiago de la Selva"
+      })
+    });
+    const d = await r.json();
+    if (r.ok || (d.mensaje && d.mensaje.includes("ya existe"))) {
+      showToast(`✅ Credenciales: usuario="${usuario}" pass="${password}"`);
+      // Mostrar modal con credenciales
+      const msg = `Credenciales para ${nombre}:
+
+Usuario: ${usuario}
+Contraseña: ${password}
+
+¿Copiar al portapapeles?`;
+      if (confirm(msg)) {
+        navigator.clipboard.writeText(`Usuario: ${usuario}
+Contraseña: ${password}`);
+        showToast("✅ Copiado al portapapeles");
+      }
+    } else {
+      showToast("⚠️ " + (d.mensaje || "Error creando credenciales"));
+    }
+  } catch(e) {
+    showToast("⚠️ Sin conexión al servidor");
+  }
 }
 
 // ============================================================

@@ -22,7 +22,7 @@ body {
 .brand-school { font-size:.92rem; font-weight:600; margin-top:4px; }
 .brand-loc { font-size:.72rem; color:#7B9CC8; margin-top:2px; }
 .brand-line { width:56px; height:3px; background:linear-gradient(90deg,#1565C0,#2E7D32); border-radius:3px; margin:8px auto 0; }
-.card { width:100%; background:rgba(15,34,17,.95); border:1px solid #1A3D1E; border-top:3px solid #1565C0; border-radius:20px; padding:28px 26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; gap:14px; margin-bottom:22px; }
+.card { width:100%; background:rgba(15,34,17,.95); border:1px solid #1A3D1E; border-top:3px solid #1565C0; border-radius:20px; padding:28px 26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; gap:14px; margin-bottom:16px; }
 .card-title { font-size:1rem; font-weight:700; text-align:center; }
 .field { display:flex; flex-direction:column; gap:5px; }
 .field label { font-size:.72rem; font-weight:600; color:#7B9CC8; letter-spacing:.04em; text-transform:uppercase; }
@@ -35,12 +35,29 @@ body {
 .btn-login { width:100%; padding:11px; background:linear-gradient(90deg,#1565C0,#1976D2); border:none; border-radius:40px; color:#fff; font-family:'Sora',sans-serif; font-size:.92rem; font-weight:700; cursor:pointer; transition:all .15s; margin-top:2px; }
 .btn-login:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(21,101,192,.5); }
 .btn-login:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.btn-est { width:100%; padding:11px; background:linear-gradient(90deg,#059669,#047857); border:none; border-radius:40px; color:#fff; font-family:'Sora',sans-serif; font-size:.92rem; font-weight:700; cursor:pointer; transition:all .15s; text-decoration:none; text-align:center; display:block; }
+.btn-est:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(5,150,105,.5); }
+.divider { display:flex; align-items:center; gap:10px; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:#1A3D1E; }
+.divider span { font-size:.7rem; color:#3A5580; white-space:nowrap; }
 .recovery { display:flex; gap:9px; background:rgba(21,101,192,.08); border:1px solid rgba(21,101,192,.2); border-radius:10px; padding:11px 13px; }
 .recovery p { font-size:.72rem; color:#7B9CC8; line-height:1.6; }
 .recovery strong { color:#F9A825; }
 .loading { display:none; align-items:center; gap:8px; font-size:.78rem; color:#66BB6A; }
 .spinner { width:16px; height:16px; border:2px solid #1A3D1E; border-top-color:#43A047; border-radius:50%; animation:spin .8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
+
+/* PORTAL ESTUDIANTE */
+#pantalla-estudiante { display:none; min-height:100vh; justify-content:center; align-items:center; padding:20px; }
+.card-est { width:100%; background:rgba(5,40,20,.95); border:1px solid #065f46; border-top:3px solid #059669; border-radius:20px; padding:28px 26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; gap:14px; margin-bottom:16px; }
+.card-est .card-title { color:#34D399; }
+.field-est input { padding:10px 14px; background:#022c22; border:1px solid #065f46; border-radius:40px; color:#E8EEF8; font-family:'Sora',sans-serif; font-size:.9rem; outline:none; width:100%; }
+.field-est input:focus { border-color:#059669; box-shadow:0 0 0 3px rgba(5,150,105,.18); }
+.field-est label { font-size:.72rem; font-weight:600; color:#34D399; letter-spacing:.04em; text-transform:uppercase; }
+.btn-doc { width:100%; padding:11px; background:transparent; border:1px solid #1A3D1E; border-radius:40px; color:#7B9CC8; font-family:'Sora',sans-serif; font-size:.85rem; cursor:pointer; transition:all .15s; }
+.btn-doc:hover { border-color:#1565C0; color:#60A5FA; }
+
+/* DASHBOARD */
 #pantalla-dashboard { display:none; min-height:100vh; flex-direction:column; }
 .dash-header { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:56px; background:linear-gradient(90deg,#0D47A1,#0A1A0C); border-bottom:2px solid #2E7D32; flex-shrink:0; }
 .dash-logo { display:flex; align-items:center; gap:10px; }
@@ -74,6 +91,7 @@ body {
 </head>
 <body>
 
+<!-- ══ LOGIN DOCENTE ══ -->
 <div id="pantalla-login">
   <div class="login-wrap">
     <div class="brand">
@@ -84,7 +102,7 @@ body {
       <div class="brand-line"></div>
     </div>
     <div class="card">
-      <div class="card-title">Acceso al Sistema Académico</div>
+      <div class="card-title">Acceso Docentes</div>
       <div class="field">
         <label>Correo o usuario</label>
         <input type="text" id="login-user" placeholder="correo@iess.edu.co o usuario" autocomplete="username">
@@ -98,7 +116,9 @@ body {
       </div>
       <div class="error-msg" id="login-error"></div>
       <div class="loading" id="login-loading"><div class="spinner"></div> Verificando...</div>
-      <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar →</button>
+      <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar como Docente →</button>
+      <div class="divider"><span>¿Eres estudiante?</span></div>
+      <button class="btn-est" onclick="mostrarLoginEst()">📚 Ingresar como Estudiante</button>
       <div class="recovery">
         <span>🔐</span>
         <p>¿Olvidaste tu contraseña?<br>Comunícate con el <strong>Administrador</strong>.</p>
@@ -107,6 +127,37 @@ body {
   </div>
 </div>
 
+<!-- ══ LOGIN ESTUDIANTE ══ -->
+<div id="pantalla-estudiante">
+  <div class="login-wrap">
+    <div class="brand">
+      <img src="escudo.png" alt="Escudo IESS" class="brand-logo">
+      <div class="brand-title">EduPanel</div>
+      <div class="brand-school">Portal Estudiantil · IESS</div>
+      <div class="brand-line" style="background:linear-gradient(90deg,#059669,#34D399)"></div>
+    </div>
+    <div class="card-est">
+      <div class="card-title">📚 Acceso Estudiantes</div>
+      <div class="field field-est">
+        <label>Usuario</label>
+        <input type="text" id="est-user" placeholder="Tu usuario asignado" autocomplete="username">
+      </div>
+      <div class="field field-est">
+        <label>Contraseña</label>
+        <div class="pass-row">
+          <input type="password" id="est-pass" placeholder="••••••••" autocomplete="current-password">
+          <button class="eye" type="button" onclick="togglePassEst()" style="color:#34D399">👁</button>
+        </div>
+      </div>
+      <div class="error-msg" id="est-error"></div>
+      <div class="loading" id="est-loading"><div class="spinner" style="border-top-color:#34D399"></div> Verificando...</div>
+      <button class="btn-login" onclick="doLoginEst()" style="background:linear-gradient(90deg,#059669,#047857)">Ingresar →</button>
+      <button class="btn-doc" onclick="mostrarLoginDoc()">← Soy docente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD DOCENTE ══ -->
 <div id="pantalla-dashboard">
   <header class="dash-header">
     <div class="dash-logo">
@@ -171,8 +222,21 @@ body {
 <script>
 const API = 'https://educlass-backend-4kk0.onrender.com';
 
-// Verificar sesión al cargar
+// ── Verificar sesión al cargar ──
 (function() {
+  // Sesión estudiante
+  const tokEst = localStorage.getItem('edutokenest');
+  const rawEst = localStorage.getItem('educlass_estudiante');
+  if (tokEst && rawEst) {
+    try {
+      const e = JSON.parse(rawEst);
+      if (e && e.name) {
+        window.location.href = 'planeacion/index.html';
+        return;
+      }
+    } catch(_) {}
+  }
+  // Sesión docente
   const tok = localStorage.getItem('edutoken');
   const raw = localStorage.getItem('educlass_usuario');
   if (tok && raw) {
@@ -185,11 +249,26 @@ const API = 'https://educlass-backend-4kk0.onrender.com';
   localStorage.removeItem('educlass_usuario');
 })();
 
+// ── Navegación entre pantallas ──
+function mostrarLoginDoc() {
+  document.getElementById('pantalla-estudiante').style.display = 'none';
+  document.getElementById('pantalla-login').style.display = 'flex';
+}
+function mostrarLoginEst() {
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('pantalla-estudiante').style.display = 'flex';
+}
+
 function togglePass() {
   const inp = document.getElementById('login-pass');
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
+function togglePassEst() {
+  const inp = document.getElementById('est-pass');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
 
+// ── Login Docente ──
 async function doLogin() {
   const input    = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value;
@@ -202,11 +281,9 @@ async function doLogin() {
     errEl.textContent = 'Ingresa correo/usuario y contraseña';
     errEl.style.display = 'block'; return;
   }
+  btnEl.disabled = true; loadEl.style.display = 'flex';
 
-  btnEl.disabled = true;
-  loadEl.style.display = 'flex';
-
-  // 1. Intentar login local con EduPanel (auth.js)
+  // 1. Login local EduPanel
   if (typeof Auth !== 'undefined') {
     const localResult = Auth.login(input, password);
     if (localResult.ok) {
@@ -215,18 +292,15 @@ async function doLogin() {
       const usuarioObj = { id:u.id, name:u.name, email:u.email||input, rol:u.role, cargo:u.role, nombre:u.name };
       localStorage.setItem('edutoken', fakeToken);
       localStorage.setItem('educlass_usuario', JSON.stringify(usuarioObj));
-      btnEl.disabled = false;
-      loadEl.style.display = 'none';
-      mostrarDashboard(usuarioObj);
-      return;
+      btnEl.disabled = false; loadEl.style.display = 'none';
+      mostrarDashboard(usuarioObj); return;
     }
   }
 
-  // 2. Intentar login EduClass (backend Render)
+  // 2. Login EduClass backend
   try {
     const r = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: input, password })
     });
     const d = await r.json();
@@ -241,21 +315,53 @@ async function doLogin() {
   } catch(e) {
     errEl.textContent = 'Sin conexión al servidor.';
     errEl.style.display = 'block';
-  } finally {
-    btnEl.disabled = false;
-    loadEl.style.display = 'none';
+  } finally { btnEl.disabled = false; loadEl.style.display = 'none'; }
+}
+
+// ── Login Estudiante ──
+async function doLoginEst() {
+  const usuario  = document.getElementById('est-user').value.trim();
+  const password = document.getElementById('est-pass').value;
+  const errEl    = document.getElementById('est-error');
+  const loadEl   = document.getElementById('est-loading');
+
+  errEl.style.display = 'none';
+  if (!usuario || !password) {
+    errEl.textContent = 'Ingresa usuario y contraseña';
+    errEl.style.display = 'block'; return;
   }
+  loadEl.style.display = 'flex';
+
+  try {
+    const r = await fetch(`${API}/auth/login-estudiante`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, password })
+    });
+    const d = await r.json();
+    if (r.ok && d.token) {
+      localStorage.setItem('edutokenest', d.token);
+      localStorage.setItem('educlass_estudiante', JSON.stringify(d.estudiante));
+      window.location.href = 'planeacion/index.html';
+    } else {
+      errEl.textContent = d.mensaje || 'Usuario o contraseña incorrectos';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Sin conexión al servidor.';
+    errEl.style.display = 'block';
+  } finally { loadEl.style.display = 'none'; }
 }
 
 function mostrarDashboard(usuario) {
-  document.getElementById('pantalla-login').style.display = 'none';
-  document.getElementById('pantalla-dashboard').style.display = 'flex';
+  document.getElementById('pantalla-login').style.display     = 'none';
+  document.getElementById('pantalla-estudiante').style.display = 'none';
+  document.getElementById('pantalla-dashboard').style.display  = 'flex';
   const nombre = usuario.name || usuario.nombre || 'Docente';
   const iniciales = nombre.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
   document.getElementById('dash-nombre').textContent  = nombre;
   document.getElementById('dash-nombre2').textContent = nombre.split(' ')[0];
   document.getElementById('dash-avatar').textContent  = iniciales;
-  const rol = usuario.rol || usuario.role || usuario.cargo || 'docente';
+  const rol = (usuario.rol || usuario.role || usuario.cargo || 'docente').toLowerCase();
   const esAdmin = ['admin','superadmin'].includes(rol);
   document.getElementById('dash-rol').textContent = esAdmin ? '👑 Administrador' : '👤 Docente';
   const modHorarios = document.getElementById('modulo-horarios');
@@ -267,18 +373,18 @@ function mostrarDashboard(usuario) {
 }
 
 function cerrarSesion() {
-  localStorage.removeItem('edutoken');
-  localStorage.removeItem('educlass_usuario');
-  localStorage.removeItem('edutokenest');
-  localStorage.removeItem('educlass_estudiante');
-  document.getElementById('pantalla-dashboard').style.display = 'none';
-  document.getElementById('pantalla-login').style.display     = 'flex';
+  ['edutoken','educlass_usuario','edutokenest','educlass_estudiante'].forEach(k => localStorage.removeItem(k));
+  document.getElementById('pantalla-dashboard').style.display  = 'none';
+  document.getElementById('pantalla-estudiante').style.display = 'none';
+  document.getElementById('pantalla-login').style.display      = 'flex';
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('pantalla-login').style.display !== 'none') doLogin();
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('pantalla-login').style.display !== 'none') doLogin();
+  if (document.getElementById('pantalla-estudiante').style.display !== 'none') doLoginEst();
 });
 </script>
 </body>
