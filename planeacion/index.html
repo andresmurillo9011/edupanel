@@ -578,6 +578,7 @@
       const cargarClases=async()=>{try{const r=await fetch(`${API}/mis-clases`,{headers:authH()});const d=await r.json();setMisClases(d.clases||[]);}catch(_){}};
       const cargarTareas=async()=>{try{const r=await fetch(`${API}/tasks/mis-tareas`,{headers:authH()});const d=await r.json();setMisTareas(d.tareas||[]);}catch(_){}};
       const cargarTareasEst=async()=>{try{const r=await fetch(`${API}/tasks/mis-tareas-estudiante`,{headers:authHEst()});const d=await r.json();setEstTareas(d.tareas||[]);}catch(_){}};
+      useEffect(()=>{if(usuario&&localStorage.getItem("edutoken")){cargarTareas();cargarClases();}},[]);
       useEffect(()=>{if(estSesion&&localStorage.getItem("edutokenest"))cargarTareasEst();},[estVista]);
       const cargarPerfil=u=>{setInstitucion(u.institution?.name||"");setDocente(u.name||"");if(u.logoPath)setLogoPreview(`${API}/${u.logoPath}`);if(u.banderaPath)setBanderaPreview(`${API}/${u.banderaPath}`);};
       const reset=()=>{setPaso(1);setArea("");setGrado("");setPeriodo("1");setFecha("");setTema("");setDuracion("55");setNivelEdu("");setApertura("");setDesarrollo("");setRetro("");setCierre("");setDejaTarea(null);setTarea("");setContenido("");setGuardadoOk(false);setClaseActiva(null);if(usuario)cargarPerfil(usuario);};
