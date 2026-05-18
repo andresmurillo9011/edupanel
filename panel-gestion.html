@@ -107,6 +107,7 @@
   <div class="tabs">
     <button class="tab active" onclick="showTab('edupanel',this)">🌿 EduPanel</button>
     <button class="tab" onclick="showTab('educlass',this)">✨ EduClass</button>
+    <button class="tab" onclick="showTab('estudiantes',this)">🎓 Estudiantes</button>
     <button class="tab" onclick="showTab('completo',this)">📋 Vista completa</button>
   </div>
 
@@ -157,6 +158,22 @@
           </tr>
         </thead>
         <tbody id="tbody-ec"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Estudiantes EduClass -->
+  <div id="tab-estudiantes" class="table-wrap" style="display:none">
+    <div class="table-header">
+      <span class="table-title">Estudiantes registrados en EduClass</span>
+      <button onclick="cargarEstudiantes()" style="padding:5px 12px;border:1px solid #2E7D32;border-radius:6px;background:rgba(46,125,50,.15);color:#66BB6A;cursor:pointer;font-size:.72rem;font-family:'Sora',sans-serif">🔄 Actualizar</button>
+    </div>
+    <div id="est-loading" style="padding:30px;text-align:center;color:#3A5580">Cargando estudiantes...</div>
+    <div id="est-table-wrap" style="display:none">
+      <input id="est-buscar" type="text" placeholder="🔍 Buscar estudiante..." oninput="filtrarEstudiantes()" style="width:100%;padding:8px 12px;margin-bottom:10px;background:#0a1128;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-size:13px;">
+      <table class="user-table" style="width:100%">
+        <thead><tr><th>Nombre</th><th>Usuario</th><th>Contraseña</th><th>Grado</th></tr></thead>
+        <tbody id="tbody-est"></tbody>
       </table>
     </div>
   </div>
@@ -287,7 +304,9 @@ async function cargarEduClass() {
   const ecTok = localStorage.getItem("edutoken");
 
   try {
-    // Obtener usuarios de EduClass con el token actual
+    const u = JSON.parse(localStorage.getItem("educlass_usuario") || "{}");
+    const currentDocente = { name: u.name||"—", email: u.email||"—", cargo: u.cargo||"Docente", institution: u.institution||{ name:"I.E.R. Santiago de la Selva" }, city: u.institution?.city||"Valparaíso", createdAt: u.createdAt||"—" };
+
     const usersR = await fetch("https://educlass-backend-4kk0.onrender.com/todos-docentes-asignaciones", {
       headers: { "Authorization": `Bearer ${ecTok}` }
     });
@@ -295,35 +314,16 @@ async function cargarEduClass() {
     if (usersR.ok) {
       const usersD = await usersR.json();
       ecUsers = usersD.docentes || usersD.usuarios || usersD.users || [];
+      if (!ecUsers.length) ecUsers = [currentDocente];
     } else {
-      // Fallback: mostrar solo los usuarios que tenemos en EduPanel con credenciales
-      ecUsers = Auth.getAllUsers()
-        .filter(u => u.emailEduclass)
-        .map(u => ({
-          name:      u.name,
-          email:     u.emailEduclass,
-          cargo:     "Docente",
-          city:      "Valparaíso",
-          institution: "I.E.R. Santiago de la Selva",
-          createdAt: u.createdAt || "—"
-        }));
+      ecUsers = [currentDocente];
     }
 
     renderECTable(ecUsers);
     loading.style.display = "none";
     wrap.style.display    = "block";
   } catch(e) {
-    // Fallback offline: mostrar usuarios con credenciales configuradas
-    ecUsers = Auth.getAllUsers()
-      .filter(u => u.emailEduclass)
-      .map(u => ({
-        name:        u.name,
-        email:       u.emailEduclass,
-        cargo:       "Docente",
-        city:        "Valparaíso",
-        institution: "I.E.R. Santiago de la Selva",
-        createdAt:   u.createdAt || "—"
-      }));
+    ecUsers = [currentDocente];
     renderECTable(ecUsers);
     loading.style.display = "none";
     wrap.style.display    = "block";
@@ -385,6 +385,8 @@ function showTab(tab, btn) {
   btn.classList.add("active");
   document.getElementById("tab-edupanel").style.display  = tab==="edupanel"  ? "block" : "none";
   document.getElementById("tab-educlass").style.display  = tab==="educlass"  ? "block" : "none";
+  document.getElementById("tab-estudiantes").style.display = tab==="estudiantes" ? "block" : "none";
+  if (tab==="estudiantes" && !todosEstudiantes.length) cargarEstudiantes();
   document.getElementById("tab-completo").style.display  = tab==="completo"  ? "block" : "none";
 }
 
@@ -398,6 +400,48 @@ function filtrar(tipo, q) {
 
 function irAEditar(id) {
   window.location.href = `admin.html#docente-${id}`;
+}
+
+let todosEstudiantes = [];
+async function cargarEstudiantes() {
+  const loading = document.getElementById("est-loading");
+  const wrap = document.getElementById("est-table-wrap");
+  loading.style.display = "block";
+  wrap.style.display = "none";
+  const ecTok = localStorage.getItem("edutoken");
+  try {
+    const r = await fetch("https://educlass-backend-4kk0.onrender.com/students", {
+      headers: { "Authorization": `Bearer ${ecTok}` }
+    });
+    const d = await r.json();
+    todosEstudiantes = d.estudiantes || [];
+    renderEstudiantes(todosEstudiantes);
+    loading.style.display = "none";
+    wrap.style.display = "block";
+  } catch(e) {
+    loading.innerHTML = "❌ Error cargando estudiantes";
+  }
+}
+function renderEstudiantes(lista) {
+  const tbody = document.getElementById("tbody-est");
+  if (!lista.length) { tbody.innerHTML = `<tr><td colspan="4" class="empty">Sin estudiantes</td></tr>`; return; }
+  // Agrupar por grado
+  const porGrado = {};
+  lista.forEach(e => { if (!porGrado[e.grade]) porGrado[e.grade] = []; porGrado[e.grade].push(e); });
+  const grados = Object.keys(porGrado).sort();
+  tbody.innerHTML = grados.map(g => porGrado[g].map((e, i) => `
+    <tr>
+      ${i===0 ? `<td rowspan="${porGrado[g].length}" style="background:#0a1128;color:#60a5fa;font-weight:bold;text-align:center;vertical-align:middle">${g}</td>` : ""}
+      <td><strong>${e.name}</strong></td>
+      <td><span class="mono">${e.username}</span></td>
+      <td><span class="pass-hidden" onclick="togglePass(this,'${e.username}')">••••••••</span></td>
+    </tr>
+  `).join("")).join("");
+}
+function filtrarEstudiantes() {
+  const q = document.getElementById("est-buscar").value.toLowerCase();
+  const filtrados = todosEstudiantes.filter(e => e.name.toLowerCase().includes(q) || e.username.toLowerCase().includes(q) || e.grade.toLowerCase().includes(q));
+  renderEstudiantes(filtrados);
 }
 
 function exportarCSV() {
