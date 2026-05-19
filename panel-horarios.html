@@ -344,22 +344,24 @@ const GRADO_LABELS = {
 // ── Cargar docentes ──
 async function cargarDocentes() {
   try {
-    const r = await fetch(`${API}/superadmin/teachers`, { headers: authH() });
-    const d = await r.json();
-    docentes = d.docentes || [];
-  } catch(_) {
-    // Fallback: intentar usuarios normales
-    try {
-      const r = await fetch(`${API}/superadmin/stats`, { headers: authH() });
+    // Intentar cargar docentes del backend EduClass
+    const r = await fetch(`${API}/todos-docentes-asignaciones`, { headers: authH() });
+    if (r.ok) {
       const d = await r.json();
-    } catch(__) {}
+      docentes = d.docentes || d.usuarios || d.users || [];
+    }
+  } catch(_) {}
+
+  // Si el backend no devuelve docentes, usar el usuario actual
+  if (!docentes.length) {
+    const u = JSON.parse(localStorage.getItem("educlass_usuario") || "{}");
+    docentes = [{ id: u.id || 'demo1', name: u.name || currentUser.name || 'Docente', cargo: u.cargo || 'Docente', email: u.email || currentUser.email }];
   }
 
-  // Si el backend no devuelve docentes, crear lista de prueba
-  if (!docentes.length) {
-    docentes = [
-      { id: 'demo1', name: currentUser.name || 'Docente Demo', cargo: currentUser.cargo || 'Docente', email: currentUser.email }
-    ];
+  // Asegurarse que el usuario actual siempre esté en la lista
+  const u = JSON.parse(localStorage.getItem("educlass_usuario") || "{}");
+  if (u.id && !docentes.find(d => d.id === u.id)) {
+    docentes.unshift({ id: u.id, name: u.name || currentUser.name, cargo: u.cargo || 'Docente', email: u.email || currentUser.email });
   }
 
   document.getElementById('stat-total').textContent = docentes.length;
