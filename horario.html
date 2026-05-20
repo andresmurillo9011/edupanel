@@ -307,8 +307,9 @@ async function renderSchedule(day) {
         // En "Mi Horario": mostrar solo celdas asignadas al docente
         const tieneAsignaciones = currentUser.asignaciones && currentUser.asignaciones.length > 0;
         const esMiHorario = vistaMode === "mio";
+        const normalizar = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[°\s]/g,"");
         const esMiMateria = !tieneAsignaciones || !esMiHorario ||
-          currentUser.asignaciones.some(a => a.grado === grado && a.area === materia);
+          currentUser.asignaciones.some(a => normalizar(a.grado) === normalizar(grado) && normalizar(a.area) === normalizar(materia));
 
         if (!esMiMateria) {
           td.className = "empty-cell locked-cell"; td.innerHTML = "—";
