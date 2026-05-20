@@ -1,13 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horario — I.E.R. Santiago de la Selva</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-left">
+    <img src="escudo.png" alt="Escudo" class="header-logo">
+    <div class="header-title">
+      <span class="school-name">I.E.R. Santiago de la Selva</span>
+      <span class="school-sub">Sistema de Horario Interactivo</span>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="clock-block">
+      <span id="current-date"></span>
+      <span id="current-time"></span>
+    </div>
+  </div>
+  <div class="header-right">
+    <a id="admin-link" href="admin.html" style="display:none" class="admin-link-btn">⚙ Admin</a>
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar">--</div>
+      <div class="user-details">
+        <span id="user-name">Cargando...</span>
+        <span id="user-role" class="user-role-badge">Docente</span>
+      </div>
+    </div>
+    <button class="logout-btn">↩ Salir</button>
+  </div>
+</header>
+
+<!-- VISTA TOGGLE -->
+<div class="vista-bar">
+  <button class="vista-btn active" onclick="setVista('completo',this)">🏫 Horario Completo</button>
+  <button class="vista-btn" onclick="setVista('mio',this)">📋 Mi Horario</button>
+</div>
+
+<!-- NAVEGACIÓN DÍAS -->
+<nav class="day-nav">
+  <button class="day-btn active" data-day="Lunes">Lun</button>
+  <button class="day-btn" data-day="Martes">Mar</button>
+  <button class="day-btn" data-day="Miércoles">Mié</button>
+  <button class="day-btn" data-day="Jueves">Jue</button>
+  <button class="day-btn" data-day="Viernes">Vie</button>
+</nav>
+
+<!-- CONTENIDO PRINCIPAL -->
+<main class="main-layout">
+  <!-- HORARIO -->
+  <section class="schedule-section">
+    <h2 class="schedule-title" id="schedule-title">🏫 Horario Completo · Lunes</h2>
+    <div class="table-wrapper">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th class="th-hora">Hora</th>
+            <th>Sexto</th>
+            <th>Séptimo</th>
+            <th>Octavo</th>
+            <th>Noveno</th>
+            <th>Décimo</th>
+            <th>Once</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-body"></tbody>
+      </table>
+    </div>
+    <div class="legend-bar" id="legend-bar"></div>
+  </section>
+
+  <!-- PANEL LATERAL -->
+  <aside class="side-panel">
+    <div id="panel-empty" class="panel-empty">
+      <div class="panel-empty-icon">📋</div>
+      <p>Selecciona una clase<br>para ver el detalle</p>
+    </div>
+    <div id="panel-content" class="panel-content" style="display:none"></div>
+  </aside>
+</main>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="data.js"></script>
+<script src="db.js"></script>
+<script>
 // ============================================================
 // APP.JS — Horario interactivo I.E.R. Santiago de la Selva
 // Usa: DB (db.js) · HORARIO/MATERIAS (data.js)
 // ============================================================
 
-let selectedDay      = "Lunes";
-let activeCell       = null;
-let panelTab         = "diario";
-let currentUser      = null;
-let vistaMode        = "completo";
+let selectedDay   = "Lunes";
+let activeCell    = null;
+let panelTab      = "diario";
+let currentUser   = null;
+let vistaMode     = "completo";
 let guiaTerminadaVal = null;
 
 // ============================================================
@@ -19,12 +112,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tok = localStorage.getItem("edutoken");
   const raw = localStorage.getItem("educlass_usuario");
 
+  // Si hay sesión de estudiante activa pero NO de docente → redirigir al portal
+  const tokEst = localStorage.getItem("edutokenest");
+  const rawEst = localStorage.getItem("educlass_estudiante");
+  if (tokEst && rawEst && (!tok || !raw)) {
+    window.location.href = "planeacion/index.html";
+    return;
+  }
+
+  // Sin sesión docente → login
   if (!tok || !raw) {
     window.location.href = "login.html";
     return;
   }
 
   const eduUser = JSON.parse(raw);
+
+  // Verificar que sea docente (los docentes tienen email, los estudiantes no)
+  if (!eduUser || !eduUser.email) {
+    localStorage.removeItem("edutoken");
+    localStorage.removeItem("educlass_usuario");
+    window.location.href = "login.html";
+    return;
+  }
+
   currentUser = {
     id:           eduUser.id,
     name:         eduUser.name,
@@ -37,9 +148,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Header
   const initials = currentUser.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-  document.getElementById("user-avatar").textContent = initials;
-  document.getElementById("user-name").textContent   = currentUser.name;
-  document.getElementById("user-role").textContent   = currentUser.role === "admin" ? "👑 Administrador" : "👤 Docente";
+  document.getElementById("user-avatar").textContent  = initials;
+  document.getElementById("user-name").textContent    = currentUser.name;
+  document.getElementById("user-role").textContent    =
+    currentUser.role === "admin" ? "👑 Administrador" : "👤 Docente";
 
   // Logout limpio
   const logoutBtn = document.querySelector(".logout-btn");
@@ -121,7 +233,6 @@ function resetPanel() {
 async function renderSchedule(day) {
   const tbody = document.getElementById("schedule-body");
   tbody.innerHTML = "";
-
   const filas = HORARIO[day] || [];
 
   // Precargar diarios para mostrar dots (en paralelo)
@@ -140,12 +251,12 @@ async function renderSchedule(day) {
   );
 
   filas.forEach((fila, rowIndex) => {
-    const tr         = document.createElement("tr");
+    const tr = document.createElement("tr");
     const isDescanso = fila.sexto === "DESCANSO";
     const isAlmuerzo = fila.sexto === "ALMUERZO";
 
     if (isDescanso || isAlmuerzo) {
-      const td  = document.createElement("td");
+      const td = document.createElement("td");
       td.colSpan = 7; td.className = "break-cell";
       const cfg = MATERIAS_CONFIG[isDescanso ? "DESCANSO" : "ALMUERZO"];
       td.style.setProperty("--break-color", cfg.color);
@@ -162,19 +273,16 @@ async function renderSchedule(day) {
 
     GRADOS.forEach(grado => {
       const materia = fila[grado] || "";
-      const td      = document.createElement("td");
-      const cfg     = MATERIAS_CONFIG[materia];
-
+      const td  = document.createElement("td");
+      const cfg = MATERIAS_CONFIG[materia];
       if (materia && cfg && !["DESCANSO","ALMUERZO"].includes(materia)) {
         td.className = "class-cell";
         td.style.setProperty("--cell-color", cfg.color);
-        td.setAttribute("data-dia", day);
-        td.setAttribute("data-hora", fila.hora);
+        td.setAttribute("data-dia",   day);
+        td.setAttribute("data-hora",  fila.hora);
         td.setAttribute("data-grado", grado);
-
         const cached = cache[`${grado}::${fila.hora}::${materia}`];
         const hasDot = cached && cached.temaVisto;
-
         td.innerHTML = `
           <span class="cell-icon">${cfg.icon}</span>
           <span class="cell-materia">${materia}</span>
@@ -197,7 +305,6 @@ async function onCellClick(td, dia, hora, grado, materia) {
   document.querySelectorAll(".class-cell.selected").forEach(el => el.classList.remove("selected"));
   td.classList.add("selected");
   activeCell = { dia, hora, grado, materia };
-
   document.getElementById("panel-empty").style.display  = "none";
   document.getElementById("panel-content").style.display = "flex";
   panelTab = "diario";
@@ -222,10 +329,10 @@ async function renderPanel(dia, hora, grado, materia) {
       <button class="close-btn" onclick="resetPanel()">✕</button>
     </div>
     <div class="panel-tabs">
-      <button class="tab-btn active"  onclick="switchTab('diario',this)">📋 Diario</button>
-      <button class="tab-btn"         onclick="switchTab('seguimiento',this)">📊 Seguimiento</button>
-      <button class="tab-btn"         onclick="switchTab('notas',this)">📝 Notas</button>
-      <button class="tab-btn"         onclick="switchTab('plan',this)">🗓 Plan</button>
+      <button class="tab-btn active" onclick="switchTab('diario',this)">📋 Diario</button>
+      <button class="tab-btn" onclick="switchTab('seguimiento',this)">📊 Seguimiento</button>
+      <button class="tab-btn" onclick="switchTab('notas',this)">📝 Notas</button>
+      <button class="tab-btn" onclick="switchTab('plan',this)">🗓 Plan</button>
     </div>
     <div class="tab-content" id="tab-content">
       <div style="padding:24px;text-align:center;color:#3A5580">Cargando...</div>
@@ -248,10 +355,10 @@ async function loadTab(tab, dia, hora, grado, materia) {
   const cont = document.getElementById("tab-content");
   try {
     let html = "";
-    if (tab === "diario")      html = await renderDiario(dia, hora, grado, materia);
-    if (tab === "seguimiento") html = await renderSeguimiento(dia, hora, grado, materia);
-    if (tab === "notas")       html = await renderNotas(dia, hora, grado, materia);
-    if (tab === "plan")        html = await renderPlan(dia, hora, grado, materia);
+    if (tab === "diario")       html = await renderDiario(dia, hora, grado, materia);
+    if (tab === "seguimiento")  html = await renderSeguimiento(dia, hora, grado, materia);
+    if (tab === "notas")        html = await renderNotas(dia, hora, grado, materia);
+    if (tab === "plan")         html = await renderPlan(dia, hora, grado, materia);
     cont.innerHTML = html;
   } catch(e) {
     cont.innerHTML = `<div class="tab-panel"><div class="empty-state">Error cargando datos.</div></div>`;
@@ -320,12 +427,12 @@ async function saveDiario() {
   const existing = await DB.getDiario(dia, grado, hora, materia);
   await DB.saveDiario(dia, grado, hora, materia, {
     ...existing,
-    temaVisto:          document.getElementById("tema-visto")?.value    || "",
-    descripcion:        document.getElementById("descripcion")?.value   || "",
-    observacionGeneral: document.getElementById("obs-general")?.value   || "",
-    guiaTerminada:      guiaTerminadaVal,
-    guiaPendiente:      document.getElementById("guia-pendiente")?.value || "",
-    avancePorcentaje:   parseInt(document.getElementById("avance-range")?.value || 50),
+    temaVisto:         document.getElementById("tema-visto")?.value    || "",
+    descripcion:       document.getElementById("descripcion")?.value   || "",
+    observacionGeneral:document.getElementById("obs-general")?.value   || "",
+    guiaTerminada:     guiaTerminadaVal,
+    guiaPendiente:     document.getElementById("guia-pendiente")?.value || "",
+    avancePorcentaje:  parseInt(document.getElementById("avance-range")?.value || 50),
   }, currentUser.id);
   showToast("✓ Diario guardado");
   await renderSchedule(dia);
@@ -404,9 +511,8 @@ async function renderNotas(dia, hora, grado, materia) {
     </div></div>`;
 
   const notasMap = await DB.getNotasGrado(dia, grado, hora, materia);
-
   const rows = lista.map((est, i) => {
-    const n            = notasMap[est.id] || { nota:"", estado:"normal", observacion:"" };
+    const n           = notasMap[est.id] || { nota:"", estado:"normal", observacion:"" };
     const estadoActual = n.estado || "normal";
     const estadoBtns   = Object.entries(ESTADOS_CLASE).map(([key, cfg]) => `
       <button class="estado-btn ${estadoActual===key?'active':''}"
@@ -454,7 +560,7 @@ async function renderNotas(dia, hora, grado, materia) {
 }
 
 async function setEstadoEst(estId, estado, dia, hora, grado, materia, btn) {
-  const n           = await DB.getNota(dia, grado, hora, materia, estId);
+  const n          = await DB.getNota(dia, grado, hora, materia, estId);
   const nuevoEstado = n.estado === estado ? "normal" : estado;
   await DB.saveNota(dia, grado, hora, materia, estId, { ...n, estado: nuevoEstado });
   const row = document.getElementById(`row-${estId}`);
@@ -498,122 +604,36 @@ async function exportNotas(dia, hora, grado, materia) {
     csv += `${est.numero},"${est.nombre}","${ESTADOS_CLASE[n.estado||"normal"]?.label||"Normal"}","${n.nota||''}","${n.observacion||''}"\n`;
   });
   const a = document.createElement("a");
-  a.href  = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-  a.download = `notas_${grado}_${materia.replace(/ /g,"_")}_${dia}.csv`;
+  a.href     = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download = `notas_${grado}_${materia.replace(/\s+/g,"_")}_${dia}.csv`;
   a.click();
-  showToast("✓ CSV exportado");
 }
 
 // ============================================================
 // TAB: PLAN
 // ============================================================
 async function renderPlan(dia, hora, grado, materia) {
-  const d        = await DB.getDiario(dia, grado, hora, materia);
-  const archivos = d.archivos || [];
+  const d = await DB.getDiario(dia, grado, hora, materia);
   return `
     <div class="tab-panel">
       <div class="form-group">
-        <label class="form-label">Plan del periodo</label>
-        <textarea class="form-textarea tall" id="plan-periodo"
-          placeholder="Objetivos, competencias, logros del periodo...">${d.planPeriodo||''}</textarea>
+        <label class="form-label">🎯 Objetivo de la clase</label>
+        <textarea class="form-textarea" id="plan-objetivo" placeholder="¿Qué aprenderán los estudiantes hoy?">${d.planObjetivo||''}</textarea>
       </div>
       <div class="form-group">
-        <label class="form-label">Logros esperados</label>
-        <input class="form-input" id="logros" type="text"
-          placeholder="Ej: El estudiante analiza y resuelve..." value="${d.logros||''}">
+        <label class="form-label">📚 Recursos y materiales</label>
+        <textarea class="form-textarea" id="plan-recursos" placeholder="Libro, fotocopias, videos, laboratorio...">${d.planRecursos||''}</textarea>
       </div>
-      <div class="plan-docs-section">
-        <label class="plan-docs-title">📎 Planeaciones y guías (PDF, Word, PPT...)</label>
-        <div class="upload-zone" onclick="document.getElementById('plan-file-upload').click()">
-          <input type="file" id="plan-file-upload" accept=".pdf,.doc,.docx,.pptx,.ppt,.xlsx,.xls"
-            style="display:none" onchange="handlePlanFileUpload(event)" multiple>
-          <span class="upload-icon">📄</span>
-          <span class="upload-text">Subir documentos</span>
-          <span class="upload-sub">PDF, Word, PowerPoint, Excel</span>
-        </div>
-        <div id="plan-docs-list">
-          ${archivos.length
-            ? archivos.map(f=>renderPlanDocItem(f)).join("")
-            : `<div style="font-size:.7rem;color:var(--text-muted)">Sin documentos subidos aún.</div>`}
-        </div>
+      <div class="form-group">
+        <label class="form-label">📝 Actividades planificadas</label>
+        <textarea class="form-textarea" id="plan-actividades" placeholder="Secuencia de actividades de la clase...">${d.planActividades||''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📊 Criterios de evaluación</label>
+        <textarea class="form-textarea" id="plan-evaluacion" placeholder="¿Cómo vas a evaluar el aprendizaje?">${d.planEvaluacion||''}</textarea>
       </div>
       <button class="save-btn" onclick="savePlan()">💾 Guardar plan</button>
     </div>`;
-}
-
-function renderPlanDocItem(f) {
-  const icons = {pdf:"📕",doc:"📘",docx:"📘",ppt:"📙",pptx:"📙",xls:"📗",xlsx:"📗"};
-  const ext   = f.nombre.split(".").pop().toLowerCase();
-  const enc   = encodeURIComponent(f.nombre);
-  return `
-    <div class="plan-doc-item" id="plandoc-${enc}">
-      <span>${icons[ext]||"📄"}</span>
-      <span class="plan-doc-name" title="${f.nombre}">${f.nombre}</span>
-      <span style="font-size:.62rem;color:var(--text-muted);white-space:nowrap">${f.tamaño}</span>
-      <button class="plan-doc-dl" onclick="descargarPlanDoc('${enc}')">⬇</button>
-      <button class="plan-doc-del" onclick="eliminarPlanDoc('${enc}')">🗑</button>
-    </div>`;
-}
-
-function handlePlanFileUpload(event) {
-  if (!activeCell) return;
-  const { dia, hora, grado, materia } = activeCell;
-  const files   = [...event.target.files];
-  let uploaded  = 0;
-
-  const process = async (i) => {
-    if (i >= files.length) {
-      showToast(`✓ ${uploaded} documento(s) subido(s)`);
-      event.target.value = "";
-      return;
-    }
-    const file = files[i];
-    if (file.size > 4*1024*1024) { showToast(`⚠ "${file.name}" supera 4MB`); return process(i+1); }
-    const reader = new FileReader();
-    reader.onload = async e => {
-      const info = { nombre:file.name, tipo:file.type, tamaño:(file.size/1024).toFixed(1)+" KB", data:e.target.result, fechaSubida:new Date().toLocaleDateString("es-CO") };
-      const existing = await DB.getDiario(dia, grado, hora, materia);
-      const archivos = existing.archivos || [];
-      const idx = archivos.findIndex(a=>a.nombre===file.name);
-      if (idx>=0) archivos[idx]=info; else archivos.push(info);
-      await DB.saveDiario(dia, grado, hora, materia, { ...existing, archivos }, currentUser.id);
-      uploaded++;
-      const cont = document.getElementById("plan-docs-list");
-      if (cont) {
-        const el = document.getElementById(`plandoc-${encodeURIComponent(file.name)}`);
-        if (el) el.outerHTML = renderPlanDocItem(info);
-        else {
-          const placeholder = cont.querySelector("div[style]");
-          if (placeholder) placeholder.remove();
-          cont.insertAdjacentHTML("beforeend", renderPlanDocItem(info));
-        }
-      }
-      process(i+1);
-    };
-    reader.readAsDataURL(file);
-  };
-  process(0);
-}
-
-async function descargarPlanDoc(enc) {
-  if (!activeCell) return;
-  const { dia, hora, grado, materia } = activeCell;
-  const d    = await DB.getDiario(dia, grado, hora, materia);
-  const file = (d.archivos||[]).find(f=>f.nombre===decodeURIComponent(enc));
-  if (!file) return;
-  const a = document.createElement("a"); a.href=file.data; a.download=file.nombre; a.click();
-}
-
-async function eliminarPlanDoc(enc) {
-  if (!activeCell) return;
-  const nombre = decodeURIComponent(enc);
-  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
-  const { dia, hora, grado, materia } = activeCell;
-  const existing = await DB.getDiario(dia, grado, hora, materia);
-  const archivos = (existing.archivos||[]).filter(f=>f.nombre!==nombre);
-  await DB.saveDiario(dia, grado, hora, materia, { ...existing, archivos }, currentUser.id);
-  document.getElementById(`plandoc-${enc}`)?.remove();
-  showToast("✓ Documento eliminado");
 }
 
 async function savePlan() {
@@ -622,24 +642,35 @@ async function savePlan() {
   const existing = await DB.getDiario(dia, grado, hora, materia);
   await DB.saveDiario(dia, grado, hora, materia, {
     ...existing,
-    planPeriodo: document.getElementById("plan-periodo")?.value || "",
-    logros:      document.getElementById("logros")?.value       || "",
+    planObjetivo:   document.getElementById("plan-objetivo")?.value    || "",
+    planRecursos:   document.getElementById("plan-recursos")?.value    || "",
+    planActividades:document.getElementById("plan-actividades")?.value || "",
+    planEvaluacion: document.getElementById("plan-evaluacion")?.value  || "",
   }, currentUser.id);
   showToast("✓ Plan guardado");
 }
 
 // ============================================================
-// LEYENDA + TOAST
+// LEYENDA
 // ============================================================
 function renderLegend() {
-  document.getElementById("legend-items").innerHTML = Object.entries(MATERIAS_CONFIG)
-    .filter(([k])=>!["DESCANSO","ALMUERZO"].includes(k))
-    .map(([n,cfg])=>`<span class="legend-item" style="--lc:${cfg.color}">${cfg.icon} ${n}</span>`)
+  const bar = document.getElementById("legend-bar");
+  if (!bar || !MATERIAS_CONFIG) return;
+  bar.innerHTML = Object.entries(MATERIAS_CONFIG)
+    .filter(([k]) => !["DESCANSO","ALMUERZO"].includes(k))
+    .map(([k, v]) => `<span class="legend-item" style="--lc:${v.color}">${v.icon} ${k}</span>`)
     .join("");
 }
 
+// ============================================================
+// TOAST
+// ============================================================
 function showToast(msg) {
   const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 3000);
+  t.textContent = msg;
+  t.classList.remove("hidden");
+  setTimeout(() => t.classList.add("hidden"), 2200);
 }
+</script>
+</body>
+</html>
