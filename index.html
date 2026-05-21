@@ -30,6 +30,7 @@
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   </div></div>
   <script type="text/babel" data-presets="react">
+
     const { useState, useRef, useEffect, useCallback } = React;
 
     const _ecToken = localStorage.getItem('edutoken');
@@ -636,7 +637,7 @@
     }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  
   </script>
 </body>
 </html>
-
