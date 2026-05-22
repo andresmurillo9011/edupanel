@@ -6,7 +6,7 @@
   <title>Planeacion con IA - EduPanel IESS</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#0e1420;color:#F1F5F9;font-family:"Segoe UI",Arial,sans-serif}
@@ -29,7 +29,7 @@
     <p style="color:#64748B;font-size:.82rem">Cargando EduClass...</p>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   </div></div>
-  <script type="text/babel">
+  <script type="text/babel" data-presets="react">
     const { useState, useRef, useEffect, useCallback } = React;
 
     const _ecToken = localStorage.getItem('edutoken');
@@ -39,64 +39,289 @@
     const FT = "Georgia, 'Times New Roman', serif";
     const FC = "'Segoe UI', Arial, sans-serif";
     const GRADOS = ["6°","7°","8°","9°","10°","11°"];
-    const TODOS_GRADOS = ["Transición","1°","2°","3°","4°","5°","6°","7°","8°","9°","10°","11°"];
+    const TODOS_GRADOS = ["Transicion","1°","2°","3°","4°","5°","6°","7°","8°","9°","10°","11°"];
     const TIPOS_ACT = [
       { id:"taller", label:"📝 Taller", desc:"Preguntas abiertas" },
-      { id:"evaluacion", label:"📊 Evaluación", desc:"Mixta" },
-      { id:"quiz", label:"⚡ Quiz", desc:"Selección múltiple" },
+      { id:"evaluacion", label:"📊 Evaluacion", desc:"Mixta" },
+      { id:"quiz", label:"⚡ Quiz", desc:"Seleccion multiple" },
       { id:"completar", label:"✏️ Completar", desc:"Espacios en blanco" },
       { id:"verdadero_falso", label:"✅ Verdadero/Falso", desc:"Afirmaciones" },
       { id:"relacionar", label:"🔗 Relacionar", desc:"Columna A-B" },
     ];
-    const OPT_P_APER=[{id:"cuento_p",label:"📚 Cuento pedagógico"},{id:"cancion",label:"🎵 Canción / rima"},{id:"pregunta",label:"❓ Pregunta impactante"},{id:"video",label:"🎬 Video sugerido"},{id:"imagen",label:"🖼️ Imagen contextual"},{id:"juego_i",label:"🎮 Juego de inicio"}];
+    const OPT_P_APER=[{id:"cuento_p",label:"📚 Cuento pedagogico"},{id:"cancion",label:"🎵 Cancion / rima"},{id:"pregunta",label:"❓ Pregunta impactante"},{id:"video",label:"🎬 Video sugerido"},{id:"imagen",label:"🖼️ Imagen contextual"},{id:"juego_i",label:"🎮 Juego de inicio"}];
     const OPT_P_DES=[{id:"juego_s",label:"🎯 Sopa de letras"},{id:"bingo",label:"🎰 Bingo educativo"},{id:"memoria",label:"🧠 Memoria conceptual"},{id:"manualidad",label:"✂️ Manualidad"},{id:"descubr",label:"🔍 Por descubrimiento"},{id:"rincones",label:"🏫 Rincones"},{id:"roles_p",label:"🎭 Juego de roles"},{id:"lluvia_p",label:"💭 Lluvia de ideas"}];
-    const OPT_P_RET=[{id:"vf",label:"✅ V/F"},{id:"completar",label:"📝 Completar"},{id:"dibujo_r",label:"🎨 Dibujo evaluativo"},{id:"preguntas",label:"❓ Preguntas rápidas"},{id:"relacionar",label:"🔗 Relacionar"},{id:"ruleta",label:"🎡 Ruleta"}];
-    const OPT_B_APER=[{id:"problema",label:"🧩 Situación problema"},{id:"dato",label:"🔢 Dato curioso"},{id:"pregunta",label:"❓ Pregunta impactante"},{id:"video",label:"🎬 Video sugerido"},{id:"noticia",label:"📰 Noticia actual"},{id:"debate_i",label:"⚖️ Debate inicial"}];
-    const OPT_B_DES=[{id:"magistral",label:"🎓 Clase magistral"},{id:"abp",label:"🧩 ABP"},{id:"debate_b",label:"⚖️ Debate académico"},{id:"caso_b",label:"🔬 Estudio de caso"},{id:"proyecto_b",label:"📁 Proyecto"},{id:"invertida",label:"🔄 Clase invertida"},{id:"simulacion",label:"🎮 Simulación"},{id:"mapa_av",label:"🗺️ Mapa conceptual"}];
-    const OPT_B_RET=[{id:"caso",label:"🔍 Caso práctico"},{id:"ensayo_c",label:"✍️ Ensayo corto"},{id:"preguntas",label:"❓ Preguntas análisis"},{id:"relacionar",label:"🔗 Relacionar"},{id:"vf",label:"✅ V/F"},{id:"debate_r",label:"💬 Debate corto"}];
-    const OPT_CIERRE=[{id:"resumen",label:"📋 Resumen colectivo"},{id:"metacog",label:"💭 Metacognición"},{id:"mapa_c",label:"🗺️ Mapa mental"},{id:"compromiso",label:"🤝 Compromiso"},{id:"ticket",label:"🎫 Ticket de salida"}];
-    const OPT_TAREA=[{id:"investiga",label:"🔎 Investigación"},{id:"entrevista",label:"🎤 Entrevista"},{id:"dibujo",label:"🎨 Dibujo"},{id:"redaccion",label:"✏️ Redacción"},{id:"video_c",label:"📱 Video"}];
+    const OPT_P_RET=[{id:"vf",label:"✅ V/F"},{id:"completar",label:"📝 Completar"},{id:"dibujo_r",label:"🎨 Dibujo evaluativo"},{id:"preguntas",label:"❓ Preguntas rapidas"},{id:"relacionar",label:"🔗 Relacionar"},{id:"ruleta",label:"🎡 Ruleta"}];
+    const OPT_B_APER=[{id:"problema",label:"🧩 Situacion problema"},{id:"dato",label:"🔢 Dato curioso"},{id:"pregunta",label:"❓ Pregunta impactante"},{id:"video",label:"🎬 Video sugerido"},{id:"noticia",label:"📰 Noticia actual"},{id:"debate_i",label:"⚖️ Debate inicial"}];
+    const OPT_B_DES=[{id:"magistral",label:"🎓 Clase magistral"},{id:"abp",label:"🧩 ABP"},{id:"debate_b",label:"⚖️ Debate academico"},{id:"caso_b",label:"🔬 Estudio de caso"},{id:"proyecto_b",label:"📁 Proyecto"},{id:"invertida",label:"🔄 Clase invertida"},{id:"simulacion",label:"🎮 Simulacion"},{id:"mapa_av",label:"🗺️ Mapa conceptual"}];
+    const OPT_B_RET=[{id:"caso",label:"🔍 Caso practico"},{id:"ensayo_c",label:"✍️ Ensayo corto"},{id:"preguntas",label:"❓ Preguntas analisis"},{id:"relacionar",label:"🔗 Relacionar"},{id:"vf",label:"✅ V/F"},{id:"debate_r",label:"💬 Debate corto"}];
+    const OPT_CIERRE=[{id:"resumen",label:"📋 Resumen colectivo"},{id:"metacog",label:"💭 Metacognicion"},{id:"mapa_c",label:"🗺️ Mapa mental"},{id:"compromiso",label:"🤝 Compromiso"},{id:"ticket",label:"🎫 Ticket de salida"}];
+    const OPT_TAREA=[{id:"investiga",label:"🔎 Investigacion"},{id:"entrevista",label:"🎤 Entrevista"},{id:"dibujo",label:"🎨 Dibujo"},{id:"redaccion",label:"✏️ Redaccion"},{id:"video_c",label:"📱 Video"}];
     const OPT_DUR=[{v:"55",l:"1 hora (55 min)"},{v:"110",l:"2 horas (110 min)"},{v:"165",l:"3 horas (165 min)"},{v:"220",l:"4 horas (220 min)"}];
 
     const C={fondo:"#0e1420",panel:"#0a1128",tarjeta:"#111827",borde:"#1e2d45",azul:"#2563EB",azulC:"#60A5FA",verde:"#059669",verdeC:"#34D399",texto:"#F1F5F9",textoS:"#64748B",err:"#F87171",ok:"#4ADE80",naranja:"#F59E0B",morado:"#7C3AED",rojo:"#DC2626"};
-    const S={fondo:{minHeight:"100vh",background:C.fondo,fontFamily:FC,color:C.texto},pantalla:{minHeight:"100vh",background:C.fondo,display:"flex",justifyContent:"center",alignItems:"center",fontFamily:FC},header:{background:C.panel,padding:"0 24px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`2px solid ${C.azul}`,position:"sticky",top:0,zIndex:100},logo:{color:C.azulC,fontSize:18,fontWeight:"bold",fontFamily:FT},cont:{maxWidth:980,margin:"0 auto",padding:"24px 16px"},card:{background:C.tarjeta,padding:"32px 28px",borderRadius:16,width:"100%",maxWidth:500,display:"flex",flexDirection:"column",gap:14,boxShadow:"0 12px 40px rgba(0,0,0,0.6)",border:`1px solid ${C.borde}`},titulo:{color:C.azulC,fontSize:22,fontWeight:"bold",margin:0,textAlign:"center",fontFamily:FT},sub:{color:C.textoS,textAlign:"center",margin:"0 0 8px",fontSize:13},lbl:{color:C.textoS,fontSize:12,marginBottom:4,fontWeight:"500"},inp:{padding:"10px 13px",borderRadius:8,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",fontFamily:FC,outline:"none"},ta:{padding:"10px 13px",borderRadius:8,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",fontFamily:FC,outline:"none",resize:"vertical",minHeight:80},sel:{padding:"10px 13px",borderRadius:8,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,flex:1,fontFamily:FC,outline:"none"},btnA:{padding:"11px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C.azul},#1d4ed8)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnG:{padding:"10px 18px",borderRadius:8,border:`1px solid ${C.borde}`,background:"transparent",color:C.textoS,fontSize:13,cursor:"pointer",width:"100%",fontFamily:FC},btnV:{padding:"11px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C.verde},#047857)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnN:{padding:"11px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C.naranja},#b45309)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",fontFamily:FT},btnM:{padding:"11px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C.morado},#5b21b6)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnSm:{padding:"5px 11px",borderRadius:6,border:`1px solid ${C.borde}`,background:"transparent",color:C.textoS,cursor:"pointer",fontSize:11},fila:{display:"flex",gap:10},bloque:{background:C.tarjeta,padding:20,borderRadius:12,marginBottom:14,border:`1px solid ${C.borde}`},tBloque:{color:C.azulC,fontSize:17,marginBottom:8,marginTop:0,fontFamily:FT,fontWeight:"bold"},grid2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8},grid3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8},opcion:(sel)=>({padding:10,borderRadius:8,border:sel?`2px solid ${C.azulC}`:`1px solid ${C.borde}`,background:sel?"#0f2a47":"#0a1128",cursor:"pointer",transition:"all 0.15s"}),oLbl:{color:C.texto,fontWeight:"700",fontSize:12,margin:0},oDesc:{color:C.textoS,fontSize:11,margin:"2px 0 0"},sep:{borderTop:`1px solid ${C.borde}`,margin:"14px 0"},chip:{display:"inline-block",background:"#0f2a47",border:`1px solid ${C.azul}`,color:C.azulC,padding:"2px 9px",borderRadius:20,fontSize:11,margin:2},err:{color:C.err,textAlign:"center",margin:0,fontSize:12},ok_msg:{color:C.ok,textAlign:"center",margin:0,fontSize:12},badge:(col)=>({background:col,color:"#fff",fontSize:10,fontWeight:"bold",padding:"2px 6px",borderRadius:20}),overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16},modal:{background:C.tarjeta,borderRadius:14,border:`1px solid ${C.borde}`,width:"100%",maxWidth:620,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden"},mHead:{padding:"18px 22px 14px",borderBottom:`1px solid ${C.borde}`,display:"flex",justifyContent:"space-between",alignItems:"center"},mBody:{padding:"18px 22px",overflowY:"auto",flex:1},mFoot:{padding:"14px 22px",borderTop:`1px solid ${C.borde}`,display:"flex",gap:8},pre:{whiteSpace:"pre-wrap",color:"#CBD5E1",fontSize:12,lineHeight:1.9,margin:0,fontFamily:"'Courier New',monospace"},pasoBola:(a,c2)=>({width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:"bold",background:c2?C.verde:a?C.azul:"#111827",color:(c2||a)?"white":"#4a5a70",border:a?`2px solid ${C.azulC}`:c2?`2px solid ${C.verde}`:`1px solid ${C.borde}`})};
+    const S={fondo:{minHeight:"100vh",background:C.fondo,fontFamily:FC,color:C.texto},pantalla:{minHeight:"100vh",background:C.fondo,display:"flex",justifyContent:"center",alignItems:"center",fontFamily:FC},header:{background:C.panel,padding:"0 24px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"2px solid "+C.azul,position:"sticky",top:0,zIndex:100},logo:{color:C.azulC,fontSize:18,fontWeight:"bold",fontFamily:FT},cont:{maxWidth:980,margin:"0 auto",padding:"24px 16px"},card:{background:C.tarjeta,padding:"32px 28px",borderRadius:16,width:"100%",maxWidth:500,display:"flex",flexDirection:"column",gap:14,boxShadow:"0 12px 40px rgba(0,0,0,0.6)",border:"1px solid "+C.borde},titulo:{color:C.azulC,fontSize:22,fontWeight:"bold",margin:0,textAlign:"center",fontFamily:FT},sub:{color:C.textoS,textAlign:"center",margin:"0 0 8px",fontSize:13},lbl:{color:C.textoS,fontSize:12,marginBottom:4,fontWeight:"500"},inp:{padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",fontFamily:FC,outline:"none"},ta:{padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",fontFamily:FC,outline:"none",resize:"vertical",minHeight:80},sel:{padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      background:"#0a1128",color:C.texto,fontSize:13,flex:1,fontFamily:FC,outline:"none"},
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      btnA:{padding:"11px 18px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+C.azul+",#1d4ed8)",color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnG:{padding:"10px 18px",borderRadius:8,border:"1px solid "+C.borde,background:"transparent",color:C.textoS,fontSize:13,cursor:"pointer",width:"100%",fontFamily:FC},btnV:{padding:"11px 18px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+C.verde+",#047857)",color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnN:{padding:"11px 18px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+C.naranja+",#b45309)",color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",fontFamily:FT},btnM:{padding:"11px 18px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+C.morado+",#5b21b6)",color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnSm:{padding:"5px 11px",borderRadius:6,border:"1px solid "+C.borde,background:"transparent",color:C.textoS,cursor:"pointer",fontSize:11},fila:{display:"flex",gap:10},bloque:{background:C.tarjeta,padding:20,borderRadius:12,marginBottom:14,border:"1px solid "+C.borde},
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        tBloque:{color:C.azulC,fontSize:17,marginBottom:8,marginTop:0,fontFamily:FT,fontWeight:"bold"},grid2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8},grid3:{display:"grid",
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        gridTemplateColumns:"1fr 1fr 1fr",gap:8},opcion:(sel)=>({padding:10,borderRadius:8,border:sel?"2px solid "+C.azulC:"1px solid "+C.borde,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+      background:sel?"#0f2a47":"#0a1128",cursor:"pointer",transition:"all 0.15s"}),oLbl:{color:C.texto,fontWeight:"700",fontSize:12,margin:0},oDesc:{color:C.textoS,fontSize:11,margin:"2px 0 0"},sep:{borderTop:"1px solid "+C.borde,margin:"14px 0"},chip:{display:"inline-block",background:"#0f2a47",border:"1px solid "+C.azul,color:C.azulC,padding:"2px 9px",borderRadius:20,fontSize:11,margin:2},err:{color:C.err,textAlign:"center",margin:0,fontSize:12},ok_msg:{color:C.ok,textAlign:"center",margin:0,fontSize:12},badge:(col)=>({background:col,color:"#fff",fontSize:10,fontWeight:"bold",padding:"2px 6px",borderRadius:20}),overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16},modal:{background:C.tarjeta,borderRadius:14,border:"1px solid "+C.borde,width:"100%",maxWidth:620,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden"},mHead:{padding:"18px 22px 14px",borderBottom:"1px solid "+C.borde,display:"flex",justifyContent:"space-between",alignItems:"center"},mBody:{padding:"18px 22px",overflowY:"auto",flex:1},mFoot:{padding:"14px 22px",borderTop:"1px solid "+C.borde,display:"flex",
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        gap:8},pre:{whiteSpace:"pre-wrap",color:"#CBD5E1",fontSize:12,lineHeight:1.9,margin:0,fontFamily:"'Courier New',monospace"},pasoBola:(a,c2)=>({width:28,height:28,borderRadius:"50%",display:"flex",
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:"bold",background:c2?C.verde:a?C.azul:"#111827",
+        
+        
+        
+        
+        
+        
+        
+        
+        
+      color:(c2||a)?"white":"#4a5a70",border:a?"2px solid "+C.azulC:c2?"2px solid "+C.verde:"1px solid "+C.borde})};
 
-    const authH=()=>({"Content-Type":"application/json","Authorization":`Bearer ${localStorage.getItem("edutoken")||""}`});
-    const authHEst=()=>({"Content-Type":"application/json","Authorization":`Bearer ${localStorage.getItem("edutokenest")||""}`});
+    const authH=()=>({"Content-Type":"application/json","Authorization":"Bearer "+localStorage.getItem("edutoken")||""});
+    const authHEst=()=>({"Content-Type":"application/json","Authorization":"Bearer "+localStorage.getItem("edutokenest")||""});
 
     // ── Estilos extra para SuperAdmin (sin redeclarar C, S, authH) ──
     const SA = {
       fondo:{minHeight:"100vh",background:C.fondo,display:"flex",fontFamily:"'Segoe UI',Arial,sans-serif",color:C.texto},
-      sidebar:{width:220,background:C.panel,borderRight:`1px solid ${C.borde}`,display:"flex",flexDirection:"column",padding:"20px 0",flexShrink:0,position:"sticky",top:0,height:"100vh"},
-      sLogo:{padding:"0 20px 20px",borderBottom:`1px solid ${C.borde}`,marginBottom:8},
-      sItem:(activo)=>({padding:"10px 20px",cursor:"pointer",background:activo?"#0f2a47":"transparent",borderLeft:activo?`3px solid ${C.azul}`:"3px solid transparent",color:activo?C.azulC:C.textoS,fontSize:13,fontWeight:activo?"600":"400",transition:"all 0.15s",display:"flex",alignItems:"center",gap:8}),
+      sidebar:{width:220,background:C.panel,borderRight:"1px solid "+C.borde,display:"flex",flexDirection:"column",padding:"20px 0",flexShrink:0,position:"sticky",top:0,height:"100vh"},
+      sLogo:{padding:"0 20px 20px",borderBottom:"1px solid "+C.borde,marginBottom:8},
+      sItem:(activo)=>({padding:"10px 20px",cursor:"pointer",background:activo?"#0f2a47":"transparent",borderLeft:activo?"3px solid "+C.azul:"3px solid transparent",color:activo?C.azulC:C.textoS,fontSize:13,fontWeight:activo?"600":"400",transition:"all 0.15s",display:"flex",alignItems:"center",gap:8}),
       main:{flex:1,padding:24,overflowY:"auto"},
       saHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20},
       titulo:{fontSize:20,fontWeight:"bold",margin:0,color:C.texto},
-      saCard:{background:C.tarjeta,border:`1px solid ${C.borde}`,borderRadius:12,padding:20,marginBottom:14},
+      saCard:{background:C.tarjeta,border:"1px solid "+C.borde,borderRadius:12,padding:20,marginBottom:14},
       grid4:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20},
-      statCard:(c)=>({background:C.tarjeta,border:`1px solid ${C.borde}`,borderRadius:10,padding:"16px 20px",textAlign:"center",borderTop:`3px solid ${c}`}),
-      saInp:{padding:"9px 12px",borderRadius:7,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",outline:"none"},
-      saSel:{padding:"9px 12px",borderRadius:7,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,outline:"none",width:"100%"},
+      statCard:(c)=>({background:C.tarjeta,border:"1px solid "+C.borde,borderRadius:10,padding:"16px 20px",textAlign:"center",borderTop:"3px solid "+c}),
+      saInp:{padding:"9px 12px",borderRadius:7,border:"1px solid "+C.borde,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",outline:"none"},
+      saSel:{padding:"9px 12px",borderRadius:7,border:"1px solid "+C.borde,background:"#0a1128",color:C.texto,fontSize:13,outline:"none",width:"100%"},
       saBtnA:{padding:"9px 16px",borderRadius:7,border:"none",background:C.azul,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
       saBtnV:{padding:"9px 16px",borderRadius:7,border:"none",background:C.verde,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
       saBtnR:{padding:"9px 16px",borderRadius:7,border:"none",background:C.rojo,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
       saBtnN:{padding:"9px 16px",borderRadius:7,border:"none",background:C.naranja,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
-      saBtnG:{padding:"9px 16px",borderRadius:7,border:`1px solid ${C.borde}`,background:"transparent",color:C.textoS,fontSize:13,cursor:"pointer"},
+      saBtnG:{padding:"9px 16px",borderRadius:7,border:"1px solid "+C.borde,background:"transparent",color:C.textoS,fontSize:13,cursor:"pointer"},
       saOverlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:16},
-      saModal:{background:C.tarjeta,borderRadius:14,border:`1px solid ${C.borde}`,width:"100%",maxWidth:560,maxHeight:"85vh",display:"flex",flexDirection:"column"},
-      saMHead:{padding:"18px 22px 14px",borderBottom:`1px solid ${C.borde}`,display:"flex",justifyContent:"space-between",alignItems:"center"},
+      saModal:{background:C.tarjeta,borderRadius:14,border:"1px solid "+C.borde,width:"100%",maxWidth:560,maxHeight:"85vh",display:"flex",flexDirection:"column"},
+      saMHead:{padding:"18px 22px 14px",borderBottom:"1px solid "+C.borde,display:"flex",justifyContent:"space-between",alignItems:"center"},
       saMBody:{padding:"18px 22px",overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:12},
-      saMFoot:{padding:"14px 22px",borderTop:`1px solid ${C.borde}`,display:"flex",gap:8,justifyContent:"flex-end"},
-      tag:(c)=>({background:c+"22",border:`1px solid ${c}`,color:c,fontSize:10,padding:"2px 7px",borderRadius:20,display:"inline-block",margin:"1px 2px"}),
+      saMFoot:{padding:"14px 22px",borderTop:"1px solid "+C.borde,display:"flex",gap:8,justifyContent:"flex-end"},
+      tag:(c)=>({background:c+"22",border:"1px solid "+c,color:c,fontSize:10,padding:"2px 7px",borderRadius:20,display:"inline-block",margin:"1px 2px"}),
     };
 
     function Opcs({lista,val,set}){return(<div style={S.grid2}>{lista.map(op=>(<div key={op.id} style={S.opcion(val===op.id)} onClick={()=>set(op.id)}><p style={S.oLbl}>{op.label}</p>{op.desc&&<p style={S.oDesc}>{op.desc}</p>}</div>))}</div>);}
-    function SubirImg({label,preview,inputRef,onChange}){return(<div style={{textAlign:"center"}}><p style={{...S.lbl,textAlign:"center"}}>{label}</p><div style={{width:72,height:72,borderRadius:8,border:`2px dashed ${C.borde}`,background:"#0a1128",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",cursor:"pointer",margin:"0 auto"}} onClick={()=>inputRef.current.click()}>{preview?<img src={preview} alt={label} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:22,color:C.textoS}}>📷</span>}</div><p style={{color:C.textoS,fontSize:10,margin:"3px 0 0"}}>Click para subir</p><input ref={inputRef} type="file" accept="image/*" style={{display:"none"}} onChange={onChange}/></div>);}
-    function DashCard({icon,titulo,desc,color,onClick,badge,disabled}){const[hover,setHover]=useState(false);return(<div onClick={disabled?null:onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{background:hover&&!disabled?"#131f35":"#0f1a2e",border:`1.5px solid ${hover&&!disabled?color:C.borde}`,borderRadius:12,padding:"18px 14px",cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s",position:"relative",opacity:disabled?0.5:1,boxShadow:hover&&!disabled?`0 4px 20px ${color}33`:"none"}}>{badge&&<span style={{position:"absolute",top:8,right:8,...S.badge(color)}}>{badge}</span>}<div style={{fontSize:28,marginBottom:6}}>{icon}</div><p style={{color:C.texto,fontWeight:"bold",fontSize:13,margin:"0 0 3px",fontFamily:FT}}>{titulo}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 8px",lineHeight:1.4}}>{desc}</p><div style={{display:"inline-block",background:disabled?C.borde:color,color:disabled?C.textoS:"#fff",padding:"3px 9px",borderRadius:6,fontSize:10,fontWeight:"bold"}}>{disabled?"Próximamente":"Abrir →"}</div></div>);}
-    function TarjetaClase({clase,onVer,onEliminar}){const fecha=new Date(clase.creadaEn).toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"});return(<div style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"10px 14px",marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{clase.datos?.tema||"Sin título"}</p><p style={{color:C.textoS,fontSize:11,margin:0}}>{clase.datos?.area} · Grado {clase.datos?.grado} · {fecha}</p></div><div style={{display:"flex",gap:5,marginLeft:8}}><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>onVer(clase)}>👁️ Ver</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>onEliminar(clase.id)}>🗑</button></div></div></div>);}
-    function NotasEstudiante({studentId,token,API}){const[notas,setNotas]=useState([]);const[cargando,setCargando]=useState(true);useEffect(()=>{if(!studentId||!token)return;fetch(`${API}/notas/estudiante/${studentId}`,{headers:{"Authorization":`Bearer ${token}`}}).then(r=>r.json()).then(d=>{setNotas(d.notas||[]);setCargando(false);}).catch(()=>setCargando(false));},[studentId]);if(cargando)return<p style={{color:C.textoS,fontSize:12,textAlign:"center",padding:16}}>Cargando notas...</p>;if(!notas.length)return<div style={{...S.bloque,textAlign:"center",padding:20}}><p style={{fontSize:28,margin:"0 0 6px"}}>📊</p><p style={{color:C.textoS,fontSize:12,margin:0}}>Sin notas registradas aún.</p></div>;return(<div>{notas.map(p=>{const vals=Object.values(p.misNotas).map(v=>parseFloat(v)).filter(v=>!isNaN(v));const prom=vals.length?parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)):null;const avance=Math.round(vals.length/p.actividades.length*100);return(<div key={p.periodoId} style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><div><p style={{color:C.verdeC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{p.nombre}</p><p style={{color:C.textoS,fontSize:11,margin:0}}>{p.area} · Grado {p.grado} · Vale {p.porcentaje}%</p></div>{prom!=null&&<span style={{color:prom>=3?C.ok:C.err,fontWeight:"bold",fontSize:20,fontFamily:FT}}>{prom}</span>}</div><div style={{background:"#0d1528",borderRadius:6,padding:"8px 10px"}}>{p.actividades.map((a,i)=>{const nota=parseFloat(p.misNotas[i]);return(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:i<p.actividades.length-1?`1px solid ${C.borde}`:"none"}}><span style={{color:C.textoS,fontSize:11}}>{a}</span><span style={{color:!isNaN(nota)?nota>=3?C.ok:C.err:C.borde,fontWeight:"bold",fontSize:12}}>{!isNaN(nota)?nota:"—"}</span></div>);})}</div><div style={{marginTop:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{color:C.textoS,fontSize:10}}>Progreso del período</span><span style={{color:C.textoS,fontSize:10}}>{avance}%</span></div><div style={{background:"#0d1528",borderRadius:10,overflow:"hidden",height:6}}><div style={{width:`${avance}%`,height:"100%",background:avance===100?C.ok:C.azulC,transition:"width 0.5s"}}/></div></div></div>);})}</div>);}
-    function ResolverAct({actividad,tipo,onResp}){const[resps,setResps]=useState({});const pregs=actividad?.preguntas||actividad?.pares||[];const setR=(i,v)=>{const n={...resps,[i]:v};setResps(n);onResp(n);};if(tipo==="relacionar"&&actividad?.pares)return(<div>{actividad.pares.map((par,i)=>(<div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}><div style={{flex:1,background:"#0a1128",padding:"7px 10px",borderRadius:7,border:`1px solid ${C.borde}`,color:C.texto,fontSize:12}}>{par.columnaA}</div><span style={{color:C.textoS}}>→</span><select style={{...S.sel,flex:1,fontSize:12}} value={resps[i]||""} onChange={e=>setR(i,e.target.value)}><option value="">Seleccionar...</option>{actividad.pares.map((op,j)=><option key={j} value={op.columnaB}>{op.columnaB}</option>)}</select></div>))}</div>);return(<div>{pregs.map((p,i)=>(<div key={i} style={{marginBottom:14,background:"#0a1128",padding:12,borderRadius:8,border:`1px solid ${C.borde}`}}><p style={{color:C.azulC,fontWeight:"bold",fontSize:12,margin:"0 0 8px"}}>{i+1}. {p.pregunta||p.enunciado||p.afirmacion}</p>{(tipo==="quiz"||p.tipo==="seleccion")&&p.opciones&&(<div style={{display:"flex",flexDirection:"column",gap:5}}>{p.opciones.map((op,j)=>(<div key={j} style={{...S.opcion(resps[i]===op),padding:"7px 10px"}} onClick={()=>setR(i,op)}><p style={{...S.oLbl,fontSize:11}}>{op}</p></div>))}</div>)}{tipo==="completar"&&<input style={S.inp} placeholder="Escribe la respuesta..." value={resps[i]||""} onChange={e=>setR(i,e.target.value)}/>}{tipo==="verdadero_falso"&&(<div style={S.fila}><div style={{...S.opcion(resps[i]==="Verdadero"),flex:1,padding:"7px 10px",textAlign:"center"}} onClick={()=>setR(i,"Verdadero")}><p style={{...S.oLbl,fontSize:12,textAlign:"center"}}>✅ Verdadero</p></div><div style={{...S.opcion(resps[i]==="Falso"),flex:1,padding:"7px 10px",textAlign:"center"}} onClick={()=>setR(i,"Falso")}><p style={{...S.oLbl,fontSize:12,textAlign:"center"}}>❌ Falso</p></div></div>)}{(tipo==="taller"||tipo==="evaluacion"||p.tipo==="abierta")&&<textarea style={{...S.ta,minHeight:60}} placeholder="Tu respuesta..." value={resps[i]||""} onChange={e=>setR(i,e.target.value)}/>}</div>))}</div>);}
+    function SubirImg({label,preview,inputRef,onChange}){return(<div style={{textAlign:"center"}}><p style={{...S.lbl,textAlign:"center"}}>{label}</p><div style={{width:72,height:72,borderRadius:8,border:"2px dashed "+C.borde,background:"#0a1128",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",cursor:"pointer",margin:"0 auto"}} onClick={()=>inputRef.current.click()}>{preview?<img src={preview} alt={label} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:22,color:C.textoS}}>📷</span>}</div><p style={{color:C.textoS,fontSize:10,margin:"3px 0 0"}}>Click para subir</p><input ref={inputRef} type="file" accept="image/*" style={{display:"none"}} onChange={onChange}/></div>);}
+    function DashCard({icon,titulo,desc,color,onClick,badge,disabled}){const[hover,setHover]=useState(false);return(<div onClick={disabled?null:onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{background:hover&&!disabled?"#131f35":"#0f1a2e",border:"1.5px solid "+hover&&!disabled?color:C.borde,borderRadius:12,padding:"18px 14px",cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s",position:"relative",opacity:disabled?0.5:1,boxShadow:hover&&!disabled?"0 4px 20px "+color+"33":"none"}}>{badge&&<span style={{position:"absolute",top:8,right:8,...S.badge(color)}}>{badge}</span>}<div style={{fontSize:28,marginBottom:6}}>{icon}</div><p style={{color:C.texto,fontWeight:"bold",fontSize:13,margin:"0 0 3px",fontFamily:FT}}>{titulo}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 8px",lineHeight:1.4}}>{desc}</p><div style={{display:"inline-block",background:disabled?C.borde:color,color:disabled?C.textoS:"#fff",padding:"3px 9px",borderRadius:6,fontSize:10,fontWeight:"bold"}}>{disabled?"Proximamente":"Abrir →"}</div></div>);}
+    function TarjetaClase({clase,onVer,onEliminar}){const fecha=new Date(clase.creadaEn).toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"});return(<div style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"10px 14px",marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{clase.datos?.tema||"Sin titulo"}</p><p style={{color:C.textoS,fontSize:11,margin:0}}>{clase.datos?.area} - Grado {clase.datos?.grado} - {fecha}</p></div><div style={{display:"flex",gap:5,marginLeft:8}}><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>onVer(clase)}>👁️ Ver</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>onEliminar(clase.id)}>🗑</button></div></div></div>);}
+    function NotasEstudiante({studentId,token,API}){const[notas,setNotas]=useState([]);const[cargando,setCargando]=useState(true);useEffect(()=>{if(!studentId||!token)return;fetch(API+"/notas/estudiante/"+studentId,{headers:{"Authorization":"Bearer "+token}}).then(r=>r.json()).then(d=>{setNotas(d.notas||[]);setCargando(false);}).catch(()=>setCargando(false));},[studentId]);if(cargando)return<p style={{color:C.textoS,fontSize:12,textAlign:"center",padding:16}}>Cargando notas...</p>;if(!notas.length)return<div style={{...S.bloque,textAlign:"center",padding:20}}><p style={{fontSize:28,margin:"0 0 6px"}}>📊</p><p style={{color:C.textoS,fontSize:12,margin:0}}>Sin notas registradas aun.</p></div>;return(<div>{notas.map(p=>{const vals=Object.values(p.misNotas).map(v=>parseFloat(v)).filter(v=>!isNaN(v));const prom=vals.length?parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)):null;const avance=Math.round(vals.length/p.actividades.length*100);return(<div key={p.periodoId} style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"12px 14px",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <div><p style={{color:C.verdeC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{p.nombre}</p><p style={{color:C.textoS,fontSize:11,margin:0}}>{p.area} - Grado {p.grado} - Vale {p.porcentaje}%</p>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      </div>{prom!=null&&<span style={{color:prom>=3?C.ok:C.err,fontWeight:"bold",fontSize:20,fontFamily:FT}}>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      {prom}</span>}</div><div style={{background:"#0d1528",borderRadius:6,padding:"8px 10px"}}>{p.actividades.map((a,i)=>{const nota=parseFloat(p.misNotas[i]);return(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:i<p.actividades.length-1?"1px solid "+C.borde:"none"}}><span style={{color:C.textoS,fontSize:11}}>{a}</span><span style={{color:!isNaN(nota)?nota>=3?C.ok:C.err:C.borde,fontWeight:"bold",fontSize:12}}>{!isNaN(nota)?nota:"—"}</span></div>);})}</div><div style={{marginTop:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{color:C.textoS,fontSize:10}}>Progreso del periodo</span><span style={{color:C.textoS,fontSize:10}}>{avance}%</span></div><div style={{background:"#0d1528",borderRadius:10,overflow:"hidden",height:6}}><div style={{width:avance+"%",height:"100%",background:avance===100?C.ok:C.azulC,transition:"width 0.5s"}}/></div></div></div>);})}</div>);}
+    function ResolverAct({actividad,tipo,onResp}){const[resps,setResps]=useState({});const pregs=actividad?.preguntas||actividad?.pares||[];const setR=(i,v)=>{const n={...resps,[i]:v};setResps(n);onResp(n);};if(tipo==="relacionar"&&actividad?.pares)return(<div>{actividad.pares.map((par,i)=>(<div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}><div style={{flex:1,background:"#0a1128",padding:"7px 10px",borderRadius:7,border:"1px solid "+C.borde,color:C.texto,fontSize:12}}>{par.columnaA}</div><span style={{color:C.textoS}}>→</span><select style={{...S.sel,flex:1,fontSize:12}} value={resps[i]||""} onChange={e=>setR(i,e.target.value)}><option value="">Seleccionar...</option>{actividad.pares.map((op,j)=><option key={j} value={op.columnaB}>{op.columnaB}</option>)}</select></div>))}</div>);return(<div>{pregs.map((p,i)=>(<div key={i} style={{marginBottom:14,background:"#0a1128",padding:12,borderRadius:8,border:"1px solid "+C.borde}}><p style={{color:C.azulC,fontWeight:"bold",fontSize:12,margin:"0 0 8px"}}>{i+1}. {p.pregunta||p.enunciado||p.afirmacion}</p>{(tipo==="quiz"||p.tipo==="seleccion")&&p.opciones&&(<div style={{display:"flex",flexDirection:"column",gap:5}}>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      {p.opciones.map((op,j)=>(<div key={j} style={{...S.opcion(resps[i]===op),padding:"7px 10px"}} onClick={()=>setR(i,op)}><p style={{...S.oLbl,fontSize:11}}>{op}</p></div>))}</div>)}{tipo==="completar"&&<input style={S.inp} placeholder="Escribe la respuesta..." value={resps[i]||""} onChange={e=>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      setR(i,
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      e.target.value)}/>}{tipo==="verdadero_falso"&&(<div style={S.fila}><div style={{...S.opcion(resps[i]==="Verdadero"),flex:1,padding:"7px 10px",textAlign:"center"}} onClick={()=>setR(i,"Verdadero")}><p style={{...S.oLbl,fontSize:12,textAlign:"center"}}>✅ Verdadero</p></div><div style={{...S.opcion(resps[i]==="Falso"),flex:1,padding:"7px 10px",textAlign:"center"}} onClick={()=>setR(i,"Falso")}><p style={{...S.oLbl,fontSize:12,textAlign:"center"}}>❌ Falso</p></div></div>)}{(tipo==="taller"||tipo==="evaluacion"||p.tipo==="abierta")&&<textarea style={{...S.ta,minHeight:60}} placeholder="Tu respuesta..." value={resps[i]||""} onChange={e=>setR(i,e.target.value)}/>}</div>))}</div>);}
 
     function ModalTarea({onCerrar,onCreada,tareaEditar}){
     const editando=!!tareaEditar;
@@ -119,15 +344,15 @@
     const[err,setErr]=useState("");
     const[verPregs,setVerPregs]=useState(false);
 
-    const cargarEsts=async g=>{if(!g){setEsts([]);return;}setCargEsts(true);try{const r=await fetch(`${API}/students/grado/${encodeURIComponent(g)}`,{headers:authH()});const d=await r.json();setEsts(d.estudiantes||[]);}catch(_){}setCargEsts(false);};
+    const cargarEsts=async g=>{if(!g){setEsts([]);return;}setCargEsts(true);try{const r=await fetch(API+"/students/grado/"+encodeURIComponent(g),{headers:authH()});const d=await r.json();setEsts(d.estudiantes||[]);}catch(_){}setCargEsts(false);};
     const toggleEst=id=>setSelIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
     const filtEsts=ests.filter(e=>e.name.toLowerCase().includes(busq.toLowerCase())||(e.username||"").toLowerCase().includes(busq.toLowerCase()));
 
     const generarAct=async()=>{
-      if(!tipo||!area){setErr("Selecciona tipo y área primero");return;}
+      if(!tipo||!area){setErr("Selecciona tipo y area primero");return;}
       setGenIA(true);setErr("");
       try{
-        const r=await fetch(`${API}/generar-actividad`,{method:"POST",headers:authH(),body:JSON.stringify({tipo,tema:titulo||"Tema general",area,grado:"General",cantidad:cantPreg})});
+        const r=await fetch(API+"/generar-actividad",{method:"POST",headers:authH(),body:JSON.stringify({tipo,tema:titulo||"Tema general",area,grado:"General",cantidad:cantPreg})});
         const d=await r.json();
         if(d.ok){setActividad(d.actividad);setVerPregs(true);}
       }catch(_){setErr("Error generando");}
@@ -143,7 +368,7 @@
 
     const agregarPregunta=()=>{
       const pregs=[...(actividad?.preguntas||actividad?.pares||[])];
-      pregs.push({pregunta:"Nueva pregunta",opciones:["Opción A","Opción B","Opción C","Opción D"],correcta:"Opción A"});
+      pregs.push({pregunta:"Nueva pregunta",opciones:["Opcion A","Opcion B","Opcion C","Opcion D"],correcta:"Opcion A"});
       setActividad({...actividad,preguntas:pregs,pares:pregs});
     };
 
@@ -154,29 +379,29 @@
     };
 
     const guardarEdicion=async()=>{
-      if(!titulo){setErr("Completa el título");return;}
+      if(!titulo){setErr("Completa el titulo");return;}
       setCreando(true);setErr("");
       try{
-        const r=await fetch(`${API}/tasks/${tareaEditar.id}`,{method:"PUT",headers:authH(),body:JSON.stringify({titulo,descripcion:desc,tipo,actividad,area,fechaEntrega:fecha})});
+        const r=await fetch(API+"/tasks/"+tareaEditar.id,{method:"PUT",headers:authH(),body:JSON.stringify({titulo,descripcion:desc,tipo,actividad,area,fechaEntrega:fecha})});
         const d=await r.json();
         if(r.ok)onCreada(d.tarea);
         else setErr(d.mensaje||"Error");
-      }catch{setErr("Error de conexión");}
+      }catch{setErr("Error de conexion");}
       setCreando(false);
     };
 
     const crear=async()=>{
-      if(!titulo){setErr("Completa el título");return;}
+      if(!titulo){setErr("Completa el titulo");return;}
       if(modo==="grado"&&!gradoSel){setErr("Selecciona el grado");return;}
       if(modo==="individual"&&selIds.length===0){setErr("Selecciona al menos un estudiante");return;}
       setCreando(true);setErr("");
       try{
         const body={titulo,descripcion:desc,tipo,actividad,area,grado:gradoSel,fechaEntrega:fecha,asignarGrado:modo==="grado"?gradoSel:"manual",estudiantesIds:modo==="individual"?selIds:[]};
-        const r=await fetch(`${API}/tasks`,{method:"POST",headers:authH(),body:JSON.stringify(body)});
+        const r=await fetch(API+"/tasks",{method:"POST",headers:authH(),body:JSON.stringify(body)});
         const d=await r.json();
         if(r.ok)onCreada(d.tarea);
         else setErr(d.mensaje||"Error");
-      }catch{setErr("Error de conexión");}
+      }catch{setErr("Error de conexion");}
       setCreando(false);
     };
 
@@ -192,21 +417,21 @@
       {(paso===1||editando)&&(<>
         <p style={{color:C.texto,fontWeight:"bold",marginBottom:8,fontFamily:FT,fontSize:13}}>Tipo de actividad</p>
         <div style={{...S.grid3,marginBottom:14}}>{TIPOS_ACT.map(t=>(<div key={t.id} style={S.opcion(tipo===t.id)} onClick={()=>setTipo(t.id)}><p style={{...S.oLbl,fontSize:11}}>{t.label}</p></div>))}</div>
-        <div style={{marginBottom:10}}><p style={S.lbl}>Título *</p><input style={S.inp} placeholder="Ej: Quiz sobre ecosistemas" value={titulo} onChange={e=>setTitulo(e.target.value)}/></div>
+        <div style={{marginBottom:10}}><p style={S.lbl}>Titulo *</p><input style={S.inp} placeholder="Ej: Quiz sobre ecosistemas" value={titulo} onChange={e=>setTitulo(e.target.value)}/></div>
         <div style={{marginBottom:10}}><p style={S.lbl}>Instrucciones</p><textarea style={{...S.ta,minHeight:60}} placeholder="Instrucciones..." value={desc} onChange={e=>setDesc(e.target.value)}/></div>
         <div style={{...S.fila,marginBottom:12}}>
-          <div style={{flex:1}}><p style={S.lbl}>Área</p><select style={S.sel} value={area} onChange={e=>setArea(e.target.value)}><option value="">Seleccionar</option>{["Ciencias Naturales","Ciencias Sociales","Matemáticas","Lengua Castellana","Inglés","Educación Física","Artística","Ética","Tecnología","Filosofía","Química","Física","Biología"].map(m=><option key={m}>{m}</option>)}</select></div>
+          <div style={{flex:1}}><p style={S.lbl}>Area</p><select style={S.sel} value={area} onChange={e=>setArea(e.target.value)}><option value="">Seleccionar</option>{["Ciencias Naturales","Ciencias Sociales","Matematicas","Lengua Castellana","Ingles","Educacion Fisica","Artistica","Etica","Tecnologia","Filosofia","Quimica","Fisica","Biologia"].map(m=><option key={m}>{m}</option>)}</select></div>
           <div style={{flex:1}}><p style={S.lbl}>Fecha entrega</p>
             <input type="date" style={S.inp} value={fecha} onChange={e=>setFecha(e.target.value)}/>
-            {diasRestantes!==null&&<p style={{fontSize:10,margin:"3px 0 0",color:diasRestantes<0?C.err:diasRestantes<=3?C.naranja:C.ok}}>{diasRestantes<0?"⚠️ Vencida":diasRestantes===0?"⚠️ Vence hoy":`📅 ${diasRestantes} días restantes`}</p>}
+            {diasRestantes!==null&&<p style={{fontSize:10,margin:"3px 0 0",color:diasRestantes<0?C.err:diasRestantes<=3?C.naranja:C.ok}}>{diasRestantes<0?"⚠️ Vencida":diasRestantes===0?"⚠️ Vence hoy":"📅 "+diasRestantes+" dias restantes"}</p>}
           </div>
         </div>
-        <div style={{background:"#0f2a47",border:`1px solid ${C.azul}`,borderRadius:8,padding:12}}>
+        <div style={{background:"#0f2a47",border:"1px solid "+C.azul,borderRadius:8,padding:12}}>
           <p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 8px",fontSize:12}}>🤖 Generar preguntas con IA</p>
           <div style={{...S.fila,marginBottom:8,alignItems:"center"}}>
             <div style={{flex:1}}><p style={S.lbl}>Cantidad de preguntas</p>
               <input type="number" style={{...S.inp,width:80}} min={1} max={20} value={cantPreg} onChange={e=>setCantPreg(Math.max(1,Math.min(20,parseInt(e.target.value)||5)))}/></div>
-            <button style={{...S.btnA,flex:2,opacity:genIA?0.7:1,marginTop:18}} disabled={genIA} onClick={generarAct}>{genIA?"⏳ Generando...":"✨ Generar preguntas automáticas"}</button>
+            <button style={{...S.btnA,flex:2,opacity:genIA?0.7:1,marginTop:18}} disabled={genIA} onClick={generarAct}>{genIA?"⏳ Generando...":"✨ Generar preguntas automaticas"}</button>
           </div>
           {actividad&&<>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
@@ -215,7 +440,7 @@
             </div>
             {verPregs&&<div style={{background:"#0a1128",borderRadius:6,padding:8,maxHeight:280,overflowY:"auto"}}>
               {(actividad.preguntas||actividad.pares||[]).map((p,i)=>(
-                <div key={i} style={{borderBottom:`1px solid ${C.borde}`,padding:"8px 0",marginBottom:4}}>
+                <div key={i} style={{borderBottom:"1px solid "+C.borde,padding:"8px 0",marginBottom:4}}>
                   <div style={{...S.fila,alignItems:"flex-start",marginBottom:4}}>
                     <p style={{color:C.azulC,fontSize:11,margin:"0 6px 0 0",flexShrink:0,fontWeight:"bold"}}>{i+1}.</p>
                     <input style={{...S.inp,flex:1,fontSize:11,padding:"4px 8px"}} value={p.pregunta||p.enunciado||p.afirmacion||""} onChange={e=>editarPregunta(i,"pregunta",e.target.value)}/>
@@ -237,7 +462,7 @@
       </>)}
 
       {paso===2&&!editando&&(<>
-        <p style={{color:C.texto,fontWeight:"bold",marginBottom:10,fontFamily:FT,fontSize:13}}>¿Cómo asignar?</p>
+        <p style={{color:C.texto,fontWeight:"bold",marginBottom:10,fontFamily:FT,fontSize:13}}>¿Como asignar?</p>
         <div style={{...S.fila,marginBottom:14}}>
           <div style={{...S.opcion(modo==="grado"),flex:1}} onClick={()=>{setModo("grado");setSelIds([]);setEsts([]);setGradoSel("");}}>
             <p style={S.oLbl}>🎓 Grado completo</p><p style={S.oDesc}>Todos los del grado</p>
@@ -249,15 +474,35 @@
         {modo==="grado"&&(<>
           <p style={S.lbl}>Selecciona el grado</p>
           <div style={{...S.grid3,marginBottom:12}}>{GRADOS.map(g=>(<div key={g} style={{...S.opcion(gradoSel===g),padding:"8px 6px",textAlign:"center"}} onClick={()=>{setGradoSel(g);cargarEsts(g);}}><p style={{...S.oLbl,textAlign:"center",fontSize:11}}>Grado {g}</p></div>))}</div>
-          {gradoSel&&<div style={{background:"#052e16",border:`1px solid ${C.ok}`,borderRadius:6,padding:"8px 12px"}}>{cargEsts?<p style={{color:C.textoS,margin:0,fontSize:12}}>Cargando...</p>:<p style={{color:C.ok,margin:0,fontSize:12,fontWeight:"bold"}}>✅ {ests.length} estudiantes en grado {gradoSel}</p>}</div>}
+          {gradoSel&&<div style={{background:"#052e16",border:"1px solid "+C.ok,borderRadius:6,padding:"8px 12px"}}>{cargEsts?<p style={{color:C.textoS,margin:0,fontSize:12}}>Cargando...</p>:<p style={{color:C.ok,margin:0,fontSize:12,fontWeight:"bold"}}>✅ {ests.length} estudiantes en grado {gradoSel}</p>}</div>}
         </>)}
         {modo==="individual"&&(<>
           <p style={{color:C.textoS,fontSize:11,margin:"0 0 6px"}}>Cargar por grado:</p>
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>{GRADOS.map(g=>(<button key={g} style={{...S.btnSm,color:gradoSel===g?C.azulC:C.textoS,borderColor:gradoSel===g?C.azul:C.borde,fontSize:10}} onClick={()=>{setGradoSel(g);setBusq("");cargarEsts(g);}}>Grado {g}</button>))}</div>
           <input style={{...S.inp,marginBottom:8}} placeholder="🔍 Buscar..." value={busq} onChange={e=>setBusq(e.target.value)}/>
-          {filtEsts.length>0&&(<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><p style={{color:C.textoS,fontSize:11,margin:0}}>{filtEsts.length} estudiantes · <span style={{color:C.ok}}>{selIds.length} seleccionados</span></p><div style={{display:"flex",gap:5}}><button style={{...S.btnSm,fontSize:10,color:C.azulC,borderColor:C.azul}} onClick={()=>setSelIds(filtEsts.map(e=>e.id))}>Todos</button><button style={{...S.btnSm,fontSize:10,color:C.err,borderColor:C.rojo}} onClick={()=>setSelIds([])}>Limpiar</button></div></div>)}
-          {cargEsts?<p style={{color:C.textoS,textAlign:"center",padding:12,fontSize:12}}>Cargando...</p>:filtEsts.length===0?(<div style={{background:"#0a1128",borderRadius:6,padding:16,textAlign:"center",border:`1px solid ${C.borde}`}}><p style={{color:C.textoS,fontSize:12,margin:0}}>{gradoSel?"No hay estudiantes.":"Selecciona un grado."}</p></div>):(<div style={{maxHeight:240,overflowY:"auto",background:"#0a1128",borderRadius:6,border:`1px solid ${C.borde}`,padding:5}}>{filtEsts.map(e=>(<div key={e.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",borderRadius:6,marginBottom:2,background:selIds.includes(e.id)?"#0f2a47":"transparent",border:selIds.includes(e.id)?`1px solid ${C.azul}`:"1px solid transparent",cursor:"pointer"}} onClick={()=>toggleEst(e.id)}><div style={{width:18,height:18,borderRadius:4,flexShrink:0,border:selIds.includes(e.id)?`2px solid ${C.azulC}`:`2px solid ${C.borde}`,background:selIds.includes(e.id)?C.azul:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>{selIds.includes(e.id)&&<span style={{color:"white",fontSize:11,fontWeight:"bold"}}>✓</span>}</div><div><p style={{color:selIds.includes(e.id)?C.azulC:C.texto,margin:0,fontSize:12,fontWeight:selIds.includes(e.id)?"bold":"normal"}}>{e.name}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Grado {e.grade} · @{e.username}</p></div></div>))}</div>)}
-          {selIds.length>0&&<div style={{marginTop:6,background:"#052e16",border:`1px solid ${C.ok}`,borderRadius:6,padding:"6px 10px"}}><p style={{color:C.ok,fontSize:11,margin:0}}>✅ {selIds.length} seleccionado{selIds.length!==1?"s":""}</p></div>}
+          {filtEsts.length>0&&(<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><p style={{color:C.textoS,fontSize:11,margin:0}}>{filtEsts.length} estudiantes - <span style={{color:C.ok}}>{selIds.length} seleccionados</span></p><div style={{display:"flex",gap:5}}><button style={{...S.btnSm,fontSize:10,color:C.azulC,borderColor:C.azul}} onClick={()=>setSelIds(filtEsts.map(e=>e.id))}>Todos</button><button style={{...S.btnSm,fontSize:10,color:C.err,borderColor:C.rojo}} onClick={()=>setSelIds([])}>Limpiar</button></div></div>)}
+          {cargEsts?<p style={{color:C.textoS,textAlign:"center",padding:12,fontSize:12}}>Cargando...</p>:filtEsts.length===0?(<div style={{background:"#0a1128",borderRadius:6,padding:16,textAlign:"center",border:"1px solid "+C.borde}}><p style={{color:C.textoS,fontSize:12,margin:0}}>{gradoSel?"No hay estudiantes.":"Selecciona un grado."}</p></div>):(<div style={{maxHeight:240,overflowY:"auto",background:"#0a1128",borderRadius:6,border:"1px solid "+C.borde,padding:5}}>{filtEsts.map(e=>(<div key={e.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",borderRadius:6,marginBottom:2,background:selIds.includes(e.id)?"#0f2a47":"transparent",border:selIds.includes(e.id)?"1px solid "+C.azul:"1px solid transparent",cursor:"pointer"}} onClick={()=>toggleEst(e.id)}><div style={{width:18,height:18,borderRadius:4,flexShrink:0,border:selIds.includes(e.id)?"2px solid "+C.azulC:"2px solid "+C.borde,background:selIds.includes(e.id)?C.azul:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>{selIds.includes(e.id)&&<span style={{color:"white",fontSize:11,fontWeight:"bold"}}>✓</span>}</div><div><p style={{color:selIds.includes(e.id)?C.azulC:C.texto,margin:0,
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            fontSize:12,fontWeight:selIds.includes(e.id)?"bold":"normal"}}>{e.name}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Grado {e.grade} - @{e.username}</p></div></div>))}</div>)}
+          {selIds.length>0&&<div style={{marginTop:6,background:"#052e16",border:"1px solid "+C.ok,borderRadius:6,padding:"6px 10px"}}><p style={{color:C.ok,fontSize:11,margin:0}}>✅ {selIds.length} seleccionado{selIds.length!==1?"s":""}</p></div>}
         </>)}
       </>)}
       {err&&<p style={{...S.err,marginTop:10}}>{err}</p>}
@@ -268,7 +513,7 @@
         <button style={{...S.btnV,flex:1,opacity:creando?0.7:1}} disabled={creando} onClick={guardarEdicion}>{creando?"⏳ Guardando...":"💾 Guardar cambios"}</button>
       </>):paso===1?(<>
         <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
-        <button style={{...S.btnV,flex:1}} onClick={()=>{if(!titulo){setErr("Completa el título");return;}setErr("");setPaso(2);}}>Siguiente →</button>
+        <button style={{...S.btnV,flex:1}} onClick={()=>{if(!titulo){setErr("Completa el titulo");return;}setErr("");setPaso(2);}}>Siguiente →</button>
       </>):(<>
         <button style={{...S.btnG,width:"auto",padding:"10px 16px"}} onClick={()=>setPaso(1)}>← Volver</button>
         <button style={{...S.btnV,flex:1,opacity:creando?0.7:1}} disabled={creando} onClick={crear}>{creando?"⏳ Creando...":"✅ Crear y asignar"}</button>
@@ -290,10 +535,10 @@
       const [err, setErr] = useState("");
       const toggleDoc = id => setDocsSelIds(p => p.includes(id) ? p.filter(x=>x!==id) : [...p,id]);
       const guardar = async () => {
-        if (!nombre || !usuario || (!editando && !password) || !instId) { setErr("Completa nombre, usuario, contraseña e institución"); return; }
+        if (!nombre || !usuario || (!editando && !password) || !instId) { setErr("Completa nombre, usuario, contrasena e institucion"); return; }
         setGuardando(true); setErr("");
         try {
-          const url = editando ? `${API}/superadmin/students/${estudiante.id}` : `${API}/superadmin/students`;
+          const url = editando ? API+"/superadmin/students/"+estudiante.id : API+"/superadmin/students";
           const method = editando ? "PUT" : "POST";
           const body = { nombre, usuario, grado, institutionId: instId, teacherIds: docsSelIds };
           if (password) body.password = password;
@@ -301,7 +546,7 @@
           const d = await r.json();
           if (r.ok) onGuardado(d.estudiante, d.mensaje);
           else setErr(d.mensaje || "Error");
-        } catch { setErr("Error de conexión"); }
+        } catch { setErr("Error de conexion"); }
         setGuardando(false);
       };
       const docsInst = docentes.filter(d => d.institutionId === instId);
@@ -310,23 +555,23 @@
           <div style={SA.saModal}>
             <div style={SA.saMHead}><h3 style={{color:C.azulC,margin:0,fontSize:16}}>{editando?"✏️ Editar estudiante":"➕ Crear estudiante"}</h3><button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button></div>
             <div style={SA.saMBody}>
-              <div><p style={S.lbl}>Nombre completo *</p><input style={SA.saInp} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: Juan Pérez"/></div>
+              <div><p style={S.lbl}>Nombre completo *</p><input style={SA.saInp} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: Juan Perez"/></div>
               <div style={S.fila}>
                 <div style={{flex:1}}><p style={S.lbl}>Usuario * (sin espacios)</p><input style={SA.saInp} value={usuario} onChange={e=>setUsuario(e.target.value.toLowerCase().replace(/\s+/g,""))} placeholder="juanperez"/></div>
-                <div style={{flex:1}}><p style={S.lbl}>{editando?"Nueva contraseña (opcional)":"Contraseña *"}</p><input type="password" style={SA.saInp} value={password} onChange={e=>setPassword(e.target.value)} placeholder={editando?"Dejar vacío para no cambiar":"••••••"}/></div>
+                <div style={{flex:1}}><p style={S.lbl}>{editando?"Nueva contrasena (opcional)":"Contrasena *"}</p><input type="password" style={SA.saInp} value={password} onChange={e=>setPassword(e.target.value)} placeholder={editando?"Dejar vacio para no cambiar":"••••••"}/></div>
               </div>
               <div style={S.fila}>
                 <div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={SA.saSel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Sin grado</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
-                <div style={{flex:1}}><p style={S.lbl}>Institución *</p><select style={SA.saSel} value={instId} onChange={e=>{setInstId(e.target.value);setDocsSelIds([]);}}><option value="">Seleccionar</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
+                <div style={{flex:1}}><p style={S.lbl}>Institucion *</p><select style={SA.saSel} value={instId} onChange={e=>{setInstId(e.target.value);setDocsSelIds([]);}}><option value="">Seleccionar</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
               </div>
               {instId && (
                 <div>
                   <p style={S.lbl}>Asignar docentes ({docsInst.length} disponibles)</p>
-                  {docsInst.length === 0 ? <p style={{color:C.textoS,fontSize:12}}>No hay docentes en esta institución.</p> : (
-                    <div style={{maxHeight:160,overflowY:"auto",background:"#0a1128",borderRadius:7,border:`1px solid ${C.borde}`,padding:6}}>
+                  {docsInst.length === 0 ? <p style={{color:C.textoS,fontSize:12}}>No hay docentes en esta institucion.</p> : (
+                    <div style={{maxHeight:160,overflowY:"auto",background:"#0a1128",borderRadius:7,border:"1px solid "+C.borde,padding:6}}>
                       {docsInst.map(d=>(
                         <div key={d.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,cursor:"pointer",background:docsSelIds.includes(d.id)?"#0f2a47":"transparent"}} onClick={()=>toggleDoc(d.id)}>
-                          <div style={{width:16,height:16,borderRadius:3,border:docsSelIds.includes(d.id)?`2px solid ${C.azulC}`:`2px solid ${C.borde}`,background:docsSelIds.includes(d.id)?C.azul:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{docsSelIds.includes(d.id)&&<span style={{color:"white",fontSize:10}}>✓</span>}</div>
+                          <div style={{width:16,height:16,borderRadius:3,border:docsSelIds.includes(d.id)?"2px solid "+C.azulC:"2px solid "+C.borde,background:docsSelIds.includes(d.id)?C.azul:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{docsSelIds.includes(d.id)&&<span style={{color:"white",fontSize:10}}>✓</span>}</div>
                           <span style={{fontSize:12,color:docsSelIds.includes(d.id)?C.azulC:C.texto}}>{d.name}</span>
                           <span style={{fontSize:10,color:C.textoS,marginLeft:"auto"}}>{d.cargo}</span>
                         </div>
@@ -343,7 +588,7 @@
       );
     }
 
-    // ── Modal Asignación Rápida por Grado ─────────────────
+    // ── Modal Asignacion Rapida por Grado ─────────────────
     function ModalAsignacionGrado({ instituciones, docentes, onCerrar, onDone }) {
       const [instId, setInstId] = useState("");
       const [grado, setGrado] = useState("");
@@ -354,21 +599,21 @@
         if (!instId || !grado || !docenteId) { setMsg("Completa todos los campos"); return; }
         setCargando(true); setMsg("");
         try {
-          const r = await fetch(`${API}/superadmin/assign/teacher-batch`, { method:"POST", headers:authH(), body:JSON.stringify({ teacherId:docenteId, institutionId:instId, grade:grado }) });
+          const r = await fetch(API+"/superadmin/assign/teacher-batch", { method:"POST", headers:authH(), body:JSON.stringify({ teacherId:docenteId, institutionId:instId, grade:grado }) });
           const d = await r.json();
           setMsg(d.mensaje || "Listo");
           if (r.ok) setTimeout(() => onDone(), 1500);
-        } catch { setMsg("Error de conexión"); }
+        } catch { setMsg("Error de conexion"); }
         setCargando(false);
       };
       const docsInst = docentes.filter(d => d.institutionId === instId);
       return (
         <div style={SA.saOverlay} onClick={e=>e.target===e.currentTarget&&onCerrar()}>
           <div style={{...SA.saModal,maxWidth:420}}>
-            <div style={SA.saMHead}><h3 style={{color:C.naranja,margin:0,fontSize:16}}>⚡ Asignación masiva por grado</h3><button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button></div>
+            <div style={SA.saMHead}><h3 style={{color:C.naranja,margin:0,fontSize:16}}>⚡ Asignacion masiva por grado</h3><button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button></div>
             <div style={SA.saMBody}>
-              <p style={{color:C.textoS,fontSize:13,margin:0}}>Asigna un docente a todos los estudiantes de un grado en una institución.</p>
-              <div><p style={S.lbl}>Institución</p><select style={SA.saSel} value={instId} onChange={e=>{setInstId(e.target.value);setDocenteId("");}}><option value="">Seleccionar</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
+              <p style={{color:C.textoS,fontSize:13,margin:0}}>Asigna un docente a todos los estudiantes de un grado en una institucion.</p>
+              <div><p style={S.lbl}>Institucion</p><select style={SA.saSel} value={instId} onChange={e=>{setInstId(e.target.value);setDocenteId("");}}><option value="">Seleccionar</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
               <div style={S.fila}>
                 <div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={SA.saSel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
                 <div style={{flex:1}}><p style={S.lbl}>Docente</p><select style={SA.saSel} value={docenteId} onChange={e=>setDocenteId(e.target.value)} disabled={!instId}><option value="">Seleccionar</option>{docsInst.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
@@ -402,9 +647,9 @@
 
       const mostrarMsg = (texto, tipo="ok") => { setMsg({ texto, tipo }); setTimeout(() => setMsg({ texto:"", tipo:"" }), 3000); };
 
-      const cargarStats = useCallback(async () => { try { const r=await fetch(`${API}/superadmin/stats`,{headers:authH()}); const d=await r.json(); setStats(d); } catch(_){} }, []);
-      const cargarInstituciones = useCallback(async () => { try { const r=await fetch(`${API}/superadmin/institutions`,{headers:authH()}); const d=await r.json(); setInstituciones(d.instituciones||[]); } catch(_){} }, []);
-      const cargarDocentes = useCallback(async () => { try { const r=await fetch(`${API}/superadmin/teachers`,{headers:authH()}); const d=await r.json(); setDocentes(d.docentes||[]); } catch(_){} }, []);
+      const cargarStats = useCallback(async () => { try { const r=await fetch(API+"/superadmin/stats",{headers:authH()}); const d=await r.json(); setStats(d); } catch(_){} }, []);
+      const cargarInstituciones = useCallback(async () => { try { const r=await fetch(API+"/superadmin/institutions",{headers:authH()}); const d=await r.json(); setInstituciones(d.instituciones||[]); } catch(_){} }, []);
+      const cargarDocentes = useCallback(async () => { try { const r=await fetch(API+"/superadmin/teachers",{headers:authH()}); const d=await r.json(); setDocentes(d.docentes||[]); } catch(_){} }, []);
       const cargarEstudiantes = useCallback(async () => {
         setCargando(true);
         try {
@@ -413,7 +658,7 @@
           if (filtroGrado) params.append("grade", filtroGrado);
           if (filtroDoc) params.append("teacherId", filtroDoc);
           if (busqueda) params.append("search", busqueda);
-          const r = await fetch(`${API}/superadmin/students?${params}`, { headers: authH() });
+          const r = await fetch(API+"/superadmin/students?"+params, { headers: authH() });
           const d = await r.json();
           setEstudiantes(d.estudiantes||[]);
         } catch(_){}
@@ -424,9 +669,9 @@
       useEffect(() => { if (seccion === "estudiantes") cargarEstudiantes(); }, [seccion, cargarEstudiantes]);
 
       const eliminarEstudiante = async id => {
-        if (!window.confirm("¿Eliminar este estudiante? Esta acción no se puede deshacer.")) return;
+        if (!window.confirm("¿Eliminar este estudiante? Esta accion no se puede deshacer.")) return;
         try {
-          const r = await fetch(`${API}/superadmin/students/${id}`, { method:"DELETE", headers:authH() });
+          const r = await fetch(API+"/superadmin/students/"+id, { method:"DELETE", headers:authH() });
           const d = await r.json();
           if (r.ok) { mostrarMsg(d.mensaje); cargarEstudiantes(); cargarStats(); }
           else mostrarMsg(d.mensaje, "err");
@@ -436,7 +681,7 @@
       const cambiarGradoMasivo = async () => {
         if (!nuevoGrado || selIds.length === 0) return;
         try {
-          const r = await fetch(`${API}/superadmin/assign/grade`, { method:"POST", headers:authH(), body:JSON.stringify({ studentIds:selIds, grade:nuevoGrado }) });
+          const r = await fetch(API+"/superadmin/assign/grade", { method:"POST", headers:authH(), body:JSON.stringify({ studentIds:selIds, grade:nuevoGrado }) });
           const d = await r.json();
           if (r.ok) { mostrarMsg(d.mensaje); setSelIds([]); setModalCambioGrado(false); setNuevoGrado(""); cargarEstudiantes(); }
           else mostrarMsg(d.mensaje, "err");
@@ -461,12 +706,12 @@
               <p style={{color:C.textoS,margin:"3px 0 0",fontSize:11}}>{usuario?.name}</p>
             </div>
             {SECCIONES.map(s=>(<div key={s.id} style={SA.sItem(seccion===s.id)} onClick={()=>setSeccion(s.id)}><span>{s.icon}</span><span>{s.label}</span></div>))}
-            <div style={{marginTop:"auto",padding:"14px 20px",borderTop:`1px solid ${C.borde}`}}>
+            <div style={{marginTop:"auto",padding:"14px 20px",borderTop:"1px solid "+C.borde}}>
               <button style={{...S.btnSm,width:"100%",color:C.err,borderColor:C.rojo,padding:"7px 0"}} onClick={onSalir}>← Salir del panel</button>
             </div>
           </div>
           <div style={SA.main}>
-            {msg.texto && (<div style={{background:msg.tipo==="ok"?"#052e16":"#2d0a0a",border:`1px solid ${msg.tipo==="ok"?C.ok:C.err}`,borderRadius:8,padding:"10px 16px",marginBottom:16}}><p style={{color:msg.tipo==="ok"?C.ok:C.err,margin:0,fontSize:13,fontWeight:"bold"}}>{msg.texto}</p></div>)}
+            {msg.texto && (<div style={{background:msg.tipo==="ok"?"#052e16":"#2d0a0a",border:"1px solid "+msg.tipo==="ok"?C.ok:C.err,borderRadius:8,padding:"10px 16px",marginBottom:16}}><p style={{color:msg.tipo==="ok"?C.ok:C.err,margin:0,fontSize:13,fontWeight:"bold"}}>{msg.texto}</p></div>)}
 
             {seccion==="dashboard"&&(<>
               <div style={SA.saHeader}><h1 style={SA.titulo}>📊 Dashboard General</h1></div>
@@ -474,11 +719,11 @@
                 {[{l:"Instituciones",v:stats.instituciones||0,c:C.azul,i:"🏫"},{l:"Docentes",v:stats.docentes||0,c:C.verde,i:"👨‍🏫"},{l:"Estudiantes",v:stats.estudiantes||0,c:C.naranja,i:"👨‍🎓"},{l:"Tareas",v:stats.tareas||0,c:C.morado,i:"📋"}].map(s=>(<div key={s.l} style={SA.statCard(s.c)}><p style={{fontSize:28,margin:"0 0 4px"}}>{s.i}</p><p style={{color:s.c,fontSize:28,fontWeight:"bold",margin:"0 0 4px"}}>{s.v}</p><p style={{color:C.textoS,fontSize:12,margin:0}}>{s.l}</p></div>))}
               </div>
               <div style={SA.saCard}>
-                <h3 style={{color:C.texto,margin:"0 0 12px",fontSize:14}}>Acciones rápidas</h3>
+                <h3 style={{color:C.texto,margin:"0 0 12px",fontSize:14}}>Acciones rapidas</h3>
                 <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
                   <button style={SA.saBtnV} onClick={()=>setSeccion("estudiantes")}>👨‍🎓 Gestionar estudiantes</button>
                   <button style={SA.saBtnA} onClick={()=>setSeccion("docentes")}>👨‍🏫 Ver docentes</button>
-                  <button style={SA.saBtnN} onClick={()=>{setSeccion("estudiantes");setModalGrado(true);}}>⚡ Asignación masiva</button>
+                  <button style={SA.saBtnN} onClick={()=>{setSeccion("estudiantes");setModalGrado(true);}}>⚡ Asignacion masiva</button>
                 </div>
               </div>
             </>)}
@@ -488,13 +733,13 @@
                 <h1 style={SA.titulo}>👨‍🎓 Estudiantes</h1>
                 <div style={{display:"flex",gap:8}}>
                   {selIds.length>0&&<button style={SA.saBtnN} onClick={()=>setModalCambioGrado(true)}>📚 Cambiar grado ({selIds.length})</button>}
-                  <button style={SA.saBtnN} onClick={()=>setModalGrado(true)}>⚡ Asignación masiva</button>
+                  <button style={SA.saBtnN} onClick={()=>setModalGrado(true)}>⚡ Asignacion masiva</button>
                   <button style={SA.saBtnV} onClick={()=>setModalEst("nuevo")}>➕ Nuevo estudiante</button>
                 </div>
               </div>
               <div style={{...SA.saCard,padding:14}}>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 2fr auto",gap:10,alignItems:"end"}}>
-                  <div><p style={{...S.lbl,marginBottom:4}}>Institución</p><select style={SA.saSel} value={filtroInst} onChange={e=>setFiltroInst(e.target.value)}><option value="">Todas</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
+                  <div><p style={{...S.lbl,marginBottom:4}}>Institucion</p><select style={SA.saSel} value={filtroInst} onChange={e=>setFiltroInst(e.target.value)}><option value="">Todas</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
                   <div><p style={{...S.lbl,marginBottom:4}}>Grado</p><select style={SA.saSel} value={filtroGrado} onChange={e=>setFiltroGrado(e.target.value)}><option value="">Todos</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
                   <div><p style={{...S.lbl,marginBottom:4}}>Docente</p><select style={SA.saSel} value={filtroDoc} onChange={e=>setFiltroDoc(e.target.value)}><option value="">Todos</option>{docentes.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
                   <div><p style={{...S.lbl,marginBottom:4}}>Buscar nombre</p><input style={SA.saInp} placeholder="Buscar..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} onKeyDown={e=>e.key==="Enter"&&cargarEstudiantes()}/></div>
@@ -506,14 +751,14 @@
                 ) : estudiantes.length===0 ? (<p style={{color:C.textoS,textAlign:"center",padding:24}}>No se encontraron estudiantes.</p>
                 ) : (<>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                    <p style={{color:C.textoS,fontSize:12,margin:0}}>{estudiantes.length} estudiantes · {selIds.length} seleccionados</p>
+                    <p style={{color:C.textoS,fontSize:12,margin:0}}>{estudiantes.length} estudiantes - {selIds.length} seleccionados</p>
                     <button style={{...S.btnSm,fontSize:11}} onClick={toggleTodos}>{selIds.length===estudiantes.length?"Deseleccionar todos":"Seleccionar todos"}</button>
                   </div>
                   <div style={{overflowX:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                      <thead><tr style={{background:"#0a1128"}}><th style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,width:30}}>☑</th>{["Nombre","Usuario","Grado","Institución","Docentes","Acciones"].map(h=>(<th key={h} style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,whiteSpace:"nowrap"}}>{h}</th>))}</tr></thead>
-                      <tbody>{estudiantes.map((e,i)=>(<tr key={e.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}>
-                        <td style={{padding:"8px 10px"}}><div style={{width:16,height:16,borderRadius:3,border:selIds.includes(e.id)?`2px solid ${C.azulC}`:`2px solid ${C.borde}`,background:selIds.includes(e.id)?C.azul:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>toggleSel(e.id)}>{selIds.includes(e.id)&&<span style={{color:"white",fontSize:10}}>✓</span>}</div></td>
+                      <thead><tr style={{background:"#0a1128"}}><th style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:"1px solid "+C.borde,width:30}}>☑</th>{["Nombre","Usuario","Grado","Institucion","Docentes","Acciones"].map(h=>(<th key={h} style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:"1px solid "+C.borde,whiteSpace:"nowrap"}}>{h}</th>))}</tr></thead>
+                      <tbody>{estudiantes.map((e,i)=>(<tr key={e.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}>
+                        <td style={{padding:"8px 10px"}}><div style={{width:16,height:16,borderRadius:3,border:selIds.includes(e.id)?"2px solid "+C.azulC:"2px solid "+C.borde,background:selIds.includes(e.id)?C.azul:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>toggleSel(e.id)}>{selIds.includes(e.id)&&<span style={{color:"white",fontSize:10}}>✓</span>}</div></td>
                         <td style={{padding:"8px 10px",fontWeight:"bold",color:C.texto}}>{e.name}</td>
                         <td style={{padding:"8px 10px",color:C.textoS}}>@{e.username}</td>
                         <td style={{padding:"8px 10px"}}><span style={SA.tag(C.azulC)}>{e.grade||"—"}</span></td>
@@ -531,8 +776,8 @@
               <div style={SA.saHeader}><h1 style={SA.titulo}>👨‍🏫 Docentes</h1></div>
               <div style={SA.saCard}>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                  <thead><tr style={{background:"#0a1128"}}>{["Nombre","Email","Cargo","Institución","Tareas"].map(h=>(<th key={h} style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`}}>{h}</th>))}</tr></thead>
-                  <tbody>{docentes.map((d,i)=>(<tr key={d.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}><td style={{padding:"8px 10px",fontWeight:"bold",color:C.texto}}>{d.name}</td><td style={{padding:"8px 10px",color:C.textoS}}>{d.email}</td><td style={{padding:"8px 10px"}}><span style={SA.tag(C.morado)}>{d.cargo}</span></td><td style={{padding:"8px 10px",color:C.textoS,fontSize:11}}>{d.institucion}</td><td style={{padding:"8px 10px",color:C.naranja,fontWeight:"bold"}}>{d.totalTareas}</td></tr>))}</tbody>
+                  <thead><tr style={{background:"#0a1128"}}>{["Nombre","Email","Cargo","Institucion","Tareas"].map(h=>(<th key={h} style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:"1px solid "+C.borde}}>{h}</th>))}</tr></thead>
+                  <tbody>{docentes.map((d,i)=>(<tr key={d.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}><td style={{padding:"8px 10px",fontWeight:"bold",color:C.texto}}>{d.name}</td><td style={{padding:"8px 10px",color:C.textoS}}>{d.email}</td><td style={{padding:"8px 10px"}}><span style={SA.tag(C.morado)}>{d.cargo}</span></td><td style={{padding:"8px 10px",color:C.textoS,fontSize:11}}>{d.institucion}</td><td style={{padding:"8px 10px",color:C.naranja,fontWeight:"bold"}}>{d.totalTareas}</td></tr>))}</tbody>
                 </table>
               </div>
             </>)}
@@ -540,13 +785,13 @@
             {seccion==="instituciones"&&(<>
               <div style={SA.saHeader}><h1 style={SA.titulo}>🏫 Instituciones</h1></div>
               <div style={SA.grid4}>
-                {instituciones.map(inst=>(<div key={inst.id} style={{...SA.saCard,borderTop:`3px solid ${C.azul}`}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 6px",fontSize:13}}>{inst.name}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 10px"}}>{inst.city||"Sin ciudad"}</p><div style={{display:"flex",gap:8}}><div style={{textAlign:"center",flex:1}}><p style={{color:C.verde,fontSize:18,fontWeight:"bold",margin:0}}>{inst.totalDocentes}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Docentes</p></div><div style={{textAlign:"center",flex:1}}><p style={{color:C.naranja,fontSize:18,fontWeight:"bold",margin:0}}>{inst.totalEstudiantes}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Estudiantes</p></div></div></div>))}
+                {instituciones.map(inst=>(<div key={inst.id} style={{...SA.saCard,borderTop:"3px solid "+C.azul}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 6px",fontSize:13}}>{inst.name}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 10px"}}>{inst.city||"Sin ciudad"}</p><div style={{display:"flex",gap:8}}><div style={{textAlign:"center",flex:1}}><p style={{color:C.verde,fontSize:18,fontWeight:"bold",margin:0}}>{inst.totalDocentes}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Docentes</p></div><div style={{textAlign:"center",flex:1}}><p style={{color:C.naranja,fontSize:18,fontWeight:"bold",margin:0}}>{inst.totalEstudiantes}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Estudiantes</p></div></div></div>))}
               </div>
             </>)}
           </div>
 
           {modalEst&&(<ModalEstudiante estudiante={modalEst==="nuevo"?null:modalEst} instituciones={instituciones} docentes={docentes} onCerrar={()=>setModalEst(null)} onGuardado={(est,msg)=>{mostrarMsg(msg);setModalEst(null);cargarEstudiantes();cargarStats();}}/>)}
-          {modalGrado&&(<ModalAsignacionGrado instituciones={instituciones} docentes={docentes} onCerrar={()=>setModalGrado(false)} onDone={()=>{setModalGrado(false);cargarEstudiantes();mostrarMsg("Asignación completada ✅");}}/>)}
+          {modalGrado&&(<ModalAsignacionGrado instituciones={instituciones} docentes={docentes} onCerrar={()=>setModalGrado(false)} onDone={()=>{setModalGrado(false);cargarEstudiantes();mostrarMsg("Asignacion completada ✅");}}/>)}
           {modalCambioGrado&&(
             <div style={SA.saOverlay} onClick={e=>e.target===e.currentTarget&&setModalCambioGrado(false)}>
               <div style={{...SA.saModal,maxWidth:360}}>
@@ -563,9 +808,204 @@
       );
     }
 
+
+    function ViewNotas({S,C,Header,showNuevoPeriodo,setShowNuevoPeriodo,
+      npNombre,setNpNombre,npArea,setNpArea,npGrado,setNpGrado,
+      npPorcentaje,setNpPorcentaje,npCantAct,setNpCantAct,
+      npNombresAct,setNpNombresAct,crearPeriodo,periodoActivo,
+      setPeriodoActivo,estudiantesPeriodo,notasEditadas,setNotasEditadas,
+      calcNota,periodos,abrirPeriodo,eliminarPeriodo,guardarNotas}) {
+      return (
+<div style={S.fondo}><Header/><div style={S.cont}>{showNuevoPeriodo&&<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setShowNuevoPeriodo(false)}><div style={{...S.modal,maxWidth:480}}><div style={S.mHead}><h3 style={{color:C.verdeC,margin:0,fontSize:15}}>📊 Nuevo periodo de notas</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setShowNuevoPeriodo(false)}>✕</button></div><div style={S.mBody}><div style={{marginBottom:10}}><p style={S.lbl}>Nombre del periodo *</p><input style={S.inp} placeholder="Ej: Primer Periodo 2026" value={npNombre} onChange={e=>setNpNombre(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Area *</p><input style={S.inp} placeholder="Ej: Tecnologia" value={npArea} onChange={e=>setNpArea(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Grado *</p><select style={S.sel} value={npGrado} onChange={e=>setNpGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Porcentaje total (%)</p><input style={S.inp} type="number" min="1" max="100" value={
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        npPorcentaje} onChange={e=>setNpPorcentaje(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Numero de actividades</p><input style={S.inp} type="number" min="1" max="10" value={npCantAct} onChange={e=>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        {const n=parseInt(e.target.value)||1;setNpCantAct(n);setNpNombresAct(Array.from({length:n},
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        (_,i)=>npNombresAct[i]||"Actividad "+i+1));}}/></div></div><div style={{marginBottom:10}}><p style={{...S.lbl,marginBottom:6}}>Nombres de actividades</p>{Array.from({length:npCantAct},(_,i)=>(<input key={i} style={{...S.inp,marginBottom:5}} placeholder={"Actividad "+i+1} value={npNombresAct[i]||""} onChange={e=>{const a=[...npNombresAct];a[i]=e.target.value;setNpNombresAct(a);}}/>))}</div><div style={{background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)",borderRadius:6,padding:10,marginBottom:10,fontSize:11,color:C.textoS}}>💡 El porcentaje indica cuanto vale este periodo (ej: 30% del ano). Las notas de 0-5 se promediaran y mostraran al estudiante progresivamente.</div><button style={S.btnV} onClick={crearPeriodo}>✅ Crear periodo</button></div></div></div>}{periodoActivo?(<div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><button style={{...S.btnSm}} onClick={()=>setPeriodoActivo(null)}>← Periodos</button><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:15}}>📊 {periodoActivo.nombre}</h2><span style={{color:C.textoS,fontSize:11}}>{periodoActivo.area} - Grado {periodoActivo.grado} - {periodoActivo.porcentaje}%</span></div>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <div style={S.bloque}><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}><th style={{padding:"9px 10px",textAlign:"left",
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          color:C.azulC,borderBottom:"1px solid "+C.borde,minWidth:160}}>Estudiante</th>{periodoActivo.actividades.map((a,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        i)=>(<th key={i} style={{padding:"9px 10px",textAlign:"center",color:C.verdeC,borderBottom:"1px solid "+C.borde,minWidth:110,fontSize:11}}>{a}<br/><span style={{color:C.textoS,fontSize:9}}>({(periodoActivo.porcentaje/periodoActivo.actividades.length).toFixed(1)}%)</span></th>))}<th style={{padding:"9px 10px",textAlign:"center",color:C.naranja,borderBottom:"1px solid "+C.borde,minWidth:80}}>Promedio</th><th style={{padding:"9px 10px",textAlign:"center",color:C.textoS,borderBottom:"1px solid "+C.borde,minWidth:80}}>Avance</th></tr></thead><tbody>{estudiantesPeriodo.length===0?<tr><td colSpan={periodoActivo.actividades.length+3} style={{padding:20,textAlign:"center",color:C.textoS}}>Cargando estudiantes...</td></tr>:estudiantesPeriodo.map((est,i)=>{const notasEst=notasEditadas[est.id]||{};const prom=calcNota(notasEst);const completadas=Object.values(notasEst).filter(v=>v!=="").length;const avance=Math.round(completadas/periodoActivo.actividades.length*100);return(<tr key={est.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}><td style={{padding:"8px 10px",color:C.texto,fontWeight:"bold",fontSize:12}}>{est.name}</td>{periodoActivo.actividades.map((_,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          j)=>(<td key={j} style={{padding:"6px 8px",textAlign:"center"}}><input style={{width:60,background:"#0f2a47",border:"1px solid "+C.borde,borderRadius:4,padding:"4px 6px",color:C.texto,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          textAlign:"center",fontSize:12}} type="number" min="0" max="5" step="0.1" placeholder="—" value={notasEst[j]||""} onChange={e=>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        {const v=e.target.value;setNotasEditadas(prev=>({...prev,[est.id]:{...prev[est.id]||{},[j]:v}}));}}/></td>))}<td style={{padding:"8px 10px",textAlign:"center"}}>{prom!=null?<span style={{color:prom>=3?C.ok:C.err,fontWeight:"bold",fontSize:14,fontFamily:FT}}>{prom}</span>:<span style={{color:C.textoS}}>—</span>}</td><td style={{padding:"8px 10px",textAlign:"center"}}><div style={{background:"#0a1128",borderRadius:10,overflow:"hidden",height:8,marginBottom:2}}><div style={{width:avance+"%",height:"100%",background:avance===100?C.ok:C.azulC,transition:"width 0.3s"}}/></div><span style={{color:C.textoS,fontSize:9}}>{avance}%</span></td></tr>)})}</tbody></table></div><div style={{...S.fila,marginTop:14,justifyContent:"flex-end"}}><button style={{...S.btnV,width:"auto",padding:"9px 18px"}} onClick={guardarNotas}>💾 Guardar notas</button></div></div></div>):(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:16}}>📊 Libro de Notas</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>setShowNuevoPeriodo(true)}>+ Nuevo periodo</button></div>{periodos.length===0?(<div style={
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          {...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📊</p><p style={{color:C.textoS,fontSize:13}}>Sin periodos creados.</p><button style={{...S.btnV,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          width:"auto",padding:"9px 16px",marginTop:10}} onClick={()=>setShowNuevoPeriodo(true)}>+ Crear primer periodo</button>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        </div>):(periodos.map(p=>{const totalEst=Object.keys(p.notas||{}).length;const conNota=Object.values(p.notas||{}).filter(n=>Object.values(n).some(v=>v!=="")).length;
+return(<div key={p.id} style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"14px 16px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+<div style={{flex:1}}><p style={{color:C.verdeC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{p.nombre}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 4px"}}>{p.area} - Grado {p.grado} - {p.porcentaje}% del periodo</p><p style={{color:C.textoS,fontSize:10,margin:0}}>{p.actividades.length} actividades - {conNota} estudiantes con notas</p></div>
+<div style={{display:"flex",gap:6}}><button style={{...S.btnV,width:"auto",padding:"7px 12px",fontSize:11}} onClick={()=>abrirPeriodo(p)}>Ingresar notas</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>eliminarPeriodo(p.id)}>X</button></div></div>)}))})</div>}</div></div>
+      );
+    }
+
     function App(){
       const urlParams=new URLSearchParams(window.location.search);const codigoUrl=urlParams.get("codigo");
-      // ── CAMBIO 1: Detectar sesión de estudiante en localStorage ──
+      // ── CAMBIO 1: Detectar sesion de estudiante en localStorage ──
       const _ecTokenEst = localStorage.getItem('edutokenest');
       const _ecEstudiante = (function(){ try{ return JSON.parse(localStorage.getItem('educlass_estudiante')||'null'); }catch{ return null; } })();
       const[vista,setVista]=useState(codigoUrl?"portal":(_ecTokenEst&&_ecEstudiante)?"portal":(_ecToken&&_ecUser)?"dashboard":"login");const[usuario,setUsuario]=useState((_ecToken&&_ecUser)?_ecUser:null);const[msgAuth,setMsgAuth]=useState("");const[nombre,setNombre]=useState("");const[email,setEmail]=useState("");const[password,setPassword]=useState("");const[regInst,setRegInst]=useState("");const[regCargo,setRegCargo]=useState("Docente");const[regCiudad,setRegCiudad]=useState("");const[logoPreview,setLogoPreview]=useState("");const[banderaPreview,setBanderaPreview]=useState("");const[logoFile,setLogoFile]=useState(null);const[banderaFile,setBanderaFile]=useState(null);const logoRef=useRef();const banderaRef=useRef();
@@ -576,62 +1016,698 @@
       // ── CAMBIO 2: Inicializar estSesion con _ecEstudiante ──
       const[estVista,setEstVista]=useState((_ecTokenEst&&_ecEstudiante)?"dashboard":"login");const[estSesion,setEstSesion]=useState(_ecEstudiante);const[estMsg,setEstMsg]=useState("");const[estNombre,setEstNombre]=useState("");const[estUsuario,setEstUsuario]=useState("");const[estPassword,setEstPassword]=useState("");const[estGrado,setEstGrado]=useState("");const[estInst,setEstInst]=useState("");const[estTareas,setEstTareas]=useState([]);const[estTareaAct,setEstTareaAct]=useState(null);const[estResps,setEstResps]=useState({});const[estRespTexto,setEstRespTexto]=useState("");const[estArchivo,setEstArchivo]=useState(null);const[estEnviando,setEstEnviando]=useState(false);const[estEntregada,setEstEntregada]=useState(false);const[estEntregaData,setEstEntregaData]=useState(null);const archivoRef=useRef();
       const esBach=nivelEdu==="bachillerato"||nivelEdu==="media_tecnica";const optAper=esBach?OPT_B_APER:OPT_P_APER;const optDes=esBach?OPT_B_DES:OPT_P_DES;const optRet=esBach?OPT_B_RET:OPT_P_RET;
-      const cargarClases=async()=>{try{const r=await fetch(`${API}/mis-clases`,{headers:authH()});const d=await r.json();setMisClases(d.clases||[]);}catch(_){}};
-      const cargarTareas=async()=>{try{const r=await fetch(`${API}/tasks/mis-tareas`,{headers:authH()});const d=await r.json();setMisTareas(d.tareas||[]);}catch(_){}};
-      const cargarTareasEst=async()=>{try{const r=await fetch(`${API}/tasks/mis-tareas-estudiante`,{headers:authHEst()});const d=await r.json();setEstTareas(d.tareas||[]);}catch(_){}};
+      const cargarClases=async()=>{try{const r=await fetch(API+"/mis-clases",{headers:authH()});const d=await r.json();setMisClases(d.clases||[]);}catch(_){}};
+      const cargarTareas=async()=>{try{const r=await fetch(API+"/tasks/mis-tareas",{headers:authH()});const d=await r.json();setMisTareas(d.tareas||[]);}catch(_){}};
+      const cargarTareasEst=async()=>{try{const r=await fetch(API+"/tasks/mis-tareas-estudiante",{headers:authHEst()});const d=await r.json();setEstTareas(d.tareas||[]);}catch(_){}};
       useEffect(()=>{if(usuario&&localStorage.getItem("edutoken")){cargarTareas();cargarClases();}},[]);
       useEffect(()=>{if(estSesion&&localStorage.getItem("edutokenest"))cargarTareasEst();},[estVista]);
-      const cargarPeriodos=async()=>{try{const r=await fetch(`${API}/notas/periodos`,{headers:authH()});const d=await r.json();setPeriodos(d.periodos||[]);}catch(_){}};
-      const crearPeriodo=async()=>{if(!npNombre||!npArea||!npGrado){alert("Completa los campos");return;}const acts=npNombresAct.length?npNombresAct:Array.from({length:npCantAct},(_,i)=>`Actividad ${i+1}`);try{const r=await fetch(`${API}/notas/periodos`,{method:"POST",headers:authH(),body:JSON.stringify({nombre:npNombre,area:npArea,grado:npGrado,porcentaje:npPorcentaje,actividades:acts})});const d=await r.json();if(r.ok){setPeriodos(p=>[...p,d.periodo]);setShowNuevoPeriodo(false);setNpNombre("");setNpArea("");setNpGrado("");setNpPorcentaje(100);setNpCantAct(3);setNpNombresAct([]);}}catch(_){alert("Error")}};
-      const abrirPeriodo=async(p)=>{setPeriodoActivo(p);setNotasEditadas(p.notas||{});try{const r=await fetch(`${API}/students/grado/${encodeURIComponent(p.grado)}`,{headers:authH()});const d=await r.json();setEstudiantesPeriodo(d.estudiantes||[]);}catch(_){setEstudiantesPeriodo([]);}};
-      const guardarNotas=async()=>{try{const r=await fetch(`${API}/notas/periodos/${periodoActivo.id}`,{method:"PUT",headers:authH(),body:JSON.stringify({notas:notasEditadas})});const d=await r.json();if(r.ok){setPeriodoActivo({...periodoActivo,notas:notasEditadas});setPeriodos(ps=>ps.map(p=>p.id===periodoActivo.id?{...p,notas:notasEditadas}:p));alert("✅ Notas guardadas");}else alert(d.mensaje);}catch(_){alert("Error")}};
-      const eliminarPeriodo=async(id)=>{if(!confirm("¿Eliminar este período?"))return;try{await fetch(`${API}/notas/periodos/${id}`,{method:"DELETE",headers:authH()});setPeriodos(ps=>ps.filter(p=>p.id!==id));if(periodoActivo?.id===id)setPeriodoActivo(null);}catch(_){}};
+      const cargarPeriodos=async()=>{try{const r=await fetch(API+"/notas/periodos",{headers:authH()});const d=await r.json();setPeriodos(d.periodos||[]);}catch(_){}};
+      const crearPeriodo=async()=>{if(!npNombre||!npArea||!npGrado){alert("Completa los campos");return;}const acts=npNombresAct.length?npNombresAct:Array.from({length:npCantAct},(_,i)=>"Actividad "+i+1);try{const r=await fetch(API+"/notas/periodos",{method:"POST",headers:authH(),body:JSON.stringify({nombre:npNombre,area:npArea,grado:npGrado,porcentaje:npPorcentaje,actividades:acts})});const d=await r.json();if(r.ok){setPeriodos(p=>[...p,d.periodo]);setShowNuevoPeriodo(false);setNpNombre("");setNpArea("");setNpGrado("");setNpPorcentaje(100);setNpCantAct(3);setNpNombresAct([]);}}catch(_){alert("Error")}};
+      const abrirPeriodo=async(p)=>{setPeriodoActivo(p);setNotasEditadas(p.notas||{});try{const r=await fetch(API+"/students/grado/"+encodeURIComponent(p.grado),{headers:authH()});const d=await r.json();setEstudiantesPeriodo(d.estudiantes||[]);}catch(_){setEstudiantesPeriodo([]);}};
+      const guardarNotas=async()=>{try{const r=await fetch(API+"/notas/periodos/"+periodoActivo.id,{method:"PUT",headers:authH(),body:JSON.stringify({notas:notasEditadas})});const d=await r.json();if(r.ok){setPeriodoActivo({...periodoActivo,notas:notasEditadas});setPeriodos(ps=>ps.map(p=>p.id===periodoActivo.id?{...p,notas:notasEditadas}:p));alert("✅ Notas guardadas");}else alert(d.mensaje);}catch(_){alert("Error")}};
+      const eliminarPeriodo=async(id)=>{if(!confirm("¿Eliminar este periodo?"))return;try{await fetch(API+"/notas/periodos/"+id,{method:"DELETE",headers:authH()});setPeriodos(ps=>ps.filter(p=>p.id!==id));if(periodoActivo?.id===id)setPeriodoActivo(null);}catch(_){}};
       const calcNota=notas=>{if(!notas)return null;const vals=Object.values(notas).map(v=>parseFloat(v)).filter(v=>!isNaN(v));return vals.length?parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)):null};
-      const cargarPerfil=u=>{setInstitucion(u.institution?.name||"");setDocente(u.name||"");if(u.logoPath)setLogoPreview(`${API}/${u.logoPath}`);if(u.banderaPath)setBanderaPreview(`${API}/${u.banderaPath}`);};
+      const cargarPerfil=u=>{setInstitucion(u.institution?.name||"");setDocente(u.name||"");if(u.logoPath)setLogoPreview(API+"/"+u.logoPath);if(u.banderaPath)setBanderaPreview(API+"/"+u.banderaPath);};
       const reset=()=>{setPaso(1);setArea("");setGrado("");setPeriodo("1");setFecha("");setTema("");setDuracion("55");setNivelEdu("");setApertura("");setDesarrollo("");setRetro("");setCierre("");setDejaTarea(null);setTarea("");setContenido("");setGuardadoOk(false);setClaseActiva(null);if(usuario)cargarPerfil(usuario);};
-      const login=async()=>{if(!email){setMsgAuth("Ingresa tu correo");return;}try{const r=await fetch(`${API}/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const d=await r.json();if(r.ok){setUsuario(d.usuario);localStorage.setItem("edutoken",d.token);localStorage.setItem("educlass_usuario",JSON.stringify(d.usuario));cargarPerfil(d.usuario);setVista("dashboard");setMsgAuth("");cargarClases();cargarTareas();cargarPeriodos();}else setMsgAuth(d.mensaje||"Error");}catch{setMsgAuth("Sin conexión al servidor");}};
-      const registrar=async()=>{if(!nombre||!email||!password||!regInst){setMsgAuth("Completa todos los campos");return;}try{const r=await fetch(`${API}/auth/registro`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre,email,password,institucion:regInst,cargo:regCargo,ciudad:regCiudad})});const d=await r.json();setMsgAuth(d.mensaje);if(r.ok)setTimeout(()=>{setVista("login");setMsgAuth("");},1500);}catch{setMsgAuth("Error en el registro");}};
+      const login=async()=>{if(!email){setMsgAuth("Ingresa tu correo");return;}try{const r=await fetch(API+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const d=await r.json();if(r.ok){setUsuario(d.usuario);localStorage.setItem("edutoken",d.token);localStorage.setItem("educlass_usuario",JSON.stringify(d.usuario));cargarPerfil(d.usuario);setVista("dashboard");setMsgAuth("");cargarClases();cargarTareas();cargarPeriodos();}else setMsgAuth(d.mensaje||"Error");}catch{setMsgAuth("Sin conexion al servidor");}};
+      const registrar=async()=>{if(!nombre||!email||!password||!regInst){setMsgAuth("Completa todos los campos");return;}try{const r=await fetch(API+"/auth/registro",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre,email,password,institucion:regInst,cargo:regCargo,ciudad:regCiudad})});const d=await r.json();setMsgAuth(d.mensaje);if(r.ok)setTimeout(()=>{setVista("login");setMsgAuth("");},1500);}catch{setMsgAuth("Error en el registro");}};
       const salir=()=>{setVista("login");setUsuario(null);localStorage.removeItem("edutoken");localStorage.removeItem("educlass_usuario");reset();setEmail("");setPassword("");setMsgAuth("");setMisClases([]);setMisTareas([]);setLogoPreview("");setBanderaPreview("");};
-      const subirPerfil=async()=>{if(!usuario)return;const form=new FormData();form.append("nombre",usuario.name);form.append("cargo",usuario.cargo||"Docente");if(logoFile)form.append("logo",logoFile);if(banderaFile)form.append("bandera",banderaFile);try{const r=await fetch(`${API}/actualizar-perfil`,{method:"POST",headers:{"Authorization":`Bearer ${localStorage.getItem("edutoken")||""}`},body:form});const d=await r.json();if(r.ok){setUsuario(d.usuario);setLogoFile(null);setBanderaFile(null);alert("Perfil guardado ✅");}else alert(d.mensaje);}catch{alert("Error guardando perfil");}};
-      const loginEst=async()=>{if(!estUsuario||!estPassword){setEstMsg("Completa usuario y contraseña");return;}try{const r=await fetch(`${API}/auth/login-estudiante`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuario:estUsuario,password:estPassword})});const d=await r.json();if(r.ok){setEstSesion(d.estudiante);localStorage.setItem("edutokenest",d.token);localStorage.setItem("educlass_estudiante",JSON.stringify(d.estudiante));setEstMsg("");setEstVista("dashboard");cargarTareasEst();}else setEstMsg(d.mensaje||"Error");}catch{setEstMsg("Sin conexión");}};
-      const registrarEst=async()=>{if(!estNombre||!estUsuario||!estPassword||!estInst){setEstMsg("Completa todos los campos incluyendo institución");return;}try{const r=await fetch(`${API}/auth/registro-estudiante`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:estNombre,usuario:estUsuario,password:estPassword,grado:estGrado,institucion:estInst})});const d=await r.json();if(r.ok){setEstMsg("✅ Cuenta creada. Ahora inicia sesión.");setEstVista("login");}else setEstMsg(d.mensaje||"Error");}catch{setEstMsg("Error en el registro");}};
+      const subirPerfil=async()=>{if(!usuario)return;const form=new FormData();form.append("nombre",usuario.name);form.append("cargo",usuario.cargo||"Docente");if(logoFile)form.append("logo",logoFile);if(banderaFile)form.append("bandera",banderaFile);try{const r=await fetch(API+"/actualizar-perfil",{method:"POST",headers:{"Authorization":"Bearer "+localStorage.getItem("edutoken")||""},body:form});const d=await r.json();if(r.ok){setUsuario(d.usuario);setLogoFile(null);setBanderaFile(null);alert("Perfil guardado ✅");}else alert(d.mensaje);}catch{alert("Error guardando perfil");}};
+      const loginEst=async()=>{if(!estUsuario||!estPassword){setEstMsg("Completa usuario y contrasena");return;}try{const r=await fetch(API+"/auth/login-estudiante",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuario:estUsuario,password:estPassword})});const d=await r.json();if(r.ok){setEstSesion(d.estudiante);localStorage.setItem("edutokenest",d.token);localStorage.setItem("educlass_estudiante",JSON.stringify(d.estudiante));setEstMsg("");setEstVista("dashboard");cargarTareasEst();}else setEstMsg(d.mensaje||"Error");}catch{setEstMsg("Sin conexion");}};
+      const registrarEst=async()=>{if(!estNombre||!estUsuario||!estPassword||!estInst){setEstMsg("Completa todos los campos incluyendo institucion");return;}try{const r=await fetch(API+"/auth/registro-estudiante",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:estNombre,usuario:estUsuario,password:estPassword,grado:estGrado,institucion:estInst})});const d=await r.json();if(r.ok){setEstMsg("✅ Cuenta creada. Ahora inicia sesion.");setEstVista("login");}else setEstMsg(d.mensaje||"Error");}catch{setEstMsg("Error en el registro");}};
       const abrirTareaEst=t=>{
         const tarea={...t, actividad: typeof t.actividad==="string"?JSON.parse(t.actividad):t.actividad};
         setEstTareaAct(tarea);setEstEntregada(tarea.entregada||false);setEstEntregaData(null);setEstResps({});setEstRespTexto("");setEstArchivo(null);setEstVista("resolver");};
-      const entregarTarea=async()=>{if(!estTareaAct)return;if(!Object.keys(estResps).length&&!estRespTexto&&!estArchivo){alert("Responde o adjunta archivo");return;}setEstEnviando(true);try{const form=new FormData();form.append("tareaId",estTareaAct.id);form.append("respuesta",estRespTexto);form.append("respuestasActividad",JSON.stringify(estResps));if(estArchivo)form.append("archivo",estArchivo);const r=await fetch(`${API}/tasks/entregar`,{method:"POST",headers:{"Authorization":`Bearer ${localStorage.getItem("edutokenest")||""}`},body:form});const d=await r.json();if(r.ok){setEstEntregada(true);setEstEntregaData(d);cargarTareasEst();}else alert(d.mensaje);}catch{alert("Error enviando");}setEstEnviando(false);};
-      const verEntregas=async t=>{setTareaActiva(t);try{const r=await fetch(`${API}/tasks/${t.id}/entregas`,{headers:authH()});const d=await r.json();setListadoEnt(d.listadoCompleto||[]);setResumenEnt({total:d.total,entregados:d.totalEntregas,pendientes:d.totalPendientes,calificados:d.totalCalificados});}catch{alert("Error cargando entregas");}setFiltroEst("todos");setVista("ver_entregas");};
-      const calificar=async()=>{if(!calNota){alert("Ingresa nota");return;}try{const r=await fetch(`${API}/tasks/calificar`,{method:"POST",headers:authH(),body:JSON.stringify({entregaId:calId,calificacion:calNota,comentario:calComent})});const d=await r.json();if(r.ok){alert("✅ Nota guardada");setCalId(null);setCalNota("");setCalComent("");verEntregas(tareaActiva);}else alert(d.mensaje);}catch{alert("Error calificando");}};
-      const eliminarTarea=async id=>{if(!window.confirm("¿Eliminar esta tarea?"))return;try{await fetch(`${API}/tasks/${id}`,{method:"DELETE",headers:authH()});cargarTareas();}catch{alert("Error");}};
-      const eliminarClase=async id=>{if(!window.confirm("¿Eliminar?"))return;try{await fetch(`${API}/clase/${id}`,{method:"DELETE",headers:authH()});cargarClases();}catch{alert("Error");}};
-      const generarGuia=async()=>{setCargando(true);setContenido("");setPaso(7);setGuardadoOk(false);const getLbl=(l,id)=>l.find(x=>x.id===id)?.label||id;try{const r=await fetch(`${API}/generar-guia`,{method:"POST",headers:authH(),body:JSON.stringify({institucion,docente,area,grado,periodo,fecha,tema,duracion,cargo:usuario?.cargo||"Docente",ciudad:usuario?.institution?.city||"",nivelEducativo:nivelEdu,tipoApertura:getLbl(optAper,apertura),estratDesarrollo:getLbl(optDes,desarrollo),retroalimentacion:getLbl(optRet,retro),tipoCierre:getLbl(OPT_CIERRE,cierre),dejaTarea,estratTarea:getLbl(OPT_TAREA,tarea)})});const d=await r.json();setContenido(d.contenido||"Sin contenido.");}catch{setContenido("❌ Error de conexión.");}setCargando(false);};
-      const guardarClase=async()=>{if(!contenido||!usuario)return;setGuardando(true);try{const r=await fetch(`${API}/guardar-clase`,{method:"POST",headers:authH(),body:JSON.stringify({contenido,datos:{institucion,docente,area,grado,periodo,fecha,tema,duracion}})});const d=await r.json();if(r.ok){setGuardadoOk(true);cargarClases();}else alert(d.mensaje);}catch{alert("Error guardando");}setGuardando(false);};
-      const exportar=async tipo=>{if(!contenido||contenido.startsWith("❌")){alert("Genera una guía primero");return;}tipo==="word"?setDescWord(true):setDescPdf(true);try{const r=await fetch(`${API}/exportar-${tipo}`,{method:"POST",headers:authH(),body:JSON.stringify({contenido,institucion,docente,area,grado,periodo,fecha,tema,duracion,logoPath:usuario?.logoPath||"",banderaPath:usuario?.banderaPath||"",cargo:usuario?.cargo||"Docente",ciudad:usuario?.institution?.city||"",nivelEducativo:nivelEdu})});if(!r.ok){alert(`Error generando ${tipo}`);tipo==="word"?setDescWord(false):setDescPdf(false);return;}const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`PlanAula_${area}_Grado${grado}.${tipo==="word"?"docx":"pdf"}`;a.click();URL.revokeObjectURL(url);}catch{alert(`Error exportando ${tipo}`);}tipo==="word"?setDescWord(false):setDescPdf(false);};
+      const entregarTarea=async()=>{if(!estTareaAct)return;if(!Object.keys(estResps).length&&!estRespTexto&&!estArchivo){alert("Responde o adjunta archivo");return;}setEstEnviando(true);try{const form=new FormData();form.append("tareaId",estTareaAct.id);form.append("respuesta",estRespTexto);form.append("respuestasActividad",JSON.stringify(estResps));if(estArchivo)form.append("archivo",estArchivo);const r=await fetch(API+"/tasks/entregar",{method:"POST",headers:{"Authorization":"Bearer "+localStorage.getItem("edutokenest")||""},body:form});const d=await r.json();if(r.ok){setEstEntregada(true);setEstEntregaData(d);cargarTareasEst();}else alert(d.mensaje);}catch{alert("Error enviando");}setEstEnviando(false);};
+      const verEntregas=async t=>{setTareaActiva(t);try{const r=await fetch(API+"/tasks/"+t.id+"/entregas",{headers:authH()});const d=await r.json();setListadoEnt(d.listadoCompleto||[]);setResumenEnt({total:d.total,entregados:d.totalEntregas,pendientes:d.totalPendientes,calificados:d.totalCalificados});}catch{alert("Error cargando entregas");}setFiltroEst("todos");setVista("ver_entregas");};
+      const calificar=async()=>{if(!calNota){alert("Ingresa nota");return;}try{const r=await fetch(API+"/tasks/calificar",{method:"POST",headers:authH(),body:JSON.stringify({entregaId:calId,calificacion:calNota,comentario:calComent})});const d=await r.json();if(r.ok){alert("✅ Nota guardada");setCalId(null);setCalNota("");setCalComent("");verEntregas(tareaActiva);}else alert(d.mensaje);}catch{alert("Error calificando");}};
+      const eliminarTarea=async id=>{if(!window.confirm("¿Eliminar esta tarea?"))return;try{await fetch(API+"/tasks/"+id,{method:"DELETE",headers:authH()});cargarTareas();}catch{alert("Error");}};
+      const eliminarClase=async id=>{if(!window.confirm("¿Eliminar?"))return;try{await fetch(API+"/clase/"+id,{method:"DELETE",headers:authH()});cargarClases();}catch{alert("Error");}};
+      const generarGuia=async()=>{setCargando(true);setContenido("");setPaso(7);setGuardadoOk(false);const getLbl=(l,id)=>l.find(x=>x.id===id)?.label||id;try{const r=await fetch(API+"/generar-guia",{method:"POST",headers:authH(),body:JSON.stringify({institucion,docente,area,grado,periodo,fecha,tema,duracion,cargo:usuario?.cargo||"Docente",ciudad:usuario?.institution?.city||"",nivelEducativo:nivelEdu,tipoApertura:getLbl(optAper,apertura),estratDesarrollo:getLbl(optDes,desarrollo),retroalimentacion:getLbl(optRet,retro),tipoCierre:getLbl(OPT_CIERRE,cierre),dejaTarea,estratTarea:getLbl(OPT_TAREA,tarea)})});const d=await r.json();setContenido(d.contenido||"Sin contenido.");}catch{setContenido("❌ Error de conexion.");}setCargando(false);};
+      const guardarClase=async()=>{if(!contenido||!usuario)return;setGuardando(true);try{const r=await fetch(API+"/guardar-clase",{method:"POST",headers:authH(),body:JSON.stringify({contenido,datos:{institucion,docente,area,grado,periodo,fecha,tema,duracion}})});const d=await r.json();if(r.ok){setGuardadoOk(true);cargarClases();}else alert(d.mensaje);}catch{alert("Error guardando");}setGuardando(false);};
+      const exportar=async tipo=>{if(!contenido||contenido.startsWith("❌")){alert("Genera una guia primero");return;}tipo==="word"?setDescWord(true):setDescPdf(true);try{const r=await fetch(API+"/exportar-"+tipo,{method:"POST",headers:authH(),body:JSON.stringify({contenido,institucion,docente,area,grado,periodo,fecha,tema,duracion,logoPath:usuario?.logoPath||"",banderaPath:usuario?.banderaPath||"",cargo:usuario?.cargo||"Docente",ciudad:usuario?.institution?.city||"",nivelEducativo:nivelEdu})});if(!r.ok){alert("Error generando "+tipo);tipo==="word"?setDescWord(false):setDescPdf(false);return;}const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="PlanAula_"+area+"_Grado"+grado+"."+tipo==="word"?"docx":"pdf";a.click();URL.revokeObjectURL(url);}catch{alert("Error exportando "+tipo);}tipo==="word"?setDescWord(false):setDescPdf(false);};
 
       if(usuario?.rol==="superadmin")return(<SuperAdmin usuario={usuario} onSalir={salir}/>);
 
-      const Header=()=>(<div style={S.header}><div style={{display:"flex",alignItems:"center",gap:10}}><span style={S.logo}>🎓 EduClass Premium</span><div style={{display:"flex",gap:3}}><button style={{...S.btnSm,color:vista==="dashboard"?C.azulC:C.textoS,borderColor:vista==="dashboard"?C.azul:C.borde}} onClick={()=>setVista("dashboard")}>🏠</button><button style={{...S.btnSm,color:["ia"].includes(vista)?C.azulC:C.textoS}} onClick={()=>{reset();setVista("ia");}}>📝 Nueva clase</button><button style={{...S.btnSm,color:vista==="tareas"?C.naranja:C.textoS,borderColor:vista==="tareas"?C.naranja:C.borde}} onClick={()=>setVista("tareas")}>📋 Tareas{misTareas.length>0&&<span style={{...S.badge(C.naranja),marginLeft:4}}>{misTareas.length}</span>}</button><button style={{...S.btnSm,color:vista==="notas"?C.verdeC:C.textoS,borderColor:vista==="notas"?C.verde:C.borde}} onClick={()=>setVista("notas")}>📊 Notas</button><button style={{...S.btnSm,color:vista==="historial"?C.verdeC:C.textoS}} onClick={()=>setVista("historial")}>📂 Clases</button></div></div><div style={{display:"flex",gap:6,alignItems:"center"}}>{logoPreview&&<img src={logoPreview} alt="L" style={{width:26,height:26,borderRadius:4,objectFit:"contain",border:`1px solid ${C.borde}`}}/>}{banderaPreview&&<img src={banderaPreview} alt="B" style={{width:26,height:26,borderRadius:4,objectFit:"contain",border:`1px solid ${C.borde}`}}/>}<span style={{color:C.textoS,fontSize:11}}>{usuario?.name}</span><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>setVista("perfil")}>⚙️</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={salir}>Salir</button></div></div>);
+      const Header=()=>(<div style={S.header}><div style={{display:"flex",alignItems:"center",gap:10}}><span style={S.logo}>🎓 EduClass Premium</span><div style={{display:"flex",gap:3}}><button style={{...S.btnSm,color:vista==="dashboard"?C.azulC:C.textoS,borderColor:vista==="dashboard"?C.azul:C.borde}} onClick={()=>setVista("dashboard")}>🏠</button><button style={{...S.btnSm,color:["ia"].includes(vista)?C.azulC:C.textoS}} onClick={()=>{reset();setVista("ia");}}>📝 Nueva clase</button><button style={{...S.btnSm,color:vista==="tareas"?C.naranja:C.textoS,borderColor:vista==="tareas"?C.naranja:C.borde}} onClick={()=>setVista("tareas")}>📋 Tareas{misTareas.length>0&&<span style={{...S.badge(C.naranja),marginLeft:4}}>{misTareas.length}</span>}</button><button style={{...S.btnSm,color:vista==="notas"?C.verdeC:C.textoS,borderColor:vista==="notas"?C.verde:C.borde}} onClick={()=>setVista("notas")}>📊 Notas</button><button style={{...S.btnSm,color:vista==="historial"?C.verdeC:C.textoS}} onClick={()=>setVista("historial")}>📂 Clases</button></div></div><div style={{display:"flex",gap:6,alignItems:"center"}}>{logoPreview&&<img src={logoPreview} alt="L" style={{width:26,height:26,borderRadius:4,objectFit:"contain",
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        border:"1px solid "+C.borde}}/>}{banderaPreview&&<img src={banderaPreview} alt="B" style={{width:26,height:26,borderRadius:4,objectFit:"contain",border:"1px solid "+C.borde}}/>}<span style={{color:C.textoS,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        fontSize:11}}>{usuario?.name}</span><button style={{...S.btnSm,color:C.azulC,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        borderColor:C.azul}} onClick={()=>setVista("perfil")}>⚙️</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={salir}>Salir</button></div></div>);
 
-      if(vista==="portal")return(<div style={S.fondo}><div style={S.header}><span style={S.logo}>📚 Portal Estudiantil</span><button style={{...S.btnSm,color:C.textoS}} onClick={()=>setVista("login")}>← Soy docente</button></div>{estVista==="login"&&(<div style={{...S.pantalla,paddingTop:20}}><div style={{...S.card,maxWidth:440}}><div style={{textAlign:"center"}}><span style={{fontSize:40}}>📚</span><h1 style={{...S.titulo,fontSize:18,marginTop:6}}>Portal del Estudiante</h1></div><div><p style={S.lbl}>Usuario</p><input style={S.inp} placeholder="Tu usuario" value={estUsuario} onChange={e=>setEstUsuario(e.target.value)} onKeyDown={e=>e.key==="Enter"&&loginEst()}/></div><div><p style={S.lbl}>Contraseña</p><input type="password" style={S.inp} placeholder="••••••••" value={estPassword} onChange={e=>setEstPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&loginEst()}/></div><button style={S.btnA} onClick={loginEst}>Ingresar</button><button style={{...S.btnG,borderColor:C.verde,color:C.verdeC}} onClick={()=>setEstVista("registro")}>¿Sin cuenta? Regístrate</button>{estMsg&&<p style={estMsg.includes("✅")?S.ok_msg:S.err}>{estMsg}</p>}</div></div>)}{estVista==="registro"&&(<div style={{...S.pantalla,paddingTop:20}}><div style={{...S.card,maxWidth:440}}><h1 style={{...S.titulo,color:C.ok,fontSize:18}}>Crear cuenta</h1><div><p style={S.lbl}>Nombre completo *</p><input style={S.inp} placeholder="Ej: Juan Pérez" value={estNombre} onChange={e=>setEstNombre(e.target.value)}/></div><div><p style={S.lbl}>Usuario *</p><input style={S.inp} placeholder="juanperez" value={estUsuario} onChange={e=>setEstUsuario(e.target.value.toLowerCase().replace(/\s+/g,""))}/></div><div><p style={S.lbl}>Contraseña *</p><input type="password" style={S.inp} value={estPassword} onChange={e=>setEstPassword(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={estGrado} onChange={e=>setEstGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Institución *</p><input style={S.inp} placeholder="Nombre del colegio" value={estInst} onChange={e=>setEstInst(e.target.value)}/></div></div><button style={S.btnV} onClick={registrarEst}>Crear cuenta</button><button style={S.btnG} onClick={()=>setEstVista("login")}>← Ya tengo cuenta</button>{estMsg&&<p style={estMsg.includes("✅")?S.ok_msg:S.err}>{estMsg}</p>}</div></div>)}{estVista==="dashboard"&&estSesion&&(<div style={S.cont}><div style={{background:"linear-gradient(135deg,#0f2a47,#0a1a35)",borderRadius:12,padding:"18px 20px",marginBottom:18,border:`1px solid ${C.azul}`}}><h2 style={{color:C.texto,fontSize:16,margin:"0 0 3px",fontFamily:FT}}>¡Hola, {estSesion.name}! 👋</h2><p style={{color:C.textoS,margin:0,fontSize:12}}>Grado {estSesion.grade}</p></div><h3 style={{color:C.textoS,fontSize:11,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Mis tareas</h3>{estTareas.length===0?(<div style={{...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📋</p><p style={{color:C.textoS,fontSize:13,margin:0}}>No tienes tareas asignadas.</p></div>):(estTareas.map(t=>(<div key={t.id} style={{background:"#0a1128",border:`1px solid ${t.entregada?C.verde:C.borde}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{t.titulo}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{t.area} · Grado {t.grado}</p>{t.entregada&&<p style={{color:t.calificacion!=null?C.naranja:C.ok,fontSize:11,margin:0,fontWeight:"bold"}}>{t.calificacion!=null?`✅ Nota: ${t.calificacion}`:"✅ Entregada"}</p>}{!t.entregada&&<p style={{color:C.naranja,fontSize:11,margin:0}}>⏳ Pendiente</p>}</div><button style={{...S.btnSm,color:t.entregada?C.textoS:C.azulC,borderColor:t.entregada?C.borde:C.azul}} onClick={()=>abrirTareaEst(t)}>{t.entregada?"👁 Ver":"📝 Resolver"}</button></div></div>)))}<button style={{...S.btnG,marginTop:14}} onClick={()=>{setEstSesion(null);localStorage.removeItem("edutokenest");localStorage.removeItem("educlass_estudiante");setEstVista("login");setEstTareas([]);setEstNombre("");setEstUsuario("");setEstPassword("");}}>Cerrar sesión</button><div style={{marginTop:16}}><h3 style={{color:C.textoS,fontSize:11,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>📊 Mis notas parciales</h3><NotasEstudiante studentId={estSesion?.id} token={localStorage.getItem("edutokenest")} API={API}/></div></div>)}{estVista==="resolver"&&estTareaAct&&(<div style={S.cont}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setEstVista("dashboard")}>← Mis tareas</button><div style={S.bloque}><h2 style={{...S.tBloque,margin:"0 0 4px",fontSize:15}}>{estTareaAct.titulo}</h2><p style={{color:C.textoS,fontSize:12,margin:"0 0 10px"}}>{estTareaAct.area} · Grado {estTareaAct.grado}</p>{estTareaAct.descripcion&&<div style={{background:"#0f2a47",borderRadius:7,padding:"10px 12px",border:`1px solid ${C.azul}`,marginBottom:14}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 3px",fontSize:11}}>📋 Instrucciones:</p><p style={{color:C.texto,fontSize:12,margin:0}}>{estTareaAct.descripcion}</p></div>}{estEntregada?(<div style={{background:"#052e16",border:`1px solid ${C.ok}`,borderRadius:8,padding:18,textAlign:"center"}}><p style={{fontSize:36,margin:"0 0 6px"}}>✅</p><p style={{color:C.ok,fontWeight:"bold",fontSize:15,margin:"0 0 6px"}}>Tarea entregada</p>{estEntregaData?.notaAuto!=null?<p style={{color:C.naranja,fontSize:36,fontWeight:"bold",margin:0,fontFamily:FT}}>{estEntregaData.notaAuto}</p>:<p style={{color:C.textoS,fontSize:12,margin:0}}>Tu docente revisará pronto.</p>}</div>):(<>{estTareaAct.actividad&&(<div style={{marginBottom:14}}><p style={{color:C.texto,fontWeight:"bold",margin:"0 0 10px",fontFamily:FT,fontSize:13}}>Resuelve la actividad:</p><ResolverAct actividad={estTareaAct.actividad} tipo={estTareaAct.tipo} onResp={setEstResps}/></div>)}<div style={{marginBottom:10}}><p style={S.lbl}>✏️ Tu respuesta:</p><textarea style={{...S.ta,minHeight:90}} placeholder="Escribe aquí..." value={estRespTexto} onChange={e=>setEstRespTexto(e.target.value)}/></div><div style={{marginBottom:14}}><p style={S.lbl}>📎 Adjuntar archivo</p><div style={S.fila}><button style={{...S.btnG,width:"auto",padding:"7px 12px",fontSize:12}} onClick={()=>archivoRef.current.click()}>📁 Seleccionar</button>{estArchivo&&<span style={{color:C.ok,fontSize:11,alignSelf:"center"}}>✅ {estArchivo.name}</span>}</div><input ref={archivoRef} type="file" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" style={{display:"none"}} onChange={e=>setEstArchivo(e.target.files[0])}/></div><button style={{...S.btnV,opacity:estEnviando?0.7:1}} disabled={estEnviando} onClick={entregarTarea}>{estEnviando?"⏳ Enviando...":"📤 Entregar tarea"}</button></>)}</div></div>)}</div>);
-      if(vista==="login")return(<div style={S.pantalla}><div style={S.card}><div style={{textAlign:"center"}}><span style={{fontSize:44}}>🎓</span><h1 style={S.titulo}>EduClass Premium</h1><p style={S.sub}>Plataforma pedagógica con IA</p></div><div><p style={S.lbl}>Correo</p><input style={S.inp} placeholder="docente@colegio.edu.co" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/></div><div><p style={S.lbl}>Contraseña</p><input type="password" style={S.inp} placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/></div><button style={S.btnA} onClick={login}>Ingresar como docente</button><button style={S.btnG} onClick={()=>{setVista("registro");setMsgAuth("");}}>Crear cuenta docente</button><div style={S.sep}/><button style={S.btnM} onClick={()=>setVista("portal")}>📚 Soy estudiante</button>{msgAuth&&<p style={S.err}>{msgAuth}</p>}</div></div>);
-      if(vista==="registro")return(<div style={S.pantalla}><div style={{...S.card,maxWidth:500}}><h1 style={{...S.titulo,color:C.ok,fontSize:18}}>Registro de Docente</h1><div><p style={S.lbl}>Nombre completo *</p><input style={S.inp} placeholder="Ej: María González" value={nombre} onChange={e=>setNombre(e.target.value)}/></div><div><p style={S.lbl}>Correo *</p><input style={S.inp} placeholder="docente@colegio.edu.co" value={email} onChange={e=>setEmail(e.target.value)}/></div><div><p style={S.lbl}>Contraseña *</p><input type="password" style={S.inp} value={password} onChange={e=>setPassword(e.target.value)}/></div><div style={S.sep}/><div><p style={S.lbl}>Institución *</p><input style={S.inp} placeholder="I.E.R. Santiago de la Selva" value={regInst} onChange={e=>setRegInst(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Cargo</p><select style={S.sel} value={regCargo} onChange={e=>setRegCargo(e.target.value)}>{["Docente","Coordinador/a","Rector/a","Orientador/a"].map(c=><option key={c}>{c}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Ciudad</p><input style={S.inp} placeholder="Valparaíso" value={regCiudad} onChange={e=>setRegCiudad(e.target.value)}/></div></div><button style={S.btnV} onClick={registrar}>Registrarme</button><button style={S.btnG} onClick={()=>{setVista("login");setMsgAuth("");}}>← Volver</button>{msgAuth&&<p style={msgAuth.includes("exitoso")?S.ok_msg:S.err}>{msgAuth}</p>}</div></div>);
-      if(vista==="dashboard")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={{background:"linear-gradient(135deg,#0f2a47,#0a1a35)",borderRadius:12,padding:"20px 22px",marginBottom:20,border:`1px solid ${C.azul}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}><div><h2 style={{color:C.texto,fontSize:17,margin:"0 0 2px",fontFamily:FT}}>¡Bienvenido/a, {usuario?.name?.split(" ")[0]}! 👋</h2><p style={{color:C.textoS,margin:0,fontSize:12}}>{usuario?.cargo} · {usuario?.institution?.name}</p></div><div style={{display:"flex",gap:6}}><div style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"8px 14px",textAlign:"center"}}><p style={{color:C.azulC,fontSize:18,fontWeight:"bold",margin:0}}>{misClases.length}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Clases</p></div><div style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"8px 14px",textAlign:"center"}}><p style={{color:C.naranja,fontSize:18,fontWeight:"bold",margin:0}}>{misTareas.length}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Tareas</p></div></div></div><p style={{color:C.textoS,fontSize:10,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Módulos</p><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8,marginBottom:18}}><DashCard icon="📝" titulo="Nueva clase" desc="Guía pedagógica con IA" color={C.azul} onClick={()=>{reset();setVista("ia");}}/><DashCard icon="📋" titulo="Tareas" desc="Asignar y revisar entregas" color={C.naranja} onClick={()=>setVista("tareas")} badge={misTareas.filter(t=>t.pendientes>0).length||null}/><DashCard icon="📂" titulo="Mis clases" desc="Historial de guías" color={C.verdeC} onClick={()=>setVista("historial")} badge={misClases.length||null}/><DashCard icon="📊" titulo="Libro de Notas" desc="Notas parciales por período" color={C.verde} onClick={()=>setVista("notas")}/><DashCard icon="⚙️" titulo="Mi perfil" desc="Escudo, bandera y datos" color={C.morado} onClick={()=>setVista("perfil")}/></div>{misClases.length>0&&(<><p style={{color:C.textoS,fontSize:10,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Clases recientes</p><div style={S.bloque}>{misClases.slice(0,3).map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(`${API}/clase/${cl.id}`,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}{misClases.length>3&&<button style={{...S.btnG,marginTop:6}} onClick={()=>setVista("historial")}>Ver todas ({misClases.length}) →</button>}</div></>)}</div></div>);
-      if(vista==="tareas")return(<div style={S.fondo}><Header/>{mostrarModal&&<ModalTarea onCerrar={()=>{setMostrarModal(false);setTareaAEditar(null);}} tareaEditar={tareaAEditar} onCreada={t=>{setMostrarModal(false);setTareaAEditar(null);cargarTareas();alert(`✅ Tarea "${t.title||t.titulo}" guardada. ${t.code?"Código: "+t.code:""}`);}}/>}
-      <div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📋 Gestión de Tareas</h2><button style={{...S.btnV,width:"auto",padding:"9px 16px"}} onClick={()=>{setTareaAEditar(null);setMostrarModal(true);}}>+ Asignar tarea</button></div>{misTareas.length===0?(<div style={{textAlign:"center",padding:"40px 20px"}}><p style={{fontSize:44,margin:"0 0 10px"}}>📋</p><p style={{color:C.textoS,fontSize:14,margin:"0 0 16px"}}>No tienes tareas creadas.</p><button style={{...S.btnV,width:"auto",padding:"10px 20px"}} onClick={()=>setMostrarModal(true)}>+ Crear primera tarea</button></div>):(misTareas.map(t=>{const dias=t.dueDate?Math.ceil((new Date(t.dueDate)-new Date())/(1000*60*60*24)):null;return(<div key={t.id} style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"12px 14px",marginBottom:7}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:6}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{t.title}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{t.area} · Grado {t.grade} · Código: <span style={{color:C.naranja,fontWeight:"bold"}}>{t.code}</span></p>{dias!==null&&<p style={{fontSize:10,margin:"0 0 3px",color:dias<0?C.err:dias<=3?C.naranja:C.ok}}>{dias<0?"⚠️ Vencida":dias===0?"⚠️ Vence hoy":`📅 ${dias} días restantes`}</p>}<div style={{display:"flex",gap:5,flexWrap:"wrap"}}><span style={{...S.badge(C.azul),fontSize:10,padding:"2px 8px"}}>👥 {t.totalEstudiantes}</span><span style={{...S.badge(t.totalEntregas>0?C.verde:"#374151"),fontSize:10,padding:"2px 8px"}}>✅ {t.totalEntregas}</span><span style={{...S.badge(t.pendientes>0?C.err:"#374151"),fontSize:10,padding:"2px 8px"}}>⏳ {t.pendientes}</span></div></div><div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>verEntregas(t)}>📊 Entregas</button><button style={{...S.btnSm,color:C.naranja,borderColor:C.naranja}} onClick={()=>{setTareaAEditar(t);setMostrarModal(true);}}>✏️ Editar</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>eliminarTarea(t.id)}>🗑</button></div></div></div>);}))}</div></div></div>);
-      if(vista==="ver_entregas"&&tareaActiva)return(<div style={S.fondo}><Header/>{verRespModal&&<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setVerRespModal(null)}><div style={{...S.modal,maxWidth:500}}><div style={S.mHead}><h3 style={{color:C.azulC,margin:0,fontSize:15}}>📋 Respuestas de {verRespModal.nombre}</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setVerRespModal(null)}>✕</button></div><div style={S.mBody}>{verRespModal.respuesta&&<div style={{marginBottom:10}}><p style={{...S.lbl,marginBottom:4}}>Respuesta escrita:</p><div style={{background:"#0a1128",borderRadius:6,padding:10,fontSize:12,color:C.texto}}>{verRespModal.respuesta}</div></div>}{verRespModal.respuestasActividad&&Object.keys(verRespModal.respuestasActividad).length>0&&<div><p style={{...S.lbl,marginBottom:6}}>Respuestas por pregunta:</p>{Object.entries(verRespModal.respuestasActividad).map(([k,v])=>(<div key={k} style={{background:"#0a1128",borderRadius:6,padding:"6px 10px",marginBottom:4,fontSize:11}}><span style={{color:C.azulC}}>Preg. {parseInt(k)+1}:</span> <span style={{color:C.texto}}>{v}</span></div>))}</div>}<div style={{borderTop:`1px solid ${C.borde}`,marginTop:14,paddingTop:14}}><p style={{...S.lbl,marginBottom:6}}>✏️ Calificar:</p><div style={S.fila}><input style={{...S.inp,flex:1}} type="number" min="0" max="5" step="0.1" placeholder="Nota (0-5)" value={verRespModal.nota||""} onChange={e=>setVerRespModal({...verRespModal,nota:e.target.value})}/><input style={{...S.inp,flex:2}} placeholder="Comentario..." value={verRespModal.comentario||""} onChange={e=>setVerRespModal({...verRespModal,comentario:e.target.value})}/></div><button style={{...S.btnV,width:"auto",padding:"8px 16px",marginTop:8}} onClick={async()=>{if(!verRespModal.nota){alert("Ingresa nota");return;}const r=await fetch(`${API}/tasks/calificar`,{method:"POST",headers:authH(),body:JSON.stringify({entregaId:verRespModal.entregaId,calificacion:verRespModal.nota,comentario:verRespModal.comentario||""})});const d=await r.json();if(r.ok){alert("✅ Nota guardada");setVerRespModal(null);verEntregas(tareaActiva);}else alert(d.mensaje);}}>💾 Guardar nota</button></div></div></div></div>}<div style={S.cont}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setVista("tareas")}>← Tareas</button><div style={S.bloque}><h2 style={S.tBloque}>📊 {tareaActiva.title}</h2><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:18}}>{[{l:"Total",v:resumenEnt.total||0,c:C.azulC},{l:"Entregaron",v:resumenEnt.entregados||0,c:C.ok},{l:"Pendientes",v:resumenEnt.pendientes||0,c:C.err},{l:"Calificados",v:resumenEnt.calificados||0,c:C.naranja}].map(s=>(<div key={s.l} style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"10px 14px",textAlign:"center"}}><p style={{color:s.c,fontSize:22,fontWeight:"bold",margin:"0 0 3px",fontFamily:FT}}>{s.v}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>{s.l}</p></div>))}</div><div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>{[["todos","Todos"],["pendiente","⏳ Pendientes"],["entregado","✅ Entregados"],["calificado","⭐ Calificados"]].map(([v,l])=>(<button key={v} style={{...S.btnSm,color:filtroEst===v?C.azulC:C.textoS,borderColor:filtroEst===v?C.azul:C.borde,background:filtroEst===v?"#0f2a47":"transparent"}} onClick={()=>setFiltroEst(v)}>{l}</button>))}</div>{calId&&(<div style={{background:"#0f2a47",border:`1px solid ${C.azul}`,borderRadius:8,padding:14,marginBottom:16}}><h3 style={{color:C.azulC,margin:"0 0 10px",fontFamily:FT,fontSize:14}}>✏️ Calificar</h3><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Nota (0-5)</p><input style={S.inp} type="number" min="0" max="5" step="0.1" value={calNota} onChange={e=>setCalNota(e.target.value)}/></div><div style={{flex:2}}><p style={S.lbl}>Comentario</p><input style={S.inp} placeholder="Retroalimentación..." value={calComent} onChange={e=>setCalComent(e.target.value)}/></div></div><div style={{...S.fila,marginTop:10}}><button style={{...S.btnV,width:"auto",padding:"8px 16px"}} onClick={calificar}>💾 Guardar</button><button style={{...S.btnG,width:"auto"}} onClick={()=>{setCalId(null);setCalNota("");setCalComent("");}}>Cancelar</button></div></div>)}{listadoEnt.length===0?<p style={{color:C.textoS,textAlign:"center",padding:20,fontSize:13}}>No hay estudiantes.</p>:(<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}>{["Estado","Estudiante","Grado","Respuesta","Nota","Acciones"].map(h=>(<th key={h} style={{padding:"9px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,fontWeight:"bold",whiteSpace:"nowrap"}}>{h}</th>))}</tr></thead><tbody>{listadoEnt.filter(e=>filtroEst==="todos"||e.estado===filtroEst).map((e,i)=>(<tr key={e.estudianteId} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}><td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{e.estado==="calificado"&&<span style={{color:C.naranja,fontWeight:"bold",fontSize:10}}>⭐</span>}{e.estado==="entregado"&&<span style={{color:C.ok,fontWeight:"bold",fontSize:10}}>✅</span>}{e.estado==="pendiente"&&<span style={{color:C.err,fontWeight:"bold",fontSize:10}}>⏳</span>}</td><td style={{padding:"9px 10px"}}><p style={{color:C.texto,margin:0,fontWeight:"bold",fontSize:12}}>{e.nombreEstudiante}</p></td><td style={{padding:"9px 10px",color:C.textoS,fontSize:11}}>{e.grado}</td><td style={{padding:"9px 10px",maxWidth:160}}>{e.resumenRespuesta&&<p style={{color:"#94a3b8",fontSize:10,margin:0,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}}>"{e.resumenRespuesta}"</p>}{!e.entregada&&<span style={{color:"#374151",fontSize:10}}>Sin entregar</span>}</td><td style={{padding:"9px 10px",textAlign:"center"}}>{e.calificacion!=null?<span style={{color:C.naranja,fontWeight:"bold",fontSize:16,fontFamily:FT}}>{e.calificacion}</span>:<span style={{color:"#374151",fontSize:11}}>—</span>}</td>                        <td style={{padding:"9px 10px"}}>{e.entregada&&<div style={{display:"flex",gap:4}}><button style={{...S.btnSm,color:C.naranja,borderColor:C.naranja,fontSize:10}} onClick={()=>{setVerRespModal(null);setCalId(e.entregaId);setCalNota(e.calificacion||"");setCalComent(e.comentario||"");}}>{e.calificacion!=null?"✏️":"📝 Cal."}</button><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul,fontSize:10}} onClick={()=>setVerRespModal({nombre:e.nombreEstudiante,respuesta:e.resumenRespuesta,respuestasActividad:e.respuestasActividad,entregaId:e.entregaId,nota:e.calificacion||"",comentario:e.comentario||""})}>👁 Ver</button></div>}</td></tr>))}</tbody></table></div>)}</div></div></div>);
+      if(vista==="portal")return(<div style={S.fondo}><div style={S.header}><span style={S.logo}>📚 Portal Estudiantil</span><button style={{...S.btnSm,color:C.textoS}} onClick={()=>setVista("login")}>← Soy docente</button></div>{estVista==="login"&&(<div style={{...S.pantalla,paddingTop:20}}><div style={{...S.card,maxWidth:440}}><div style={{textAlign:"center"}}><span style={{fontSize:40}}>📚</span><h1 style={{...S.titulo,fontSize:18,marginTop:6}}>Portal del Estudiante</h1></div><div><p style={S.lbl}>Usuario</p><input style={S.inp} placeholder="Tu usuario" value={estUsuario} onChange={e=>setEstUsuario(e.target.value)} onKeyDown={e=>e.key==="Enter"&&loginEst()}/></div><div><p style={S.lbl}>Contrasena</p><input type="password" style={S.inp} placeholder="••••••••" value={estPassword} onChange={e=>setEstPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&loginEst()}/></div><button style={S.btnA} onClick={loginEst}>Ingresar</button><button style={{...S.btnG,borderColor:C.verde,color:C.verdeC}} onClick={()=>setEstVista("registro")}>¿Sin cuenta? Registrate</button>{estMsg&&<p style={estMsg.includes("✅")?S.ok_msg:S.err}>{estMsg}</p>}</div></div>)}{estVista==="registro"&&(<div style={{...S.pantalla,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        paddingTop:20}}><div style={{...S.card,maxWidth:440}}><h1 style={{...S.titulo,color:C.ok,fontSize:18}}>Crear cuenta</h1><div><p style={S.lbl}>Nombre completo *</p><input style={S.inp} placeholder="Ej: Juan Perez" value={estNombre} onChange={e=>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        setEstNombre(e.target.value)}/></div><div><p style={S.lbl}>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        Usuario *</p><input style={S.inp} placeholder="juanperez" value={estUsuario} onChange={e=>setEstUsuario(e.target.value.toLowerCase().replace(/\s+/g,""))}/></div><div><p style={S.lbl}>Contrasena *</p><input type="password" style={S.inp} value={estPassword} onChange={e=>setEstPassword(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={estGrado} onChange={e=>setEstGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Institucion *</p><input style={S.inp} placeholder="Nombre del colegio" value={estInst} onChange={e=>setEstInst(e.target.value)}/></div></div><button style={S.btnV} onClick={registrarEst}>Crear cuenta</button><button style={S.btnG} onClick={()=>setEstVista("login")}>← Ya tengo cuenta</button>{estMsg&&<p style={estMsg.includes("✅")?S.ok_msg:S.err}>{estMsg}</p>}</div></div>)}{estVista==="dashboard"&&estSesion&&(<div style={S.cont}><div style={{background:"linear-gradient(135deg,#0f2a47,#0a1a35)",borderRadius:12,padding:"18px 20px",marginBottom:18,border:"1px solid "+C.azul}}><h2 style={{color:C.texto,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          fontSize:16,margin:"0 0 3px",fontFamily:FT}}>¡Hola, {estSesion.name}! 👋</h2><p style={{color:C.textoS,margin:0,fontSize:12}}>Grado {estSesion.grade}</p></div><h3 style={{color:C.textoS,fontSize:11,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Mis tareas</h3>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        {estTareas.length===0?(<div style={{...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📋</p><p style={{color:C.textoS,fontSize:13,margin:0}}>No tienes tareas asignadas.</p></div>):(estTareas.map(t=>(<div key={t.id} style={{background:"#0a1128",border:"1px solid "+t.entregada?C.verde:C.borde,borderRadius:8,padding:"12px 14px",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{t.titulo}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{t.area} - Grado {t.grado}</p>{t.entregada&&<p style={{color:t.calificacion!=null?C.naranja:C.ok,fontSize:11,margin:0,fontWeight:"bold"}}>{t.calificacion!=null?"✅ Nota: "+t.calificacion:"✅ Entregada"}</p>}{!t.entregada&&<p style={{color:C.naranja,fontSize:11,margin:0}}>⏳ Pendiente</p>}</div><button style={{...S.btnSm,color:t.entregada?C.textoS:C.azulC,borderColor:t.entregada?C.borde:C.azul}} onClick={()=>abrirTareaEst(t)}>{t.entregada?"👁 Ver":"📝 Resolver"}</button></div></div>)))}<button style={{...S.btnG,marginTop:14}} onClick={()=>{setEstSesion(null);localStorage.removeItem("edutokenest");localStorage.removeItem("educlass_estudiante");setEstVista("login");setEstTareas([]);setEstNombre("");setEstUsuario("");setEstPassword("");}}>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          Cerrar sesion</button>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <div style={{marginTop:16}}><h3 style={{color:C.textoS,fontSize:11,fontWeight:"600",letterSpacing:1,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        textTransform:"uppercase",margin:"0 0 10px"}}>📊 Mis notas parciales</h3><NotasEstudiante studentId={estSesion?.id} token={localStorage.getItem("edutokenest")} API={API}/></div></div>)}{estVista==="resolver"&&estTareaAct&&(<div style={S.cont}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setEstVista("dashboard")}>← Mis tareas</button><div style={S.bloque}><h2 style={{...S.tBloque,margin:"0 0 4px",fontSize:15}}>{estTareaAct.titulo}</h2><p style={{color:C.textoS,fontSize:12,margin:"0 0 10px"}}>{estTareaAct.area} - Grado {estTareaAct.grado}</p>{estTareaAct.descripcion&&<div style={{background:"#0f2a47",borderRadius:7,padding:"10px 12px",border:"1px solid "+C.azul,marginBottom:14}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 3px",fontSize:11}}>📋 Instrucciones:</p><p style={{color:C.texto,fontSize:12,margin:0}}>{estTareaAct.descripcion}</p></div>}{estEntregada?(<div style={{background:"#052e16",border:"1px solid "+C.ok,borderRadius:8,padding:18,textAlign:"center"}}><p style={{fontSize:36,margin:"0 0 6px"}}>✅</p><p style={{color:C.ok,fontWeight:"bold",fontSize:15,margin:"0 0 6px"}}>Tarea entregada</p>{estEntregaData?.notaAuto!=null?<p style={{color:C.naranja,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          fontSize:36,fontWeight:"bold",margin:0,fontFamily:FT}}>{estEntregaData.notaAuto}</p>:<p style={{color:C.textoS,fontSize:12,margin:0}}>Tu docente revisara pronto.</p>}</div>):(<>{estTareaAct.actividad&&(<div style={{marginBottom:14}}>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 10px",fontFamily:FT,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        fontSize:13}}>Resuelve la actividad:</p><ResolverAct actividad={estTareaAct.actividad} tipo={estTareaAct.tipo} onResp={setEstResps}/></div>)}<div style={{marginBottom:10}}><p style={S.lbl}>✏️ Tu respuesta:</p><textarea style={{...S.ta,minHeight:90}} placeholder="Escribe aqui..." value={estRespTexto} onChange={e=>setEstRespTexto(e.target.value)}/></div><div style={{marginBottom:14}}><p style={S.lbl}>📎 Adjuntar archivo</p><div style={S.fila}><button style={{...S.btnG,width:"auto",padding:"7px 12px",fontSize:12}} onClick={()=>archivoRef.current.click()}>📁 Seleccionar</button>{estArchivo&&<span style={{color:C.ok,fontSize:11,alignSelf:"center"}}>✅ {estArchivo.name}</span>}</div><input ref={archivoRef} type="file" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" style={{display:"none"}} onChange={e=>setEstArchivo(e.target.files[0])}/></div><button style={{...S.btnV,opacity:estEnviando?0.7:1}} disabled={estEnviando} onClick={entregarTarea}>{estEnviando?"⏳ Enviando...":"📤 Entregar tarea"}</button></>)}</div></div>)}</div>);
+      if(vista==="login")return(<div style={S.pantalla}><div style={S.card}><div style={{textAlign:"center"}}><span style={{fontSize:44}}>🎓</span><h1 style={S.titulo}>EduClass Premium</h1><p style={S.sub}>Plataforma pedagogica con IA</p></div><div><p style={S.lbl}>Correo</p><input style={S.inp} placeholder="docente@colegio.edu.co" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/></div><div><p style={S.lbl}>Contrasena</p><input type="password" style={S.inp} placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/></div><button style={S.btnA} onClick={login}>Ingresar como docente</button><button style={S.btnG} onClick={()=>{setVista("registro");setMsgAuth("");}}>Crear cuenta docente</button><div style={S.sep}/><button style={S.btnM} onClick={()=>setVista("portal")}>📚 Soy estudiante</button>{msgAuth&&<p style={S.err}>{msgAuth}</p>}</div></div>);
+      if(vista==="registro")return(<div style={S.pantalla}><div style={{...S.card,maxWidth:500}}><h1 style={{...S.titulo,color:C.ok,fontSize:18}}>Registro de Docente</h1><div><p style={S.lbl}>Nombre completo *</p><input style={S.inp} placeholder="Ej: Maria Gonzalez" value={nombre} onChange={e=>setNombre(e.target.value)}/></div><div><p style={S.lbl}>Correo *</p><input style={S.inp} placeholder="docente@colegio.edu.co" value={email} onChange={e=>setEmail(e.target.value)}/></div><div><p style={S.lbl}>Contrasena *</p><input type="password" style={S.inp} value={password} onChange={e=>setPassword(e.target.value)}/></div><div style={S.sep}/><div><p style={S.lbl}>Institucion *</p><input style={S.inp} placeholder="I.E.R. Santiago de la Selva" value={regInst} onChange={e=>setRegInst(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Cargo</p><select style={S.sel} value={regCargo} onChange={e=>setRegCargo(e.target.value)}>{["Docente","Coordinador/a","Rector/a","Orientador/a"].map(c=><option key={c}>{c}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Ciudad</p><input style={S.inp} placeholder="Valparaiso" value={regCiudad} onChange={e=>setRegCiudad(e.target.value)}/>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        </div></div><button style={S.btnV} onClick={registrar}>Registrarme</button><button style={S.btnG} onClick={()=>{setVista("login");setMsgAuth("");}}>← Volver</button>{msgAuth&&<p style={msgAuth.includes("exitoso")?S.ok_msg:S.err}>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        {msgAuth}</p>}</div></div>);
+      if(vista==="dashboard")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={{background:"linear-gradient(135deg,#0f2a47,#0a1a35)",borderRadius:12,padding:"20px 22px",marginBottom:20,border:"1px solid "+C.azul,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}><div><h2 style={{color:C.texto,fontSize:17,margin:"0 0 2px",fontFamily:FT}}>¡Bienvenido/a, {usuario?.name?.split(" ")[0]}! 👋</h2><p style={{color:C.textoS,margin:0,fontSize:12}}>{usuario?.cargo} - {usuario?.institution?.name}</p></div><div style={{display:"flex",gap:6}}><div style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"8px 14px",textAlign:"center"}}><p style={{color:C.azulC,fontSize:18,fontWeight:"bold",margin:0}}>{misClases.length}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Clases</p></div><div style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"8px 14px",textAlign:"center"}}><p style={{color:C.naranja,fontSize:18,fontWeight:"bold",margin:0}}>{misTareas.length}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Tareas</p></div></div></div><p style={{color:C.textoS,fontSize:10,fontWeight:"600",
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Modulos</p><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8,marginBottom:18}}><DashCard icon="📝" titulo="Nueva clase" desc="Guia pedagogica con IA" color={C.azul} onClick={()=>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        {reset();setVista("ia");
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        }}/><DashCard icon="📋" titulo="Tareas" desc="Asignar y revisar entregas" color={C.naranja} onClick={()=>setVista("tareas")} badge={misTareas.filter(t=>t.pendientes>0).length||null}/><DashCard icon="📂" titulo="Mis clases" desc="Historial de guias" color={C.verdeC} onClick={()=>setVista("historial")} badge={misClases.length||null}/><DashCard icon="📊" titulo="Libro de Notas" desc="Notas parciales por periodo" color={C.verde} onClick={()=>setVista("notas")}/><DashCard icon="⚙️" titulo="Mi perfil" desc="Escudo, bandera y datos" color={C.morado} onClick={()=>setVista("perfil")}/></div>{misClases.length>0&&(<><p style={{color:C.textoS,fontSize:10,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Clases recientes</p><div style={S.bloque}>{misClases.slice(0,3).map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(API+"/clase/"+cl.id,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}{misClases.length>3&&<button style={{...S.btnG,marginTop:6}} onClick={()=>setVista("historial")}>Ver todas ({misClases.length}) →</button>}</div></>)}</div></div>);
+      if(vista==="tareas")return(<div style={S.fondo}><Header/>{mostrarModal&&<ModalTarea onCerrar={()=>{setMostrarModal(false);setTareaAEditar(null);}} tareaEditar={tareaAEditar} onCreada={t=>{setMostrarModal(false);setTareaAEditar(null);cargarTareas();alert("✅ Tarea guardada. Codigo: "+(t.code||""));}}/>}
+      <div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📋 Gestion de Tareas</h2><button style={{...S.btnV,width:"auto",padding:"9px 16px"}} onClick={()=>{setTareaAEditar(null);setMostrarModal(true);}}>+ Asignar tarea</button></div>{misTareas.length===0?(<div style={{textAlign:"center",padding:"40px 20px"}}><p style={{fontSize:44,margin:"0 0 10px"}}>📋</p><p style={{color:C.textoS,fontSize:14,margin:"0 0 16px"}}>No tienes tareas creadas.</p><button style={{...S.btnV,width:"auto",padding:"10px 20px"}} onClick={()=>setMostrarModal(true)}>+ Crear primera tarea</button></div>):(misTareas.map(t=>{const dias=t.dueDate?Math.ceil((new Date(t.dueDate)-new Date())/(1000*60*60*24)):null;return(<div key={t.id} style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"12px 14px",marginBottom:7}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:6}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{t.title}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{t.area} - Grado {t.grade} - Codigo: <span style={
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        {color:C.naranja,fontWeight:"bold"}}>{t.code}</span></p>{dias!==null&&<p style={{fontSize:10,margin:"0 0 3px",color:dias<0?C.err:dias<=3?C.naranja:C.ok}}>{dias<0?"⚠️ Vencida":dias===0?"⚠️ Vence hoy":"📅 "+dias+" dias restantes"}</p>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        }<div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <span style={{...S.badge(C.azul),fontSize:10,padding:"2px 8px"}}>👥 {t.totalEstudiantes}</span><span style={{...S.badge(t.totalEntregas>0?C.verde:"#374151"),fontSize:10,padding:"2px 8px"}}>✅ {t.totalEntregas}</span><span style={{...S.badge(t.pendientes>0?C.err:"#374151"),fontSize:10,padding:"2px 8px"}}>⏳ {t.pendientes}</span></div></div><div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>verEntregas(t)}>📊 Entregas</button><button style={{...S.btnSm,color:C.naranja,borderColor:C.naranja}} onClick={()=>{setTareaAEditar(t);setMostrarModal(true);}}>✏️ Editar</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>eliminarTarea(t.id)}>🗑</button></div></div></div>);}))}</div></div></div>);
+      if(vista==="ver_entregas"&&tareaActiva)return(<div style={S.fondo}><Header/>{verRespModal&&<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setVerRespModal(null)}><div style={{...S.modal,maxWidth:500}}><div style={S.mHead}><h3 style={{color:C.azulC,margin:0,fontSize:15}}>📋 Respuestas de {verRespModal.nombre}</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setVerRespModal(null)}>✕</button></div><div style={S.mBody}>{verRespModal.respuesta&&<div style={{marginBottom:10}}><p style={{...S.lbl,marginBottom:4}}>Respuesta escrita:</p><div style={{background:"#0a1128",borderRadius:6,padding:10,fontSize:12,color:C.texto}}>{verRespModal.respuesta}</div></div>}{verRespModal.respuestasActividad&&Object.keys(verRespModal.respuestasActividad).length>0&&<div><p style={{...S.lbl,marginBottom:6}}>Respuestas por pregunta:</p>{Object.entries(verRespModal.respuestasActividad).map(([k,v])=>(<div key={k} style={{background:"#0a1128",borderRadius:6,padding:"6px 10px",marginBottom:4,fontSize:11}}><span style={{color:C.azulC}}>Preg. {parseInt(k)+1}:</span> <span style={{color:C.texto}}>{v}</span></div>))}</div>}<div style={{borderTop:"1px solid "+C.borde,marginTop:14,paddingTop:14}}>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <p style={{...S.lbl,marginBottom:6}}>✏️ Calificar:</p><div style={S.fila}><input style={{...S.inp,flex:1}} type="number" min="0" max="5" step="0.1" placeholder="Nota (0-5)" value={verRespModal.nota||""} onChange={e=>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        setVerRespModal({...verRespModal,nota:e.target.value})}/><input style={{...S.inp,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        flex:2}} placeholder="Comentario..." value={verRespModal.comentario||""} onChange={e=>setVerRespModal({...verRespModal,comentario:e.target.value})}/></div><button style={{...S.btnV,width:"auto",padding:"8px 16px",marginTop:8}} onClick={async()=>{if(!verRespModal.nota){alert("Ingresa nota");return;}const r=await fetch(API+"/tasks/calificar",{method:"POST",headers:authH(),body:JSON.stringify({entregaId:verRespModal.entregaId,calificacion:verRespModal.nota,comentario:verRespModal.comentario||""})});const d=await r.json();if(r.ok){alert("✅ Nota guardada");setVerRespModal(null);verEntregas(tareaActiva);}else alert(d.mensaje);}}>💾 Guardar nota</button></div></div></div></div>}<div style={S.cont}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setVista("tareas")}>← Tareas</button><div style={S.bloque}><h2 style={S.tBloque}>📊 {tareaActiva.title}</h2><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:18}}>{[{l:"Total",v:resumenEnt.total||0,c:C.azulC},{l:"Entregaron",v:resumenEnt.entregados||0,c:C.ok},{l:"Pendientes",v:resumenEnt.pendientes||0,c:C.err},{l:"Calificados",v:resumenEnt.calificados||0,c:C.naranja}].map(s=>(<div key={s.l} style={{
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"10px 14px",textAlign:"center"}}><p style={{color:s.c,fontSize:22,fontWeight:"bold",margin:"0 0 3px",fontFamily:FT}}>{s.v}</p>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <p style={{color:C.textoS,fontSize:10,margin:0}}>{s.l}</p></div>))}</div><div style={{display:"flex",
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        gap:6,marginBottom:14,flexWrap:"wrap"}}>{[["todos","Todos"],["pendiente","⏳ Pendientes"],["entregado","✅ Entregados"],["calificado","⭐ Calificados"]].map(([v,l])=>(<button key={v} style={{...S.btnSm,color:filtroEst===v?C.azulC:C.textoS,borderColor:filtroEst===v?C.azul:C.borde,background:filtroEst===v?"#0f2a47":"transparent"}} onClick={()=>setFiltroEst(v)}>{l}</button>))}</div>{calId&&(<div style={{background:"#0f2a47",border:"1px solid "+C.azul,borderRadius:8,padding:14,marginBottom:16}}><h3 style={{color:C.azulC,margin:"0 0 10px",fontFamily:FT,fontSize:14}}>✏️ Calificar</h3><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Nota (0-5)</p><input style={S.inp} type="number" min="0" max="5" step="0.1" value={calNota} onChange={e=>setCalNota(e.target.value)}/></div><div style={{flex:2}}><p style={S.lbl}>Comentario</p><input style={S.inp} placeholder="Retroalimentacion..." value={calComent} onChange={e=>setCalComent(e.target.value)}/></div></div><div style={{...S.fila,marginTop:10}}><button style={{...S.btnV,width:"auto",padding:"8px 16px"}} onClick={calificar}>💾 Guardar</button><button style={{...S.btnG,width:"auto"}} onClick={()=>{setCalId(null);setCalNota("");setCalComent("");}}>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          Cancelar</button></div></div>)}{listadoEnt.length===0?<p style={{color:C.textoS,textAlign:"center",padding:20,fontSize:13}}>No hay estudiantes.</p>:(<div style={{overflowX:"auto"}}><table style={{width:"100%",
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        {["Estado","Estudiante","Grado","Respuesta","Nota","Acciones"].map(h=>(<th key={h} style={{padding:"9px 10px",textAlign:"left",color:C.azulC,borderBottom:"1px solid "+C.borde,fontWeight:"bold",whiteSpace:"nowrap"}}>{h}</th>))}</tr></thead><tbody>{listadoEnt.filter(e=>filtroEst==="todos"||e.estado===filtroEst).map((e,i)=>(<tr key={e.estudianteId} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}><td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{e.estado==="calificado"&&<span style={{color:C.naranja,fontWeight:"bold",fontSize:10}}>⭐</span>}{e.estado==="entregado"&&<span style={{color:C.ok,fontWeight:"bold",fontSize:10}}>✅</span>}{e.estado==="pendiente"&&<span style={{color:C.err,fontWeight:"bold",fontSize:10}}>⏳</span>}</td><td style={{padding:"9px 10px"}}><p style={{color:C.texto,margin:0,fontWeight:"bold",fontSize:12}}>{e.nombreEstudiante}</p></td><td style={{padding:"9px 10px",color:C.textoS,fontSize:11}}>{e.grado}</td><td style={{padding:"9px 10px",maxWidth:160}}>{e.resumenRespuesta&&<p style={{color:"#94a3b8",fontSize:10,margin:0,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}}>"{e.resumenRespuesta}"</p>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          }{!e.entregada&&<span style={{color:"#374151",fontSize:10}}>Sin entregar</span>}</td><td style={{padding:"9px 10px",textAlign:"center"}}>{e.calificacion!=null?<span style={{color:C.naranja,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          fontWeight:"bold",fontSize:16,fontFamily:FT}}>{e.calificacion}</span>:<span style={{color:"#374151",
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        fontSize:11}}>—</span>}</td>                        <td style={{padding:"9px 10px"}}>{e.entregada&&<div style={{display:"flex",gap:4}}><button style={{...S.btnSm,color:C.naranja,borderColor:C.naranja,fontSize:10}} onClick={()=>{setVerRespModal(null);setCalId(e.entregaId);setCalNota(e.calificacion||"");setCalComent(e.comentario||"");}}>{e.calificacion!=null?"✏️":"📝 Cal."}</button><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul,fontSize:10}} onClick={()=>setVerRespModal({nombre:e.nombreEstudiante,respuesta:e.resumenRespuesta,respuestasActividad:e.respuestasActividad,entregaId:e.entregaId,nota:e.calificacion||"",comentario:e.comentario||""})}>👁 Ver</button></div>}</td></tr>))}</tbody></table></div>)}</div></div></div>);
       if(vista==="perfil")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setVista("dashboard")}>← Volver</button><h2 style={S.tBloque}>⚙️ Mi perfil</h2><div style={{display:"flex",gap:32,justifyContent:"center",marginBottom:20}}><SubirImg label="🏫 Escudo" preview={logoPreview} inputRef={logoRef} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/><SubirImg label="🚩 Bandera" preview={banderaPreview} inputRef={banderaRef} onChange={e=>{const f=e.target.files[0];if(f){setBanderaFile(f);setBanderaPreview(URL.createObjectURL(f));}}}/></div><div style={S.sep}/><div style={{...S.fila,marginBottom:10}}><div style={{flex:1}}><p style={S.lbl}>Cargo</p><select style={S.sel} value={usuario?.cargo||"Docente"} onChange={e=>setUsuario({...usuario,cargo:e.target.value})}>{["Docente","Coordinador/a","Rector/a","Orientador/a"].map(c=><option key={c}>{c}</option>)}</select></div></div><button style={{...S.btnV,width:"auto",padding:"10px 20px"}} onClick={subirPerfil}>💾 Guardar</button></div></div></div>);
-      if(vista==="notas")return(<div style={S.fondo}><Header/><div style={S.cont}>{showNuevoPeriodo&&<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setShowNuevoPeriodo(false)}><div style={{...S.modal,maxWidth:480}}><div style={S.mHead}><h3 style={{color:C.verdeC,margin:0,fontSize:15}}>📊 Nuevo período de notas</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setShowNuevoPeriodo(false)}>✕</button></div><div style={S.mBody}><div style={{marginBottom:10}}><p style={S.lbl}>Nombre del período *</p><input style={S.inp} placeholder="Ej: Primer Período 2026" value={npNombre} onChange={e=>setNpNombre(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Área *</p><input style={S.inp} placeholder="Ej: Tecnología" value={npArea} onChange={e=>setNpArea(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Grado *</p><select style={S.sel} value={npGrado} onChange={e=>setNpGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Porcentaje total (%)</p><input style={S.inp} type="number" min="1" max="100" value={npPorcentaje} onChange={e=>setNpPorcentaje(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Número de actividades</p><input style={S.inp} type="number" min="1" max="10" value={npCantAct} onChange={e=>{const n=parseInt(e.target.value)||1;setNpCantAct(n);setNpNombresAct(Array.from({length:n},(_,i)=>npNombresAct[i]||`Actividad ${i+1}`));}}/></div></div><div style={{marginBottom:10}}><p style={{...S.lbl,marginBottom:6}}>Nombres de actividades</p>{Array.from({length:npCantAct},(_,i)=>(<input key={i} style={{...S.inp,marginBottom:5}} placeholder={`Actividad ${i+1}`} value={npNombresAct[i]||""} onChange={e=>{const a=[...npNombresAct];a[i]=e.target.value;setNpNombresAct(a);}}/>))}</div><div style={{background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)",borderRadius:6,padding:10,marginBottom:10,fontSize:11,color:C.textoS}}>💡 El porcentaje indica cuánto vale este período (ej: 30% del año). Las notas de 0-5 se promediarán y mostrarán al estudiante progresivamente.</div><button style={S.btnV} onClick={crearPeriodo}>✅ Crear período</button></div></div></div>}{periodoActivo?(<div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><button style={{...S.btnSm}} onClick={()=>setPeriodoActivo(null)}>← Períodos</button><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:15}}>📊 {periodoActivo.nombre}</h2><span style={{color:C.textoS,fontSize:11}}>{periodoActivo.area} · Grado {periodoActivo.grado} · {periodoActivo.porcentaje}%</span></div><div style={S.bloque}><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}><th style={{padding:"9px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,minWidth:160}}>Estudiante</th>{periodoActivo.actividades.map((a,i)=>(<th key={i} style={{padding:"9px 10px",textAlign:"center",color:C.verdeC,borderBottom:`1px solid ${C.borde}`,minWidth:110,fontSize:11}}>{a}<br/><span style={{color:C.textoS,fontSize:9}}>({(periodoActivo.porcentaje/periodoActivo.actividades.length).toFixed(1)}%)</span></th>))}<th style={{padding:"9px 10px",textAlign:"center",color:C.naranja,borderBottom:`1px solid ${C.borde}`,minWidth:80}}>Promedio</th><th style={{padding:"9px 10px",textAlign:"center",color:C.textoS,borderBottom:`1px solid ${C.borde}`,minWidth:80}}>Avance</th></tr></thead><tbody>{estudiantesPeriodo.length===0?<tr><td colSpan={periodoActivo.actividades.length+3} style={{padding:20,textAlign:"center",color:C.textoS}}>Cargando estudiantes...</td></tr>:estudiantesPeriodo.map((est,i)=>{const notasEst=notasEditadas[est.id]||{};const prom=calcNota(notasEst);const completadas=Object.values(notasEst).filter(v=>v!=="").length;const avance=Math.round(completadas/periodoActivo.actividades.length*100);return(<tr key={est.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}><td style={{padding:"8px 10px",color:C.texto,fontWeight:"bold",fontSize:12}}>{est.name}</td>{periodoActivo.actividades.map((_,j)=>(<td key={j} style={{padding:"6px 8px",textAlign:"center"}}><input style={{width:60,background:"#0f2a47",border:`1px solid ${C.borde}`,borderRadius:4,padding:"4px 6px",color:C.texto,textAlign:"center",fontSize:12}} type="number" min="0" max="5" step="0.1" placeholder="—" value={notasEst[j]||""} onChange={e=>{const v=e.target.value;setNotasEditadas(prev=>({...prev,[est.id]:{...prev[est.id]||{},[j]:v}}));}}/></td>))}<td style={{padding:"8px 10px",textAlign:"center"}}>{prom!=null?<span style={{color:prom>=3?C.ok:C.err,fontWeight:"bold",fontSize:14,fontFamily:FT}}>{prom}</span>:<span style={{color:C.textoS}}>—</span>}</td><td style={{padding:"8px 10px",textAlign:"center"}}><div style={{background:"#0a1128",borderRadius:10,overflow:"hidden",height:8,marginBottom:2}}><div style={{width:`${avance}%`,height:"100%",background:avance===100?C.ok:C.azulC,transition:"width 0.3s"}}/></div><span style={{color:C.textoS,fontSize:9}}>{avance}%</span></td></tr>)})}</tbody></table></div><div style={{...S.fila,marginTop:14,justifyContent:"flex-end"}}><button style={{...S.btnV,width:"auto",padding:"9px 18px"}} onClick={guardarNotas}>💾 Guardar notas</button></div></div></div>):(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:16}}>📊 Libro de Notas</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>setShowNuevoPeriodo(true)}>+ Nuevo período</button></div>{periodos.length===0?(<div style={{...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📊</p><p style={{color:C.textoS,fontSize:13}}>Sin períodos creados.</p><button style={{...S.btnV,width:"auto",padding:"9px 16px",marginTop:10}} onClick={()=>setShowNuevoPeriodo(true)}>+ Crear primer período</button></div>):(periodos.map(p=>{const totalEst=Object.keys(p.notas||{}).length;const conNota=Object.values(p.notas||{}).filter(n=>Object.values(n).some(v=>v!=="")).length;return(<div key={p.id} style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"14px 16px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><div style={{flex:1}}><p style={{color:C.verdeC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{p.nombre}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 4px"}}>{p.area} · Grado {p.grado} · {p.porcentaje}% del período</p><p style={{color:C.textoS,fontSize:10,margin:0}}>{p.actividades.length} actividades · {conNota} estudiantes con notas</p></div><div style={{display:"flex",gap:6}}><button style={{...S.btnV,width:"auto",padding:"7px 12px",fontSize:11}} onClick={()=>abrirPeriodo(p)}>📝 Ingresar notas</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>eliminarPeriodo(p.id)}>🗑</button></div></div>)}))})</div>}</div></div>);
-      if(vista==="historial")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📂 Mis clases</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>{reset();setVista("ia");}}>+ Nueva</button></div>{misClases.length===0?<p style={{color:C.textoS,textAlign:"center",padding:24,fontSize:13}}>Sin clases guardadas.</p>:misClases.map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(`${API}/clase/${cl.id}`,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}</div></div></div>);
-      if(vista==="verClase"&&claseActiva)return(<div style={S.fondo}><Header/><div style={S.cont}><button style={{...S.btnSm,marginBottom:12}} onClick={()=>setVista("historial")}>← Volver</button><div style={{background:C.tarjeta,padding:20,borderRadius:12,border:`1px solid ${C.borde}`}}><h2 style={{color:C.azulC,fontSize:17,marginBottom:3,marginTop:0,fontFamily:FT}}>{claseActiva.datos?.tema}</h2><p style={{color:C.textoS,fontSize:12,marginBottom:16}}>{claseActiva.datos?.area} · Grado {claseActiva.datos?.grado}</p><div style={S.sep}/><pre style={S.pre}>{claseActiva.contenido}</pre></div></div></div>);
+      if(vista==="notas")return(<ViewNotas
+        S={S} C={C} Header={Header}
+        showNuevoPeriodo={showNuevoPeriodo}
+        setShowNuevoPeriodo={setShowNuevoPeriodo}
+        npNombre={npNombre} setNpNombre={setNpNombre}
+        npArea={npArea} setNpArea={setNpArea}
+        npGrado={npGrado} setNpGrado={setNpGrado}
+        npPorcentaje={npPorcentaje} setNpPorcentaje={setNpPorcentaje}
+        npCantAct={npCantAct} setNpCantAct={setNpCantAct}
+        npNombresAct={npNombresAct} setNpNombresAct={setNpNombresAct}
+        crearPeriodo={crearPeriodo} periodoActivo={periodoActivo}
+        setPeriodoActivo={setPeriodoActivo}
+        estudiantesPeriodo={estudiantesPeriodo}
+        notasEditadas={notasEditadas} setNotasEditadas={setNotasEditadas}
+        calcNota={calcNota} periodos={periodos}
+        abrirPeriodo={abrirPeriodo} eliminarPeriodo={eliminarPeriodo}
+        guardarNotas={guardarNotas}/>);
+      if(vista==="historial")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📂 Mis clases</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>{reset();setVista("ia");}}>+ Nueva</button></div>{misClases.length===0?<p style={{color:C.textoS,textAlign:"center",padding:24,fontSize:13}}>Sin clases guardadas.</p>:misClases.map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(API+"/clase/"+cl.id,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}</div></div></div>);
+      if(vista==="verClase"&&claseActiva)return(<div style={S.fondo}><Header/><div style={S.cont}><button style={{...S.btnSm,marginBottom:12}} onClick={()=>setVista("historial")}>← Volver</button><div style={{background:C.tarjeta,padding:20,borderRadius:12,border:"1px solid "+C.borde}}><h2 style={{color:C.azulC,fontSize:17,marginBottom:3,marginTop:0,fontFamily:FT}}>{claseActiva.datos?.tema}</h2><p style={{color:C.textoS,fontSize:12,marginBottom:16}}>{claseActiva.datos?.area} - Grado {claseActiva.datos?.grado}</p><div style={S.sep}/><pre style={S.pre}>{claseActiva.contenido}</pre></div></div></div>);
 
       const PASOS=["Nivel","Datos","Apertura","Desarrollo","Retroalim.","Cierre","Resultado"];
       return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{display:"flex",gap:4,marginBottom:20,justifyContent:"center",flexWrap:"wrap"}}>{PASOS.map((p,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={S.pasoBola(paso===i+1,paso>i+1)}>{paso>i+1?"✓":i+1}</div><span style={{color:paso===i+1?C.azulC:"#4a5a70",fontSize:10}}>{p}</span>{i<PASOS.length-1&&<span style={{color:C.borde,margin:"0 1px",fontSize:12}}>›</span>}</div>))}</div>)}
-      {paso===1&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setVista("dashboard")}>← Inicio</button><h2 style={S.tBloque}>🎓 Nivel educativo</h2><div style={S.grid2}>{[{id:"preescolar",label:"🌱 Preescolar",desc:"Transición"},{id:"primaria",label:"🏫 Primaria",desc:"Grados 1° a 5°"},{id:"bachillerato",label:"📚 Bachillerato",desc:"Grados 6° a 11°"},{id:"media_tecnica",label:"🔧 Media Técnica",desc:"Grados 10° y 11°"}].map(n=>(<div key={n.id} style={S.opcion(nivelEdu===n.id)} onClick={()=>setNivelEdu(n.id)}><p style={S.oLbl}>{n.label}</p><p style={S.oDesc}>{n.desc}</p></div>))}</div><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!nivelEdu){alert("Selecciona el nivel");return;}setPaso(2);}}>Continuar →</button></div>)}
-      {paso===2&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(1)}>← Volver</button><h2 style={S.tBloque}>📋 Información de la clase</h2><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Institución</p><input style={S.inp} value={institucion} onChange={e=>setInstitucion(e.target.value)}/></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Docente</p><input style={S.inp} value={docente} onChange={e=>setDocente(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Periodo</p><select style={S.sel} value={periodo} onChange={e=>setPeriodo(e.target.value)}>{["1","2","3","4"].map(p=><option key={p}>Periodo {p}</option>)}</select></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:1}}><p style={S.lbl}>Área</p><select style={S.sel} value={area} onChange={e=>setArea(e.target.value)}><option value="">Seleccionar</option>{["Ciencias Naturales","Ciencias Sociales","Matemáticas","Lengua Castellana","Inglés","Educación Física","Artística","Ética y Valores","Tecnología e Informática","Filosofía","Química","Física","Biología"].map(m=><option key={m}>{m}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Seleccionar</option>{(nivelEdu==="preescolar"?["Transición"]:nivelEdu==="primaria"?["1°","2°","3°","4°","5°"]:nivelEdu==="media_tecnica"?["10°","11°"]:["6°","7°","8°","9°","10°","11°"]).map(g=><option key={g}>{g}</option>)}</select></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Tema</p><input style={S.inp} placeholder="Ej: El verbo to be" value={tema} onChange={e=>setTema(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Duración</p><select style={S.sel} value={duracion} onChange={e=>setDuracion(e.target.value)}>{OPT_DUR.map(d=><option key={d.v} value={d.v}>{d.l}</option>)}</select></div></div><div style={{marginBottom:16}}><p style={S.lbl}>Fecha</p><input type="date" style={{...S.inp,width:"auto"}} value={fecha} onChange={e=>setFecha(e.target.value)}/></div><button style={S.btnV} onClick={()=>{if(!area||!grado||!tema){alert("Completa área, grado y tema");return;}setPaso(3);}}>Continuar →</button></div>)}
-      {paso===3&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(2)}>← Volver</button><h2 style={S.tBloque}>🚀 ¿Cómo iniciar la clase?</h2><Opcs lista={optAper} val={apertura} set={setApertura}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!apertura){alert("Selecciona apertura");return;}setPaso(4);}}>Continuar →</button></div>)}
-      {paso===4&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(3)}>← Volver</button><h2 style={S.tBloque}>⚙️ ¿Cómo desarrollar el contenido?</h2><Opcs lista={optDes} val={desarrollo} set={setDesarrollo}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!desarrollo){alert("Selecciona estrategia");return;}setPaso(5);}}>Continuar →</button></div>)}
-      {paso===5&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(4)}>← Volver</button><h2 style={S.tBloque}>🔄 ¿Cómo verificar el aprendizaje?</h2><Opcs lista={optRet} val={retro} set={setRetro}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!retro){alert("Selecciona estrategia");return;}setPaso(6);}}>Continuar →</button></div>)}
-      {paso===6&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(5)}>← Volver</button><h2 style={S.tBloque}>🏁 Cierre y tarea</h2><p style={{color:C.texto,fontWeight:"bold",marginBottom:8,fontFamily:FT,fontSize:13}}>Estrategia de cierre</p><Opcs lista={OPT_CIERRE} val={cierre} set={setCierre}/><div style={S.sep}/><p style={{color:C.texto,fontWeight:"bold",marginBottom:8,fontFamily:FT,fontSize:13}}>¿Dejar tarea?</p><div style={{...S.fila,marginBottom:12}}><div style={{...S.opcion(dejaTarea===true),flex:1}} onClick={()=>setDejaTarea(true)}><p style={S.oLbl}>✅ Sí</p></div><div style={{...S.opcion(dejaTarea===false),flex:1}} onClick={()=>{setDejaTarea(false);setTarea("");}}><p style={S.oLbl}>❌ No</p></div></div>{dejaTarea===true&&<Opcs lista={OPT_TAREA} val={tarea} set={setTarea}/>}<button style={{...S.btnV,marginTop:16,opacity:cargando?0.7:1}} disabled={cargando} onClick={()=>{if(!cierre){alert("Selecciona cierre");return;}if(dejaTarea===null){alert("Indica si hay tarea");return;}if(dejaTarea&&!tarea){alert("Selecciona tipo de tarea");return;}generarGuia();}}>{cargando?"⏳ Generando guía...":"✨ Generar guía completa"}</button></div>)}
-      {paso===7&&(<div>{!cargando&&contenido&&!contenido.startsWith("❌")&&(<><div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}><span style={S.chip}>📚 {area}</span><span style={S.chip}>🎓 {grado}</span><span style={S.chip}>⏱️ {OPT_DUR.find(d=>d.v===duracion)?.l}</span></div><div style={{...S.fila,marginBottom:16,flexWrap:"wrap",gap:6}}><button style={{...S.btnA,width:"auto",padding:"9px 14px"}} onClick={()=>exportar("word")} disabled={descWord}>{descWord?"⏳...":"📥 Word"}</button><button style={{...S.btnN,width:"auto",padding:"9px 14px"}} onClick={()=>exportar("pdf")} disabled={descPdf}>{descPdf?"⏳...":"📄 PDF"}</button>{!guardadoOk?<button style={{...S.btnV,width:"auto",padding:"9px 14px",opacity:guardando?0.7:1}} onClick={guardarClase} disabled={guardando}>{guardando?"💾...":"💾 Guardar"}</button>:<span style={{...S.chip,background:"#052e16",borderColor:C.ok,color:C.ok,padding:"9px 12px"}}>✅ Guardada</span>}<button style={{...S.btnG,width:"auto"}} onClick={()=>setVista("dashboard")}>🏠</button><button style={{...S.btnG,width:"auto"}} onClick={reset}>+ Nueva</button></div></>)}{cargando&&<div style={{background:C.tarjeta,padding:44,borderRadius:12,border:`1px solid ${C.borde}`,textAlign:"center"}}><p style={{fontSize:36,margin:"0 0 10px"}}>✨</p><p style={{color:C.azulC,fontSize:16,fontFamily:FT}}>Generando tu guía...</p></div>}{!cargando&&contenido&&(<div style={{background:C.tarjeta,padding:20,borderRadius:12,border:`1px solid ${C.borde}`}}><h2 style={{color:C.azulC,fontSize:16,marginBottom:3,marginTop:0,fontFamily:FT}}>📄 {tema}</h2><p style={{color:C.textoS,fontSize:11,marginBottom:16}}>{area} · {grado}</p><div style={S.sep}/><pre style={S.pre}>{contenido}</pre></div>)}</div>)}
+      {paso===1&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setVista("dashboard")}>← Inicio</button><h2 style={S.tBloque}>🎓 Nivel educativo</h2><div style={S.grid2}>{[{id:"preescolar",label:"🌱 Preescolar",desc:"Transicion"},{id:"primaria",label:"🏫 Primaria",desc:"Grados 1° a 5°"},{id:"bachillerato",label:"📚 Bachillerato",desc:"Grados 6° a 11°"},{id:"media_tecnica",label:"🔧 Media Tecnica",desc:"Grados 10° y 11°"}].map(n=>(<div key={n.id} style={S.opcion(nivelEdu===n.id)} onClick={()=>setNivelEdu(n.id)}><p style={S.oLbl}>{n.label}</p><p style={S.oDesc}>{n.desc}</p></div>))}</div><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!nivelEdu){alert("Selecciona el nivel");return;}setPaso(2);}}>Continuar →</button></div>)}
+      {paso===2&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(1)}>← Volver</button><h2 style={S.tBloque}>📋 Informacion de la clase</h2><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Institucion</p><input style={S.inp} value={institucion} onChange={e=>setInstitucion(e.target.value)}/></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Docente</p><input style={S.inp} value={docente} onChange={e=>setDocente(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Periodo</p><select style={S.sel} value={periodo} onChange={e=>setPeriodo(e.target.value)}>{["1","2","3","4"].map(p=><option key={p}>Periodo {p}</option>)}</select></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:1}}><p style={S.lbl}>Area</p><select style={S.sel} value={area} onChange={e=>setArea(e.target.value)}><option value="">Seleccionar</option>{["Ciencias Naturales","Ciencias Sociales","Matematicas","Lengua Castellana","Ingles","Educacion Fisica","Artistica","Etica y Valores","Tecnologia e Informatica","Filosofia","Quimica","Fisica","Biologia"].map(m=><option key={m}>{m}</option>)}</select>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        </div><div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Seleccionar</option>{(nivelEdu==="preescolar"?["Transicion"]:nivelEdu==="primaria"?["1°","2°","3°","4°","5°"]:nivelEdu==="media_tecnica"?["10°","11°"]:["6°","7°","8°","9°","10°","11°"]).map(g=>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <option key={g}>{g}</option>)}</select></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Tema</p><input style={S.inp} placeholder="Ej: El verbo to be" value={tema} onChange={e=>setTema(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Duracion</p><select style={S.sel} value={duracion} onChange={e=>setDuracion(e.target.value)}>{OPT_DUR.map(d=><option key={d.v} value={d.v}>{d.l}</option>)}</select></div></div><div style={{marginBottom:16}}><p style={S.lbl}>Fecha</p><input type="date" style={{...S.inp,width:"auto"}} value={fecha} onChange={e=>setFecha(e.target.value)}/></div><button style={S.btnV} onClick={()=>{if(!area||!grado||!tema){alert("Completa area, grado y tema");return;}setPaso(3);}}>Continuar →</button></div>)}
+      {paso===3&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(2)}>← Volver</button><h2 style={S.tBloque}>🚀 ¿Como iniciar la clase?</h2><Opcs lista={optAper} val={apertura} set={setApertura}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!apertura){alert("Selecciona apertura");return;}setPaso(4);}}>Continuar →</button></div>)}
+      {paso===4&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(3)}>← Volver</button><h2 style={S.tBloque}>⚙️ ¿Como desarrollar el contenido?</h2><Opcs lista={optDes} val={desarrollo} set={setDesarrollo}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!desarrollo){alert("Selecciona estrategia");return;}setPaso(5);}}>Continuar →</button></div>)}
+      {paso===5&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(4)}>← Volver</button><h2 style={S.tBloque}>🔄 ¿Como verificar el aprendizaje?</h2><Opcs lista={optRet} val={retro} set={setRetro}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!retro){alert("Selecciona estrategia");return;}setPaso(6);}}>Continuar →</button></div>)}
+      {paso===6&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(5)}>← Volver</button><h2 style={S.tBloque}>🏁 Cierre y tarea</h2><p style={{color:C.texto,fontWeight:"bold",marginBottom:8,fontFamily:FT,fontSize:13}}>Estrategia de cierre</p><Opcs lista={OPT_CIERRE} val={cierre} set={setCierre}/><div style={S.sep}/><p style={{color:C.texto,fontWeight:"bold",marginBottom:8,fontFamily:FT,fontSize:13}}>¿Dejar tarea?</p><div style={{...S.fila,marginBottom:12}}><div style={{...S.opcion(dejaTarea===true),flex:1}} onClick={()=>setDejaTarea(true)}><p style={S.oLbl}>✅ Si</p></div><div style={{...S.opcion(dejaTarea===false),flex:1}} onClick={()=>{setDejaTarea(false);setTarea("");}}><p style={S.oLbl}>❌ No</p></div></div>{dejaTarea===true&&<Opcs lista={OPT_TAREA} val={tarea} set={setTarea}/>}<button style={{...S.btnV,marginTop:16,opacity:cargando?0.7:1}} disabled={cargando} onClick={()=>{if(!cierre){alert("Selecciona cierre");return;}if(dejaTarea===null){alert("Indica si hay tarea");return;}if(dejaTarea&&!tarea){alert("Selecciona tipo de tarea");return;}generarGuia();}}>{cargando?"⏳ Generando guia...":"✨ Generar guia completa"}</button></div>)}
+      {paso===7&&(<div>{!cargando&&contenido&&!contenido.startsWith("❌")&&(<><div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}><span style={S.chip}>📚 {area}</span><span style={S.chip}>🎓 {grado}</span><span style={S.chip}>⏱️ {OPT_DUR.find(d=>d.v===duracion)?.l}</span></div><div style={{...S.fila,marginBottom:16,flexWrap:"wrap",gap:6}}><button style={{...S.btnA,width:"auto",padding:"9px 14px"}} onClick={()=>exportar("word")} disabled={descWord}>{descWord?"⏳...":"📥 Word"}</button><button style={{...S.btnN,width:"auto",padding:"9px 14px"}} onClick={()=>exportar("pdf")} disabled={descPdf}>{descPdf?"⏳...":"📄 PDF"}</button>{!guardadoOk?<button style={{...S.btnV,width:"auto",padding:"9px 14px",opacity:guardando?0.7:1}} onClick={guardarClase} disabled={guardando}>{guardando?"💾...":"💾 Guardar"}</button>:<span style={{...S.chip,background:"#052e16",borderColor:C.ok,color:C.ok,padding:"9px 12px"}}>✅ Guardada</span>}<button style={{...S.btnG,width:"auto"}} onClick={()=>setVista("dashboard")}>🏠</button><button style={{...S.btnG,width:"auto"}} onClick={reset}>+ Nueva</button></div></>)}{cargando&&<div style={{background:C.tarjeta,padding:44,borderRadius:12,border:"1px solid "+C.borde,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        textAlign:"center"}}><p style={{fontSize:36,margin:"0 0 10px"}}>✨</p><p style={{color:C.azulC,fontSize:16,fontFamily:FT}}>Generando tu guia...</p></div>}{!cargando&&contenido&&(<div style={{background:C.tarjeta,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        padding:20,borderRadius:12,border:"1px solid "+C.borde}}><h2 style={{color:C.azulC,
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        fontSize:16,marginBottom:3,marginTop:0,fontFamily:FT}}>📄 {tema}</h2><p style={{color:C.textoS,fontSize:11,marginBottom:16}}>{area} - {grado}</p><div style={S.sep}/><pre style={S.pre}>{contenido}</pre></div>)}</div>)}
       </div></div>);
     }
 
