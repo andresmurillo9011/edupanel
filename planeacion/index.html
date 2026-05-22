@@ -632,9 +632,9 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
 </html
 
     function NotasEstudiante({studentId, token, API}) {
-      const [notas, setNotas] = React.useState([]);
-      const [cargando, setCargando] = React.useState(true);
-      React.useEffect(() => {
+      const [notas, setNotas] = useState([]);
+      const [cargando, setCargando] = useState(true);
+      useEffect(() => {
         if (!studentId || !token) return;
         fetch(API + '/notas/estudiante/' + studentId, {
           headers: {"Authorization": "Bearer " + token}
@@ -650,7 +650,9 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
       if (!notas.length) return (
         <div style={{...S.bloque,textAlign:"center",padding:20}}>
           <p style={{fontSize:28,margin:"0 0 6px"}}>&#x1F4CA;</p>
-          <p style={{color:C.textoS,fontSize:12,margin:0}}>Sin notas registradas aun.</p>
+          <p style={{color:C.textoS,fontSize:12,margin:0}}>
+            Sin notas registradas aun.
+          </p>
         </div>
       );
       return (
@@ -661,20 +663,16 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
             const prom = vals.length
               ? parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2))
               : null;
-            const avance = Math.round(vals.length / p.actividades.length * 100);
+            const avance = Math.round(vals.length/p.actividades.length*100);
             return (
               <div key={p.periodoId} style={{
                 background:"#0a1128",
-                border:"1px solid " + C.borde,
-                borderRadius:8,
-                padding:"12px 14px",
-                marginBottom:8
+                border:"1px solid "+C.borde,
+                borderRadius:8,padding:"12px 14px",marginBottom:8
               }}>
                 <div style={{
-                  display:"flex",
-                  justifyContent:"space-between",
-                  alignItems:"flex-start",
-                  marginBottom:8
+                  display:"flex",justifyContent:"space-between",
+                  alignItems:"flex-start",marginBottom:8
                 }}>
                   <div>
                     <p style={{
@@ -682,37 +680,41 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
                       margin:"0 0 2px",fontSize:13
                     }}>{p.nombre}</p>
                     <p style={{color:C.textoS,fontSize:11,margin:0}}>
-                      {p.area} · Grado {p.grado} · Vale {p.porcentaje}%
+                      {p.area} - Grado {p.grado} - Vale {p.porcentaje}%
                     </p>
                   </div>
-                  {prom != null && (
+                  {prom!=null&&(
                     <span style={{
                       color:prom>=3?C.ok:C.err,
                       fontWeight:"bold",fontSize:20
                     }}>{prom}</span>
                   )}
                 </div>
-                <div style={{background:"#0d1528",borderRadius:6,padding:"8px 10px"}}>
-                  {p.actividades.map((a, i) => {
-                    const nota = parseFloat(p.misNotas[i]);
-                    return (
+                <div style={{
+                  background:"#0d1528",borderRadius:6,padding:"8px 10px"
+                }}>
+                  {p.actividades.map((a,i)=>{
+                    const nota=parseFloat(p.misNotas[i]);
+                    return(
                       <div key={i} style={{
                         display:"flex",justifyContent:"space-between",
                         padding:"3px 0",
-                        borderBottom:i<p.actividades.length-1?"1px solid "+C.borde:"none"
+                        borderBottom:i<p.actividades.length-1
+                          ?"1px solid "+C.borde:"none"
                       }}>
                         <span style={{color:C.textoS,fontSize:11}}>{a}</span>
                         <span style={{
                           color:!isNaN(nota)?nota>=3?C.ok:C.err:C.borde,
                           fontWeight:"bold",fontSize:12
-                        }}>{!isNaN(nota)?nota:"—"}</span>
+                        }}>{!isNaN(nota)?nota:"-"}</span>
                       </div>
                     );
                   })}
                 </div>
                 <div style={{marginTop:8}}>
                   <div style={{
-                    display:"flex",justifyContent:"space-between",marginBottom:3
+                    display:"flex",justifyContent:"space-between",
+                    marginBottom:3
                   }}>
                     <span style={{color:C.textoS,fontSize:10}}>Progreso</span>
                     <span style={{color:C.textoS,fontSize:10}}>{avance}%</span>
@@ -723,8 +725,7 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
                   }}>
                     <div style={{
                       width:avance+"%",height:"100%",
-                      background:avance===100?C.ok:C.azulC,
-                      transition:"width 0.5s"
+                      background:avance===100?C.ok:C.azulC
                     }}/>
                   </div>
                 </div>
