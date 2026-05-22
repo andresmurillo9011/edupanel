@@ -27,6 +27,7 @@
   <a href="login.html" class="back-btn">← Volver a EduPanel</a>
   <div id="root"></div>
   <script type="text/babel" data-presets="react">
+
     const { useState, useRef, useEffect } = React;
 
 // Auto-login desde sesión de EduPanel
@@ -85,6 +86,11 @@ return(<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()
 <div style={S.mFoot}>{paso===1?(<><button style={S.btnG} onClick={onCerrar}>Cancelar</button><button style={{...S.btnV,flex:1}} onClick={()=>{if(!titulo){setErr("Completa el título");return;}setErr("");setPaso(2);}}>Siguiente →</button></>):(<><button style={{...S.btnG,width:"auto",padding:"10px 16px"}} onClick={()=>setPaso(1)}>← Volver</button><button style={{...S.btnV,flex:1,opacity:creando?0.7:1}} disabled={creando} onClick={crear}>{creando?"⏳ Creando...":"✅ Crear y asignar"}</button></>)}</div>
 </div></div>);}
 
+window.__Opcs=Opcs;
+
+</script>
+<script type="text/babel" data-presets="react">
+
 function App(){
 const urlParams=new URLSearchParams(window.location.search);const codigoUrl=urlParams.get("codigo");
 const[vista,setVista]=useState(codigoUrl?"portal":(_ecToken&&_ecUser)?"dashboard":"login");const[usuario,setUsuario]=useState((_ecToken&&_ecUser)?_ecUser:null);const[msgAuth,setMsgAuth]=useState("");const[nombre,setNombre]=useState("");const[email,setEmail]=useState("");const[password,setPassword]=useState("");const[regInst,setRegInst]=useState("");const[regCargo,setRegCargo]=useState("Docente");const[regCiudad,setRegCiudad]=useState("");const[logoPreview,setLogoPreview]=useState("");const[banderaPreview,setBanderaPreview]=useState("");const[logoFile,setLogoFile]=useState(null);const[banderaFile,setBanderaFile]=useState(null);const logoRef=useRef();const banderaRef=useRef();
@@ -122,8 +128,18 @@ if(vista==="ver_entregas"&&tareaActiva)return(<div style={S.fondo}><Header/><div
 if(vista==="perfil")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setVista("dashboard")}>← Volver</button><h2 style={S.tBloque}>⚙️ Mi perfil</h2><div style={{display:"flex",gap:32,justifyContent:"center",marginBottom:20}}><SubirImg label="🏫 Escudo" preview={logoPreview} inputRef={logoRef} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/><SubirImg label="🚩 Bandera" preview={banderaPreview} inputRef={banderaRef} onChange={e=>{const f=e.target.files[0];if(f){setBanderaFile(f);setBanderaPreview(URL.createObjectURL(f));}}}/></div><div style={S.sep}/><div style={{...S.fila,marginBottom:10}}><div style={{flex:1}}><p style={S.lbl}>Cargo</p><select style={S.sel} value={usuario?.cargo||"Docente"} onChange={e=>setUsuario({...usuario,cargo:e.target.value})}>{["Docente","Coordinador/a","Rector/a","Orientador/a"].map(c=><option key={c}>{c}</option>)}</select></div></div><button style={{...S.btnV,width:"auto",padding:"10px 20px"}} onClick={subirPerfil}>💾 Guardar</button></div></div></div>);
 if(vista==="historial")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📂 Mis clases</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>{reset();setVista("ia");}}>+ Nueva</button></div>{misClases.length===0?<p style={{color:C.textoS,textAlign:"center",padding:24,fontSize:13}}>Sin clases guardadas.</p>:misClases.map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(`${API}/clase/${cl.id}`,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}</div></div></div>);
 if(vista==="verClase"&&claseActiva)return(<div style={S.fondo}><Header/><div style={S.cont}><button style={{...S.btnSm,marginBottom:12}} onClick={()=>setVista("historial")}>← Volver</button><div style={{background:C.tarjeta,padding:20,borderRadius:12,border:`1px solid ${C.borde}`}}><h2 style={{color:C.azulC,fontSize:17,marginBottom:3,marginTop:0,fontFamily:FT}}>{claseActiva.datos?.tema}</h2><p style={{color:C.textoS,fontSize:12,marginBottom:16}}>{claseActiva.datos?.area} · Grado {claseActiva.datos?.grado}</p><div style={S.sep}/><pre style={S.pre}>{claseActiva.contenido}</pre></div></div></div>);
-const PASOS=["Nivel","Datos","Apertura","Desarrollo","Retroalim.","Cierre","Resultado"];
-return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{display:"flex",gap:4,marginBottom:20,justifyContent:"center",flexWrap:"wrap"}}>{PASOS.map((p,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={S.pasoBola(paso===i+1,paso>i+1)}>{paso>i+1?"✓":i+1}</div><span style={{color:paso===i+1?C.azulC:"#4a5a70",fontSize:10}}>{p}</span>{i<PASOS.length-1&&<span style={{color:C.borde,margin:"0 1px",fontSize:12}}>›</span>}</div>))}</div>)}
+
+      const PASOS=["Nivel","Datos","Apertura","Desarrollo","Retroalim.","Cierre","Resultado"];
+      if(window.__renderPASOS)return window.__renderPASOS({S,C,FT,FC,vista,paso,area,grado,periodo,fecha,tema,duracion,nivelEdu,apertura,desarrollo,retro,cierre,dejaTarea,tarea,contenido,cargando,descWord,descPdf,guardando,guardadoOk,claseActiva,misClases,optAper,optDes,optRet,OPT_CIERRE,OPT_TAREA,OPT_DUR,setVista,setPaso,setArea,setGrado,setPeriodo,setFecha,setTema,setDuracion,setNivelEdu,setApertura,setDesarrollo,setRetro,setCierre,setDejaTarea,setTarea,generarGuia,guardarClase,exportar,reset,Header,esBach});
+      return null;
+    }
+
+</script>
+<script type="text/babel" data-presets="react">
+
+function __PasosView({S,C,FT,FC,vista,paso,area,grado,periodo,fecha,tema,duracion,nivelEdu,apertura,desarrollo,retro,cierre,dejaTarea,tarea,contenido,cargando,descWord,descPdf,guardando,guardadoOk,claseActiva,misClases,optAper,optDes,optRet,OPT_CIERRE,OPT_TAREA,OPT_DUR,setVista,setPaso,setArea,setGrado,setPeriodo,setFecha,setTema,setDuracion,setNivelEdu,setApertura,setDesarrollo,setRetro,setCierre,setDejaTarea,setTarea,generarGuia,guardarClase,exportar,reset,Header,esBach}){
+  const Opcs=window.__Opcs;
+  return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{display:"flex",gap:4,marginBottom:20,justifyContent:"center",flexWrap:"wrap"}}>{PASOS.map((p,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={S.pasoBola(paso===i+1,paso>i+1)}>{paso>i+1?"✓":i+1}</div><span style={{color:paso===i+1?C.azulC:"#4a5a70",fontSize:10}}>{p}</span>{i<PASOS.length-1&&<span style={{color:C.borde,margin:"0 1px",fontSize:12}}>›</span>}</div>))}</div>)}
 {paso===1&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setVista("dashboard")}>← Inicio</button><h2 style={S.tBloque}>🎓 Nivel educativo</h2><div style={S.grid2}>{[{id:"preescolar",label:"🌱 Preescolar",desc:"Transición"},{id:"primaria",label:"🏫 Primaria",desc:"Grados 1° a 5°"},{id:"bachillerato",label:"📚 Bachillerato",desc:"Grados 6° a 11°"},{id:"media_tecnica",label:"🔧 Media Técnica",desc:"Grados 10° y 11°"}].map(n=>(<div key={n.id} style={S.opcion(nivelEdu===n.id)} onClick={()=>setNivelEdu(n.id)}><p style={S.oLbl}>{n.label}</p><p style={S.oDesc}>{n.desc}</p></div>))}</div><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!nivelEdu){alert("Selecciona el nivel");return;}setPaso(2);}}>Continuar →</button></div>)}
 {paso===2&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(1)}>← Volver</button><h2 style={S.tBloque}>📋 Información de la clase</h2><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Institución</p><input style={S.inp} value={institucion} onChange={e=>setInstitucion(e.target.value)}/></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Docente</p><input style={S.inp} value={docente} onChange={e=>setDocente(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Periodo</p><select style={S.sel} value={periodo} onChange={e=>setPeriodo(e.target.value)}>{["1","2","3","4"].map(p=><option key={p}>Periodo {p}</option>)}</select></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:1}}><p style={S.lbl}>Área</p><select style={S.sel} value={area} onChange={e=>setArea(e.target.value)}><option value="">Seleccionar</option>{["Ciencias Naturales","Ciencias Sociales","Matemáticas","Lengua Castellana","Inglés","Educación Física","Artística","Ética y Valores","Tecnología e Informática","Filosofía","Química","Física","Biología"].map(m=><option key={m}>{m}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Seleccionar</option>{(nivelEdu==="preescolar"?["Transición"]:nivelEdu==="primaria"?["1°","2°","3°","4°","5°"]:nivelEdu==="media_tecnica"?["10°","11°"]:["6°","7°","8°","9°","10°","11°"]).map(g=><option key={g}>{g}</option>)}</select></div></div><div style={{...S.fila,marginBottom:8}}><div style={{flex:2}}><p style={S.lbl}>Tema</p><input style={S.inp} placeholder="Ej: El verbo to be" value={tema} onChange={e=>setTema(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Duración</p><select style={S.sel} value={duracion} onChange={e=>setDuracion(e.target.value)}>{OPT_DUR.map(d=><option key={d.v} value={d.v}>{d.l}</option>)}</select></div></div><div style={{marginBottom:16}}><p style={S.lbl}>Fecha</p><input type="date" style={{...S.inp,width:"auto"}} value={fecha} onChange={e=>setFecha(e.target.value)}/></div><button style={S.btnV} onClick={()=>{if(!area||!grado||!tema){alert("Completa área, grado y tema");return;}setPaso(3);}}>Continuar →</button></div>)}
 {paso===3&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(2)}>← Volver</button><h2 style={S.tBloque}>🚀 ¿Cómo iniciar la clase?</h2><Opcs lista={optAper} val={apertura} set={setApertura}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!apertura){alert("Selecciona apertura");return;}setPaso(4);}}>Continuar →</button></div>)}
@@ -311,8 +327,8 @@ function ModalAsignacionGrado({ instituciones, docentes, onCerrar, onDone }) {
     </div>
   );
 }
+window.__renderPASOS=function(p){return React.createElement(__PasosView,p);};
 
-// ── Panel principal Super Admin ───────────────────────
 function SuperAdmin({ usuario, onSalir }) {
   const [seccion, setSeccion] = useState("dashboard");
   const [stats, setStats] = useState({});
@@ -606,6 +622,8 @@ function SuperAdmin({ usuario, onSalir }) {
 }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-  </script>
+  
+</script>
+
 </body>
 </html>
