@@ -68,7 +68,11 @@ const S={fondo:{minHeight:"100vh",background:C.fondo,fontFamily:FC,color:C.texto
   
   
   
+  
+  
   border:"none",background:`linear-gradient(135deg,${C.verde},#047857)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnN:{padding:"11px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C.naranja},#b45309)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",fontFamily:FT},btnM:{padding:"11px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C.morado},#5b21b6)`,color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",width:"100%",fontFamily:FT},btnSm:{padding:"5px 11px",borderRadius:6,border:`1px solid ${C.borde}`,background:"transparent",color:C.textoS,cursor:"pointer",fontSize:11},fila:{display:"flex",gap:10},bloque:{background:C.tarjeta,padding:20,borderRadius:12,marginBottom:14,border:`1px solid ${C.borde}`},tBloque:{color:C.azulC,fontSize:17,marginBottom:8,marginTop:0,fontFamily:FT,fontWeight:"bold"},grid2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8},grid3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8},opcion:(sel)=>({padding:10,borderRadius:8,border:sel?`2px solid ${C.azulC}`:`1px solid ${C.borde}`,background:sel?"#0f2a47":"#0a1128",cursor:"pointer",transition:"all 0.15s"}),oLbl:{color:C.texto,fontWeight:"700",fontSize:12,margin:0},oDesc:{color:C.textoS,fontSize:11,margin:"2px 0 0"},sep:{borderTop:`1px solid ${C.borde}`,margin:"14px 0"},chip:{display:"inline-block",background:"#0f2a47",border:`1px solid ${C.azul}`,color:C.azulC,padding:"2px 9px",borderRadius:20,fontSize:11,margin:2},err:{color:C.err,textAlign:"center",margin:0,fontSize:12},ok_msg:{color:C.ok,textAlign:"center",margin:0,fontSize:12},badge:(col)=>({background:col,color:"#fff",fontSize:10,fontWeight:"bold",padding:"2px 6px",borderRadius:20}),overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16},modal:{background:C.tarjeta,
+    
+    
     
     
     
@@ -82,6 +86,8 @@ function SubirImg({label,preview,inputRef,onChange}){return(<div style={{textAli
 function DashCard({icon,titulo,desc,color,onClick,badge,disabled}){const[hover,setHover]=useState(false);return(<div onClick={disabled?null:onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{background:hover&&!disabled?"#131f35":"#0f1a2e",border:`1.5px solid ${hover&&!disabled?color:C.borde}`,borderRadius:12,padding:"18px 14px",cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s",position:"relative",opacity:disabled?0.5:1,boxShadow:hover&&!disabled?`0 4px 20px ${color}33`:"none"}}>{badge&&<span style={{position:"absolute",top:8,right:8,...S.badge(color)}}>{badge}</span>}<div style={{fontSize:28,marginBottom:6}}>{icon}</div><p style={{color:C.texto,fontWeight:"bold",fontSize:13,margin:"0 0 3px",fontFamily:FT}}>{titulo}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 8px",lineHeight:1.4}}>{desc}</p><div style={{display:"inline-block",background:disabled?C.borde:color,color:disabled?C.textoS:"#fff",padding:"3px 9px",borderRadius:6,fontSize:10,fontWeight:"bold"}}>{disabled?"Próximamente":"Abrir →"}</div></div>);}
 function TarjetaClase({clase,onVer,onEliminar}){const fecha=new Date(clase.creadaEn).toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"});return(<div style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"10px 14px",marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{clase.datos?.tema||"Sin título"}</p><p style={{color:C.textoS,fontSize:11,margin:0}}>{clase.datos?.area} · Grado {clase.datos?.grado} · {fecha}</p></div><div style={{display:"flex",gap:5,marginLeft:8}}><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>onVer(clase)}>👁️ Ver</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>onEliminar(clase.id)}>🗑</button></div></div></div>);}
 function ResolverAct({actividad,tipo,onResp}){const[resps,setResps]=useState({});const pregs=actividad?.preguntas||actividad?.pares||[];const setR=(i,v)=>{const n={...resps,[i]:v};setResps(n);onResp(n);};if(tipo==="relacionar"&&actividad?.pares)return(<div>{actividad.pares.map((par,i)=>(<div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}><div style={{flex:1,background:"#0a1128",padding:"7px 10px",borderRadius:7,border:`1px solid ${C.borde}`,color:C.texto,fontSize:12}}>{par.columnaA}</div><span style={{color:C.textoS}}>→</span><select style={{...S.sel,flex:1,fontSize:12}} value={resps[i]||""} onChange={e=>setR(i,e.target.value)}><option value="">Seleccionar...</option>{actividad.pares.map((op,j)=><option key={j} value={op.columnaB}>{op.columnaB}</option>)}</select></div>))}</div>);return(<div>{pregs.map((p,i)=>(<div key={i} style={{marginBottom:14,background:"#0a1128",padding:12,borderRadius:8,border:`1px solid ${C.borde}`}}><p style={{color:C.azulC,fontWeight:"bold",fontSize:12,margin:"0 0 8px"}}>{i+1}. {p.pregunta||p.enunciado||p.afirmacion}</p>{(tipo==="quiz"||p.tipo==="seleccion")&&p.opciones&&(<div style={{display:"flex",flexDirection:"column",gap:5}}>{p.opciones.map((op,j)=>(<div key={j} style={{...S.opcion(resps[i]===op),padding:"7px 10px"}} onClick={()=>setR(i,op)}><p style={{...S.oLbl,fontSize:11}}>{op}</p></div>))}</div>)}{tipo==="completar"&&<input style={S.inp} placeholder="Escribe la respuesta..." value={resps[i]||""} onChange={e=>setR(i,e.target.value)}/>}{tipo==="verdadero_falso"&&(<div style={S.fila}><div style={{...S.opcion(resps[i]==="Verdadero"),flex:1,padding:"7px 10px",textAlign:"center"}} onClick={()=>setR(i,"Verdadero")}><p style={{...S.oLbl,fontSize:12,textAlign:"center"}}>✅ Verdadero</p></div><div style={{...S.opcion(resps[i]==="Falso"),flex:1,padding:"7px 10px",textAlign:"center"}} onClick={()=>setR(i,"Falso")}><p style={{...S.oLbl,
+  
+  
   
   
   
@@ -101,10 +107,14 @@ return(<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()
   
   
   
+  
+  
   background:"#0a1128",borderRadius:6,padding:8}}><p style={{color:C.ok,fontWeight:"bold",margin:"0 0 4px",fontSize:11}}>✅ {(actividad.preguntas||actividad.pares||[]).length} preguntas</p></div>}</div></>)}
 {paso===2&&(<><p style={{color:C.texto,fontWeight:"bold",marginBottom:10,fontFamily:FT,fontSize:13}}>¿Cómo asignar?</p><div style={{...S.fila,marginBottom:14}}><div style={{...S.opcion(modo==="grado"),flex:1}} onClick={()=>{setModo("grado");setSelIds([]);setEsts([]);setGradoSel("");}}><p style={S.oLbl}>🎓 Grado completo</p><p style={S.oDesc}>Todos los del grado</p></div><div style={{...S.opcion(modo==="individual"),flex:1}} onClick={()=>{setModo("individual");setGradoSel("");}}><p style={S.oLbl}>👤 Individual</p><p style={S.oDesc}>Estudiante por estudiante</p></div></div>
 {modo==="grado"&&(<><p style={S.lbl}>Selecciona el grado</p><div style={{...S.grid3,marginBottom:12}}>{GRADOS.map(g=>(<div key={g} style={{...S.opcion(gradoSel===g),padding:"8px 6px",textAlign:"center"}} onClick={()=>{setGradoSel(g);cargarEsts(g);}}><p style={{...S.oLbl,textAlign:"center",fontSize:11}}>Grado {g}</p></div>))}</div>{gradoSel&&<div style={{background:"#052e16",border:`1px solid ${C.ok}`,borderRadius:6,padding:"8px 12px"}}>{cargEsts?<p style={{color:C.textoS,margin:0,fontSize:12}}>Cargando...</p>:<p style={{color:C.ok,margin:0,fontSize:12,fontWeight:"bold"}}>✅ {ests.length} estudiantes en grado {gradoSel}</p>}</div>}</>)}
 {modo==="individual"&&(<><p style={{color:C.textoS,fontSize:11,margin:"0 0 6px"}}>Cargar por grado:</p><div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>{GRADOS.map(g=>(<button key={g} style={{...S.btnSm,color:gradoSel===g?C.azulC:C.textoS,borderColor:gradoSel===g?C.azul:C.borde,fontSize:10}} onClick={()=>{setGradoSel(g);setBusq("");cargarEsts(g);}}>Grado {g}</button>))}</div><input style={{...S.inp,marginBottom:8}} placeholder="🔍 Buscar..." value={busq} onChange={e=>setBusq(e.target.value)}/>{filtEsts.length>0&&(<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><p style={{color:C.textoS,fontSize:11,margin:0}}>{filtEsts.length} estudiantes · <span style={{color:C.ok}}>{selIds.length} seleccionados</span></p><div style={{display:"flex",gap:5}}><button style={{...S.btnSm,fontSize:10,color:C.azulC,borderColor:C.azul}} onClick={()=>setSelIds(filtEsts.map(e=>e.id))}>Todos</button><button style={{...S.btnSm,fontSize:10,color:C.err,borderColor:C.rojo}} onClick={()=>setSelIds([])}>Limpiar</button></div></div>)}{cargEsts?<p style={{color:C.textoS,textAlign:"center",padding:12,fontSize:12}}>Cargando...</p>:filtEsts.length===0?(<div style={{background:"#0a1128",borderRadius:6,padding:16,textAlign:"center",border:`1px solid ${C.borde}`}}><p style={{color:C.textoS,fontSize:12,margin:0}}>{gradoSel?"No hay estudiantes.":"Selecciona un grado."}</p></div>):(<div style={{maxHeight:240,overflowY:"auto",background:"#0a1128",borderRadius:6,border:`1px solid ${C.borde}`,padding:5}}>{filtEsts.map(e=>(<div key={e.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",borderRadius:6,marginBottom:2,background:selIds.includes(e.id)?"#0f2a47":"transparent",border:selIds.includes(e.id)?`1px solid ${C.azul}`:"1px solid transparent",cursor:"pointer"}} onClick={()=>toggleEst(e.id)}><div style={{width:18,height:18,borderRadius:4,
+  
+  
   
   
   
@@ -149,13 +159,19 @@ if(vista==="portal")return(<div style={S.fondo}><div style={S.header}><span styl
   
   
   
+  
+  
   setEstGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div><div style={{flex:1}}><p style={S.lbl}>Institución *</p><input style={S.inp} placeholder="Nombre del colegio" value={estInst} onChange={e=>setEstInst(e.target.value)}/></div></div><button style={S.btnV} onClick={registrarEst}>Crear cuenta</button><button style={S.btnG} onClick={()=>setEstVista("login")}>← Ya tengo cuenta</button>{estMsg&&<p style={estMsg.includes("✅")?S.ok_msg:S.err}>{estMsg}</p>}</div></div>)}{estVista==="dashboard"&&estSesion&&(<div style={S.cont}><div style={{background:"linear-gradient(135deg,#0f2a47,#0a1a35)",borderRadius:12,padding:"18px 20px",marginBottom:18,border:`1px solid ${C.azul}`}}><h2 style={{color:C.texto,fontSize:16,margin:"0 0 3px",fontFamily:FT}}>¡Hola, {estSesion.name}! 👋</h2><p style={{color:C.textoS,margin:0,fontSize:12}}>Grado {estSesion.grade}</p></div><h3 style={{color:C.textoS,fontSize:11,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Mis tareas</h3>{estTareas.length===0?(<div style={{...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📋</p><p style={{color:C.textoS,fontSize:13,margin:0}}>No tienes tareas asignadas.</p></div>):(estTareas.map(t=>(<div key={t.id} style={{background:"#0a1128",border:`1px solid ${t.entregada?C.verde:C.borde}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>{t.titulo}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{t.area} · Grado {t.grado}</p>{t.entregada&&<p style={{color:t.calificacion!=null?C.naranja:C.ok,fontSize:11,margin:0,fontWeight:"bold"}}>{t.calificacion!=null?`✅ Nota: ${t.calificacion}`:"✅ Entregada"}</p>
     
     
     
     
     
+    
+    
   }{!t.entregada&&<p style={{color:C.naranja,fontSize:11,margin:0}}>⏳ Pendiente</p>}</div><button style={{...S.btnSm,color:t.entregada?C.textoS:C.azulC,borderColor:t.entregada?C.borde:C.azul}} onClick={()=>abrirTareaEst(t)}>{t.entregada?"👁 Ver":"📝 Resolver"}</button></div></div>)))}<button style={{...S.btnG,marginTop:14}} onClick={()=>{setEstSesion(null);localStorage.removeItem("edutokenest");setEstVista("login");setEstTareas([]);}}>Cerrar sesión</button></div>)}{estVista==="resolver"&&estTareaAct&&(<div style={S.cont}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setEstVista("dashboard")}>← Mis tareas</button><div style={S.bloque}><h2 style={{...S.tBloque,margin:"0 0 4px",fontSize:15}}>{estTareaAct.titulo}</h2><p style={{color:C.textoS,fontSize:12,margin:"0 0 10px"}}>{estTareaAct.area} · Grado {estTareaAct.grado}</p>{estTareaAct.descripcion&&<div style={{background:"#0f2a47",borderRadius:7,padding:"10px 12px",border:`1px solid ${C.azul}`,marginBottom:14}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 3px",fontSize:11}}>📋 Instrucciones:</p><p style={{color:C.texto,fontSize:12,margin:0}}>{estTareaAct.descripcion}</p></div>}{estEntregada?(<div style={{background:"#052e16",border:`1px solid ${C.ok}`,borderRadius:8,padding:18,textAlign:"center"}}><p style={{fontSize:36,margin:"0 0 6px"}}>✅</p><p style={{color:C.ok,fontWeight:"bold",fontSize:15,margin:"0 0 6px"}}>Tarea entregada</p>{estEntregaData?.notaAuto!=null?<p style={{color:C.naranja,fontSize:36,fontWeight:"bold",margin:0,fontFamily:FT}}>{estEntregaData.notaAuto}</p>:<p style={{color:C.textoS,fontSize:12,margin:0}}>Tu docente revisará pronto.</p>}</div>):(<>{estTareaAct.actividad&&(<div style={{marginBottom:14}}><p style={{color:C.texto,fontWeight:"bold",margin:"0 0 10px",fontFamily:FT,fontSize:13}}>Resuelve la actividad:</p><ResolverAct actividad={estTareaAct.actividad} tipo={estTareaAct.tipo} onResp={setEstResps}/>
+    
+    
     
     
     
@@ -170,8 +186,12 @@ if(vista==="dashboard")return(<div style={S.fondo}><Header/><div style={S.cont}>
   
   
   
+  
+  
   setVista("perfil")}/></div>{misClases.length>0&&(<><p style={{color:C.textoS,fontSize:10,fontWeight:"600",letterSpacing:1,textTransform:"uppercase",margin:"0 0 10px"}}>Clases recientes</p><div style={S.bloque}>{misClases.slice(0,3).map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(`${API}/clase/${cl.id}`,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}{misClases.length>3&&<button style={{...S.btnG,marginTop:6}} onClick={()=>setVista("historial")}>Ver todas ({misClases.length}) →</button>}</div></>)}</div></div>);
 if(vista==="tareas")return(<div style={S.fondo}><Header/>{mostrarModal&&<ModalTarea onCerrar={()=>setMostrarModal(false)} onCreada={t=>{setMostrarModal(false);cargarTareas();alert(`✅ Tarea "${t.title}" creada. Código: ${t.code}`);}}/>}<div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📋 Gestión de Tareas</h2><button style={{...S.btnV,width:"auto",padding:"9px 16px"}} onClick={()=>setMostrarModal(true)}>+ Asignar tarea</button></div>{misTareas.length===0?(<div style={{textAlign:"center",padding:"40px 20px"}}><p style={{fontSize:44,margin:"0 0 10px"}}>📋</p><p style={{color:C.textoS,fontSize:14,margin:"0 0 16px"}}>No tienes tareas creadas.</p><button style={{...S.btnV,width:"auto",padding:"10px 20px"}} onClick={()=>setMostrarModal(true)}>+ Crear primera tarea</button></div>):(misTareas.map(t=>(<div key={t.id} style={{background:"#0a1128",border:`1px solid ${C.borde}`,borderRadius:8,padding:"12px 14px",marginBottom:7}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:6}}><div style={{flex:1}}><p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{t.title}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 5px"}}>{t.area} · Grado {t.grade} · Código: <span style={{color:C.naranja,fontWeight:"bold"}}>{t.code}</span></p><div style={{display:"flex",gap:5,flexWrap:"wrap"}}><span style={{...S.badge(C.azul),fontSize:10,padding:"2px 8px"}}>👥 {t.totalEstudiantes}</span><span style={{...S.badge(t.totalEntregas>0?C.verde:"#374151"),fontSize:10,padding:"2px 8px"}}>✅ {t.totalEntregas}</span><span style={{...S.badge(t.pendientes>0?C.err:"#374151"),fontSize:10,padding:"2px 8px"}}>⏳ {t.pendientes}</span></div></div><div style={{display:"flex",gap:5,alignItems:"center"}}><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}} onClick={()=>
+  
+  
   
   
   
@@ -184,7 +204,11 @@ if(vista==="ver_entregas"&&tareaActiva)return(<div style={S.fondo}><Header/><div
   
   
   
+  
+  
   width:"auto",padding:"8px 16px"}} onClick={calificar}>💾 Guardar</button><button style={{...S.btnG,width:"auto"}} onClick={()=>{setCalId(null);setCalNota("");setCalComent("");}}>Cancelar</button></div></div>)}{listadoEnt.length===0?<p style={{color:C.textoS,textAlign:"center",padding:20,fontSize:13}}>No hay estudiantes.</p>:(<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}>{["Estado","Estudiante","Grado","Respuesta","Nota","Acciones"].map(h=>(<th key={h} style={{padding:"9px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,fontWeight:"bold",whiteSpace:"nowrap"}}>{h}</th>))}</tr></thead><tbody>{listadoEnt.filter(e=>filtroEst==="todos"||e.estado===filtroEst).map((e,i)=>(<tr key={e.estudianteId} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}><td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{e.estado==="calificado"&&<span style={{color:C.naranja,fontWeight:"bold",fontSize:10}}>⭐</span>}{e.estado==="entregado"&&<span style={{color:C.ok,fontWeight:"bold",fontSize:10}}>✅</span>}{e.estado==="pendiente"&&<span style={{color:C.err,fontWeight:"bold",fontSize:10}}>⏳</span>}</td><td style={{padding:"9px 10px"}}><p style={{color:C.texto,margin:0,fontWeight:"bold",fontSize:12}}>{e.nombreEstudiante}</p></td><td style={{padding:"9px 10px",color:C.textoS,fontSize:11}}>{e.grado}</td><td style={{padding:"9px 10px",maxWidth:160}}>{e.resumenRespuesta&&<p style={{color:"#94a3b8",fontSize:10,margin:0,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}}>"{e.resumenRespuesta}"</p>}{!e.entregada&&<span style={{color:"#374151",fontSize:10}}>Sin entregar</span>}</td><td style={{padding:"9px 10px",textAlign:"center"}}>{e.calificacion!=null?<span style={{color:C.naranja,fontWeight:"bold",fontSize:16,
+    
+    
     
     
     
@@ -203,6 +227,8 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
   
   
   
+  
+  
   {OPT_DUR.map(d=><option key={d.v} value={d.v}>{d.l}</option>)}</select></div></div><div style={{marginBottom:16}}><p style={S.lbl}>Fecha</p><input type="date" style={{...S.inp,width:"auto"}} value={fecha} onChange={e=>setFecha(e.target.value)}/></div><button style={S.btnV} onClick={()=>{if(!area||!grado||!tema){alert("Completa área, grado y tema");return;}setPaso(3);}}>Continuar →</button></div>)}
 {paso===3&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(2)}>← Volver</button><h2 style={S.tBloque}>🚀 ¿Cómo iniciar la clase?</h2><Opcs lista={optAper} val={apertura} set={setApertura}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!apertura){alert("Selecciona apertura");return;}setPaso(4);}}>Continuar →</button></div>)}
 {paso===4&&(<div style={S.bloque}><button style={{...S.btnSm,marginBottom:10}} onClick={()=>setPaso(3)}>← Volver</button><h2 style={S.tBloque}>⚙️ ¿Cómo desarrollar el contenido?</h2><Opcs lista={optDes} val={desarrollo} set={setDesarrollo}/><button style={{...S.btnV,marginTop:16}} onClick={()=>{if(!desarrollo){alert("Selecciona estrategia");return;}setPaso(5);}}>Continuar →</button></div>)}
@@ -211,477 +237,6 @@ return(<div style={S.fondo}><Header/><div style={S.cont}>{paso<7&&(<div style={{
 {paso===7&&(<div>{!cargando&&contenido&&!contenido.startsWith("❌")&&(<><div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}><span style={S.chip}>📚 {area}</span><span style={S.chip}>🎓 {grado}</span><span style={S.chip}>⏱️ {OPT_DUR.find(d=>d.v===duracion)?.l}</span></div><div style={{...S.fila,marginBottom:16,flexWrap:"wrap",gap:6}}><button style={{...S.btnA,width:"auto",padding:"9px 14px"}} onClick={()=>exportar("word")} disabled={descWord}>{descWord?"⏳...":"📥 Word"}</button><button style={{...S.btnN,width:"auto",padding:"9px 14px"}} onClick={()=>exportar("pdf")} disabled={descPdf}>{descPdf?"⏳...":"📄 PDF"}</button>{!guardadoOk?<button style={{...S.btnV,width:"auto",padding:"9px 14px",opacity:guardando?0.7:1}} onClick={guardarClase} disabled={guardando}>{guardando?"💾...":"💾 Guardar"}</button>:<span style={{...S.chip,background:"#052e16",borderColor:C.ok,color:C.ok,padding:"9px 12px"}}>✅ Guardada</span>}<button style={{...S.btnG,width:"auto"}} onClick={()=>setVista("dashboard")}>🏠</button><button style={{...S.btnG,width:"auto"}} onClick={reset}>+ Nueva</button></div></>)}{cargando&&<div style={{background:C.tarjeta,padding:44,borderRadius:12,border:`1px solid ${C.borde}`,textAlign:"center"}}><p style={{fontSize:36,margin:"0 0 10px"}}>✨</p><p style={{color:C.azulC,fontSize:16,fontFamily:FT}}>Generando tu guía...</p></div>}{!cargando&&contenido&&(<div style={{background:C.tarjeta,padding:20,borderRadius:12,border:`1px solid ${C.borde}`}}><h2 style={{color:C.azulC,fontSize:16,marginBottom:3,marginTop:0,fontFamily:FT}}>📄 {tema}</h2><p style={{color:C.textoS,fontSize:11,marginBottom:16}}>{area} · {grado}</p><div style={S.sep}/><pre style={S.pre}>{contenido}</pre></div>)}</div>)}
 </div></div>);}
 // SuperAdmin.jsx — Panel completo de administración
-// Agregar en App.js: import SuperAdmin from './SuperAdmin';
-// Y agregar la vista en el router
-
-
-const API = "https://educlass-backend-4kk0.onrender.com";
-
-const C = {
-  fondo:"#0e1420", panel:"#0a1128", tarjeta:"#111827", borde:"#1e2d45",
-  azul:"#2563EB", azulC:"#60A5FA", verde:"#059669", verdeC:"#34D399",
-  texto:"#F1F5F9", textoS:"#64748B", err:"#F87171", ok:"#4ADE80",
-  naranja:"#F59E0B", morado:"#7C3AED", rojo:"#DC2626",
-};
-
-const S = {
-  fondo:{minHeight:"100vh",background:C.fondo,display:"flex",fontFamily:"'Segoe UI',Arial,sans-serif",color:C.texto},
-  sidebar:{width:220,background:C.panel,borderRight:`1px solid ${C.borde}`,display:"flex",flexDirection:"column",padding:"20px 0",flexShrink:0,position:"sticky",top:0,height:"100vh"},
-  sLogo:{padding:"0 20px 20px",borderBottom:`1px solid ${C.borde}`,marginBottom:8},
-  sItem:(activo)=>({padding:"10px 20px",cursor:"pointer",background:activo?"#0f2a47":"transparent",borderLeft:activo?`3px solid ${C.azul}`:"3px solid transparent",color:activo?C.azulC:C.textoS,fontSize:13,fontWeight:activo?"600":"400",transition:"all 0.15s",display:"flex",alignItems:"center",gap:8}),
-  main:{flex:1,padding:24,overflowY:"auto"},
-  header:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20},
-  titulo:{fontSize:20,fontWeight:"bold",margin:0,color:C.texto},
-  card:{background:C.tarjeta,border:`1px solid ${C.borde}`,borderRadius:12,padding:20,marginBottom:14},
-  grid4:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20},
-  statCard:(c)=>({background:C.tarjeta,border:`1px solid ${C.borde}`,borderRadius:10,padding:"16px 20px",textAlign:"center",borderTop:`3px solid ${c}`}),
-  inp:{padding:"9px 12px",borderRadius:7,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",outline:"none"},
-  sel:{padding:"9px 12px",borderRadius:7,border:`1px solid ${C.borde}`,background:"#0a1128",color:C.texto,fontSize:13,outline:"none",width:"100%"},
-  btnA:{padding:"9px 16px",borderRadius:7,border:"none",background:C.azul,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
-  btnV:{padding:"9px 16px",borderRadius:7,border:"none",background:C.verde,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
-  btnR:{padding:"9px 16px",borderRadius:7,border:"none",background:C.rojo,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
-  btnN:{padding:"9px 16px",borderRadius:7,border:"none",background:C.naranja,color:"#fff",fontWeight:"600",fontSize:13,cursor:"pointer"},
-  btnSm:{padding:"4px 10px",borderRadius:5,border:`1px solid ${C.borde}`,background:"transparent",color:C.textoS,cursor:"pointer",fontSize:11},
-  btnG:{padding:"9px 16px",borderRadius:7,border:`1px solid ${C.borde}`,background:"transparent",color:C.textoS,fontSize:13,cursor:"pointer"},
-  fila:{display:"flex",gap:10},
-  lbl:{color:C.textoS,fontSize:12,marginBottom:4,fontWeight:"500"},
-  err:{color:C.err,fontSize:12,margin:"6px 0 0"},
-  ok_msg:{color:C.ok,fontSize:12,margin:"6px 0 0"},
-  tag:(c)=>({background:c+"22",border:`1px solid ${c}`,color:c,fontSize:10,padding:"2px 7px",borderRadius:20,display:"inline-block",margin:"1px 2px"}),
-  overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:16},
-  modal:{background:C.tarjeta,borderRadius:14,border:`1px solid ${C.borde}`,width:"100%",maxWidth:560,maxHeight:"85vh",display:"flex",flexDirection:"column"},
-  mHead:{padding:"18px 22px 14px",borderBottom:`1px solid ${C.borde}`,display:"flex",justifyContent:"space-between",alignItems:"center"},
-  mBody:{padding:"18px 22px",overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:12},
-  mFoot:{padding:"14px 22px",borderTop:`1px solid ${C.borde}`,display:"flex",gap:8,justifyContent:"flex-end"},
-};
-
-const GRADOS = ["Transición","1°","2°","3°","4°","5°","6°","7°","8°","9°","10°","11°"];
-
-const authH = () => ({ "Content-Type":"application/json", "Authorization":`Bearer ${localStorage.getItem("edutoken")||""}` });
-
-// ── Modal Crear/Editar Estudiante ─────────────────────
-function ModalEstudiante({ estudiante, instituciones, docentes, onCerrar, onGuardado }) {
-  const editando = !!estudiante;
-  const [nombre, setNombre] = useState(estudiante?.name || "");
-  const [usuario, setUsuario] = useState(estudiante?.username || "");
-  const [password, setPassword] = useState("");
-  const [grado, setGrado] = useState(estudiante?.grade || "");
-  const [instId, setInstId] = useState(estudiante?.institutionId || "");
-  const [docsSelIds, setDocsSelIds] = useState(estudiante?.docentes?.map(d=>d.id) || []);
-  const [guardando, setGuardando] = useState(false);
-  const [err, setErr] = useState("");
-
-  const toggleDoc = id => setDocsSelIds(p => p.includes(id) ? p.filter(x=>x!==id) : [...p,id]);
-
-  const guardar = async () => {
-    if (!nombre || !usuario || (!editando && !password) || !instId) {
-      setErr("Completa nombre, usuario, contraseña e institución"); return;
-    }
-    setGuardando(true); setErr("");
-    try {
-      const url = editando ? `${API}/superadmin/students/${estudiante.id}` : `${API}/superadmin/students`;
-      const method = editando ? "PUT" : "POST";
-      const body = { nombre, usuario, grado, institutionId: instId, teacherIds: docsSelIds };
-      if (password) body.password = password;
-
-      const r = await fetch(url, { method, headers: authH(), body: JSON.stringify(body) });
-      const d = await r.json();
-      if (r.ok) onGuardado(d.estudiante, d.mensaje);
-      else setErr(d.mensaje || "Error");
-    } catch { setErr("Error de conexión"); }
-    setGuardando(false);
-  };
-
-  const docsInst = docentes.filter(d => d.institutionId === instId);
-
-  return (
-    <div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()}>
-      <div style={S.modal}>
-        <div style={S.mHead}>
-          <h3 style={{color:C.azulC,margin:0,fontSize:16}}>{editando?"✏️ Editar estudiante":"➕ Crear estudiante"}</h3>
-          <button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button>
-        </div>
-        <div style={S.mBody}>
-          <div><p style={S.lbl}>Nombre completo *</p><input style={S.inp} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: Juan Pérez"/></div>
-          <div style={S.fila}>
-            <div style={{flex:1}}><p style={S.lbl}>Usuario * (sin espacios)</p><input style={S.inp} value={usuario} onChange={e=>setUsuario(e.target.value.toLowerCase().replace(/\s+/g,""))} placeholder="juanperez"/></div>
-            <div style={{flex:1}}><p style={S.lbl}>{editando?"Nueva contraseña (opcional)":"Contraseña *"}</p><input type="password" style={S.inp} value={password} onChange={e=>setPassword(e.target.value)} placeholder={editando?"Dejar vacío para no cambiar":"••••••"}/></div>
-          </div>
-          <div style={S.fila}>
-            <div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Sin grado</option>{GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
-            <div style={{flex:1}}><p style={S.lbl}>Institución *</p><select style={S.sel} value={instId} onChange={e=>{setInstId(e.target.value);setDocsSelIds([]);}}><option value="">Seleccionar</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
-          </div>
-          {instId && (
-            <div>
-              <p style={S.lbl}>Asignar docentes ({docsInst.length} disponibles)</p>
-              {docsInst.length === 0 ? <p style={{color:C.textoS,fontSize:12}}>No hay docentes en esta institución.</p> : (
-                <div style={{maxHeight:160,overflowY:"auto",background:"#0a1128",borderRadius:7,border:`1px solid ${C.borde}`,padding:6}}>
-                  {docsInst.map(d=>(
-                    <div key={d.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,cursor:"pointer",background:docsSelIds.includes(d.id)?"#0f2a47":"transparent"}} onClick={()=>toggleDoc(d.id)}>
-                      <div style={{width:16,height:16,borderRadius:3,border:docsSelIds.includes(d.id)?`2px solid ${C.azulC}`:`2px solid ${C.borde}`,background:docsSelIds.includes(d.id)?C.azul:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                        {docsSelIds.includes(d.id)&&<span style={{color:"white",fontSize:10}}>✓</span>}
-                      </div>
-                      <span style={{fontSize:12,color:docsSelIds.includes(d.id)?C.azulC:C.texto}}>{d.name}</span>
-                      <span style={{fontSize:10,color:C.textoS,marginLeft:"auto"}}>{d.cargo}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          {err && <p style={S.err}>{err}</p>}
-        </div>
-        <div style={S.mFoot}>
-          <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
-          <button style={{...S.btnV,opacity:guardando?0.7:1}} disabled={guardando} onClick={guardar}>{guardando?"Guardando...":"💾 Guardar"}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Modal Asignación Rápida por Grado ─────────────────
-function ModalAsignacionGrado({ instituciones, docentes, onCerrar, onDone }) {
-  const [instId, setInstId] = useState("");
-  const [grado, setGrado] = useState("");
-  const [docenteId, setDocenteId] = useState("");
-  const [cargando, setCargando] = useState(false);
-  const [msg, setMsg] = useState("");
-
-  const asignar = async () => {
-    if (!instId || !grado || !docenteId) { setMsg("Completa todos los campos"); return; }
-    setCargando(true); setMsg("");
-    try {
-      const r = await fetch(`${API}/superadmin/assign/teacher-batch`, {
-        method: "POST", headers: authH(),
-        body: JSON.stringify({ teacherId: docenteId, institutionId: instId, grade: grado })
-      });
-      const d = await r.json();
-      setMsg(d.mensaje || "Listo");
-      if (r.ok) setTimeout(() => onDone(), 1500);
-    } catch { setMsg("Error de conexión"); }
-    setCargando(false);
-  };
-
-  const docsInst = docentes.filter(d => d.institutionId === instId);
-
-  return (
-    <div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()}>
-      <div style={{...S.modal,maxWidth:420}}>
-        <div style={S.mHead}>
-          <h3 style={{color:C.naranja,margin:0,fontSize:16}}>⚡ Asignación masiva por grado</h3>
-          <button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button>
-        </div>
-        <div style={S.mBody}>
-          <p style={{color:C.textoS,fontSize:13,margin:0}}>Asigna un docente a todos los estudiantes de un grado en una institución.</p>
-          <div><p style={S.lbl}>Institución</p><select style={S.sel} value={instId} onChange={e=>{setInstId(e.target.value);setDocenteId("");}}><option value="">Seleccionar</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
-          <div style={S.fila}>
-            <div style={{flex:1}}><p style={S.lbl}>Grado</p><select style={S.sel} value={grado} onChange={e=>setGrado(e.target.value)}><option value="">Seleccionar</option>{GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
-            <div style={{flex:1}}><p style={S.lbl}>Docente</p><select style={S.sel} value={docenteId} onChange={e=>setDocenteId(e.target.value)} disabled={!instId}><option value="">Seleccionar</option>{docsInst.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
-          </div>
-          {msg && <p style={msg.includes("✅")?S.ok_msg:S.err}>{msg}</p>}
-        </div>
-        <div style={S.mFoot}>
-          <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
-          <button style={{...S.btnN,opacity:cargando?0.7:1}} disabled={cargando} onClick={asignar}>{cargando?"Asignando...":"⚡ Asignar docente al grado"}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Panel principal Super Admin ───────────────────────
-function SuperAdmin({ usuario, onSalir }) {
-  const [seccion, setSeccion] = useState("dashboard");
-  const [stats, setStats] = useState({});
-  const [instituciones, setInstituciones] = useState([]);
-  const [docentes, setDocentes] = useState([]);
-  const [estudiantes, setEstudiantes] = useState([]);
-  const [cargando, setCargando] = useState(false);
-  const [msg, setMsg] = useState({ texto:"", tipo:"" });
-
-  // Filtros
-  const [filtroInst, setFiltroInst] = useState("");
-  const [filtroGrado, setFiltroGrado] = useState("");
-  const [filtroDoc, setFiltroDoc] = useState("");
-  const [busqueda, setBusqueda] = useState("");
-
-  // Selección múltiple
-  const [selIds, setSelIds] = useState([]);
-
-  // Modales
-  const [modalEst, setModalEst] = useState(null); // null | "nuevo" | {estudiante}
-  const [modalGrado, setModalGrado] = useState(false);
-  const [modalCambioGrado, setModalCambioGrado] = useState(false);
-  const [nuevoGrado, setNuevoGrado] = useState("");
-
-  const mostrarMsg = (texto, tipo="ok") => {
-    setMsg({ texto, tipo });
-    setTimeout(() => setMsg({ texto:"", tipo:"" }), 3000);
-  };
-
-  const cargarStats = useCallback(async () => {
-    try { const r=await fetch(`${API}/superadmin/stats`,{headers:authH()}); const d=await r.json(); setStats(d); } catch(_){}
-  }, []);
-
-  const cargarInstituciones = useCallback(async () => {
-    try { const r=await fetch(`${API}/superadmin/institutions`,{headers:authH()}); const d=await r.json(); setInstituciones(d.instituciones||[]); } catch(_){}
-  }, []);
-
-  const cargarDocentes = useCallback(async () => {
-    try { const r=await fetch(`${API}/superadmin/teachers`,{headers:authH()}); const d=await r.json(); setDocentes(d.docentes||[]); } catch(_){}
-  }, []);
-
-  const cargarEstudiantes = useCallback(async () => {
-    setCargando(true);
-    try {
-      const params = new URLSearchParams();
-      if (filtroInst) params.append("institutionId", filtroInst);
-      if (filtroGrado) params.append("grade", filtroGrado);
-      if (filtroDoc) params.append("teacherId", filtroDoc);
-      if (busqueda) params.append("search", busqueda);
-      const r = await fetch(`${API}/superadmin/students?${params}`, { headers: authH() });
-      const d = await r.json();
-      setEstudiantes(d.estudiantes||[]);
-    } catch(_){}
-    setCargando(false);
-  }, [filtroInst, filtroGrado, filtroDoc, busqueda]);
-
-  useEffect(() => { cargarStats(); cargarInstituciones(); cargarDocentes(); }, []);
-  useEffect(() => { if (seccion === "estudiantes") cargarEstudiantes(); }, [seccion, cargarEstudiantes]);
-
-  const eliminarEstudiante = async id => {
-    if (!window.confirm("¿Eliminar este estudiante? Esta acción no se puede deshacer.")) return;
-    try {
-      const r = await fetch(`${API}/superadmin/students/${id}`, { method:"DELETE", headers:authH() });
-      const d = await r.json();
-      if (r.ok) { mostrarMsg(d.mensaje); cargarEstudiantes(); cargarStats(); }
-      else mostrarMsg(d.mensaje, "err");
-    } catch { mostrarMsg("Error al eliminar", "err"); }
-  };
-
-  const cambiarGradoMasivo = async () => {
-    if (!nuevoGrado || selIds.length === 0) return;
-    try {
-      const r = await fetch(`${API}/superadmin/assign/grade`, {
-        method: "POST", headers: authH(),
-        body: JSON.stringify({ studentIds: selIds, grade: nuevoGrado })
-      });
-      const d = await r.json();
-      if (r.ok) { mostrarMsg(d.mensaje); setSelIds([]); setModalCambioGrado(false); setNuevoGrado(""); cargarEstudiantes(); }
-      else mostrarMsg(d.mensaje, "err");
-    } catch { mostrarMsg("Error", "err"); }
-  };
-
-  const toggleSel = id => setSelIds(p => p.includes(id) ? p.filter(x=>x!==id) : [...p,id]);
-  const toggleTodos = () => setSelIds(selIds.length === estudiantes.length ? [] : estudiantes.map(e=>e.id));
-
-  const SECCIONES = [
-    { id:"dashboard", icon:"📊", label:"Dashboard" },
-    { id:"estudiantes", icon:"👨‍🎓", label:"Estudiantes" },
-    { id:"docentes", icon:"👨‍🏫", label:"Docentes" },
-    { id:"instituciones", icon:"🏫", label:"Instituciones" },
-  ];
-
-  return (
-    <div style={S.fondo}>
-      {/* Sidebar */}
-      <div style={S.sidebar}>
-        <div style={S.sLogo}>
-          <p style={{color:C.azulC,fontWeight:"bold",margin:0,fontSize:14}}>🛡️ Super Admin</p>
-          <p style={{color:C.textoS,margin:"3px 0 0",fontSize:11}}>{usuario?.name}</p>
-        </div>
-        {SECCIONES.map(s=>(
-          <div key={s.id} style={S.sItem(seccion===s.id)} onClick={()=>setSeccion(s.id)}>
-            <span>{s.icon}</span><span>{s.label}</span>
-          </div>
-        ))}
-        <div style={{marginTop:"auto",padding:"14px 20px",borderTop:`1px solid ${C.borde}`}}>
-          <button style={{...S.btnSm,width:"100%",color:C.err,borderColor:C.rojo,padding:"7px 0"}} onClick={onSalir}>← Salir del panel</button>
-        </div>
-      </div>
-
-      {/* Main */}
-      <div style={S.main}>
-        {/* Mensaje global */}
-        {msg.texto && (
-          <div style={{background:msg.tipo==="ok"?"#052e16":"#2d0a0a",border:`1px solid ${msg.tipo==="ok"?C.ok:C.err}`,borderRadius:8,padding:"10px 16px",marginBottom:16}}>
-            <p style={{color:msg.tipo==="ok"?C.ok:C.err,margin:0,fontSize:13,fontWeight:"bold"}}>{msg.texto}</p>
-          </div>
-        )}
-
-        {/* ── DASHBOARD ── */}
-        {seccion==="dashboard"&&(
-          <>
-            <div style={S.header}><h1 style={S.titulo}>📊 Dashboard General</h1></div>
-            <div style={S.grid4}>
-              {[{l:"Instituciones",v:stats.instituciones||0,c:C.azul,i:"🏫"},{l:"Docentes",v:stats.docentes||0,c:C.verde,i:"👨‍🏫"},{l:"Estudiantes",v:stats.estudiantes||0,c:C.naranja,i:"👨‍🎓"},{l:"Tareas",v:stats.tareas||0,c:C.morado,i:"📋"}].map(s=>(
-                <div key={s.l} style={S.statCard(s.c)}>
-                  <p style={{fontSize:28,margin:"0 0 4px"}}>{s.i}</p>
-                  <p style={{color:s.c,fontSize:28,fontWeight:"bold",margin:"0 0 4px"}}>{s.v}</p>
-                  <p style={{color:C.textoS,fontSize:12,margin:0}}>{s.l}</p>
-                </div>
-              ))}
-            </div>
-            <div style={S.card}>
-              <h3 style={{color:C.texto,margin:"0 0 12px",fontSize:14}}>Acciones rápidas</h3>
-              <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                <button style={S.btnV} onClick={()=>setSeccion("estudiantes")}>👨‍🎓 Gestionar estudiantes</button>
-                <button style={S.btnA} onClick={()=>setSeccion("docentes")}>👨‍🏫 Ver docentes</button>
-                <button style={S.btnN} onClick={()=>{setSeccion("estudiantes");setModalGrado(true);}}>⚡ Asignación masiva</button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ── ESTUDIANTES ── */}
-        {seccion==="estudiantes"&&(
-          <>
-            <div style={S.header}>
-              <h1 style={S.titulo}>👨‍🎓 Estudiantes</h1>
-              <div style={{display:"flex",gap:8}}>
-                {selIds.length>0&&(
-                  <button style={S.btnN} onClick={()=>setModalCambioGrado(true)}>📚 Cambiar grado ({selIds.length})</button>
-                )}
-                <button style={S.btnN} onClick={()=>setModalGrado(true)}>⚡ Asignación masiva</button>
-                <button style={S.btnV} onClick={()=>setModalEst("nuevo")}>➕ Nuevo estudiante</button>
-              </div>
-            </div>
-
-            {/* Filtros */}
-            <div style={{...S.card,padding:14}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 2fr auto",gap:10,alignItems:"end"}}>
-                <div><p style={{...S.lbl,marginBottom:4}}>Institución</p><select style={S.sel} value={filtroInst} onChange={e=>setFiltroInst(e.target.value)}><option value="">Todas</option>{instituciones.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
-                <div><p style={{...S.lbl,marginBottom:4}}>Grado</p><select style={S.sel} value={filtroGrado} onChange={e=>setFiltroGrado(e.target.value)}><option value="">Todos</option>{GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
-                <div><p style={{...S.lbl,marginBottom:4}}>Docente</p><select style={S.sel} value={filtroDoc} onChange={e=>setFiltroDoc(e.target.value)}><option value="">Todos</option>{docentes.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
-                <div><p style={{...S.lbl,marginBottom:4}}>Buscar nombre</p><input style={S.inp} placeholder="Buscar..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} onKeyDown={e=>e.key==="Enter"&&cargarEstudiantes()}/></div>
-                <button style={S.btnA} onClick={cargarEstudiantes}>🔍 Buscar</button>
-              </div>
-            </div>
-
-            {/* Tabla */}
-            <div style={S.card}>
-              {cargando ? (
-                <p style={{color:C.textoS,textAlign:"center",padding:24}}>Cargando...</p>
-              ) : estudiantes.length===0 ? (
-                <p style={{color:C.textoS,textAlign:"center",padding:24}}>No se encontraron estudiantes.</p>
-              ) : (
-                <>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                    <p style={{color:C.textoS,fontSize:12,margin:0}}>{estudiantes.length} estudiantes · {selIds.length} seleccionados</p>
-                    <button style={{...S.btnSm,fontSize:11}} onClick={toggleTodos}>{selIds.length===estudiantes.length?"Deseleccionar todos":"Seleccionar todos"}</button>
-                  </div>
-                  <div style={{overflowX:"auto"}}>
-                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                      <thead>
-                        <tr style={{background:"#0a1128"}}>
-                          <th style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,width:30}}>☑</th>
-                          {["Nombre","Usuario","Grado","Institución","Docentes","Acciones"].map(h=>(
-                            <th key={h} style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`,whiteSpace:"nowrap"}}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {estudiantes.map((e,i)=>(
-                          <tr key={e.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}>
-                            <td style={{padding:"8px 10px"}}>
-                              <div style={{width:16,height:16,borderRadius:3,border:selIds.includes(e.id)?`2px solid ${C.azulC}`:`2px solid ${C.borde}`,background:selIds.includes(e.id)?C.azul:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>toggleSel(e.id)}>
-                                {selIds.includes(e.id)&&<span style={{color:"white",fontSize:10}}>✓</span>}
-                              </div>
-                            </td>
-                            <td style={{padding:"8px 10px",fontWeight:"bold",color:C.texto}}>{e.name}</td>
-                            <td style={{padding:"8px 10px",color:C.textoS}}>@{e.username}</td>
-                            <td style={{padding:"8px 10px"}}><span style={S.tag(C.azulC)}>{e.grade||"—"}</span></td>
-                            <td style={{padding:"8px 10px",color:C.textoS,fontSize:11}}>{e.institucion||"—"}</td>
-                            <td style={{padding:"8px 10px",maxWidth:200}}>
-                              {e.docentes?.length===0 ? <span style={{color:"#374151",fontSize:10}}>Sin docente</span> : e.docentes?.map(d=><span key={d.id} style={S.tag(C.verdeC)}>{d.name}</span>)}
-                            </td>
-                            <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}>
-                              <div style={{display:"flex",gap:4}}>
-                                <button style={{...S.btnSm,color:C.azulC,borderColor:C.azul,fontSize:10}} onClick={()=>setModalEst(e)}>✏️ Editar</button>
-                                <button style={{...S.btnSm,color:C.err,borderColor:C.rojo,fontSize:10}} onClick={()=>eliminarEstudiante(e.id)}>🗑</button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* ── DOCENTES ── */}
-        {seccion==="docentes"&&(
-          <>
-            <div style={S.header}><h1 style={S.titulo}>👨‍🏫 Docentes</h1></div>
-            <div style={S.card}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                <thead><tr style={{background:"#0a1128"}}>{["Nombre","Email","Cargo","Institución","Tareas"].map(h=>(<th key={h} style={{padding:"8px 10px",textAlign:"left",color:C.azulC,borderBottom:`1px solid ${C.borde}`}}>{h}</th>))}</tr></thead>
-                <tbody>{docentes.map((d,i)=>(<tr key={d.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:`1px solid ${C.borde}`}}><td style={{padding:"8px 10px",fontWeight:"bold",color:C.texto}}>{d.name}</td><td style={{padding:"8px 10px",color:C.textoS}}>{d.email}</td><td style={{padding:"8px 10px"}}><span style={S.tag(C.morado)}>{d.cargo}</span></td><td style={{padding:"8px 10px",color:C.textoS,fontSize:11}}>{d.institucion}</td><td style={{padding:"8px 10px",color:C.naranja,fontWeight:"bold"}}>{d.totalTareas}</td></tr>))}</tbody>
-              </table>
-            </div>
-          </>
-        )}
-
-        {/* ── INSTITUCIONES ── */}
-        {seccion==="instituciones"&&(
-          <>
-            <div style={S.header}><h1 style={S.titulo}>🏫 Instituciones</h1></div>
-            <div style={S.grid4}>
-              {instituciones.map(inst=>(
-                <div key={inst.id} style={{...S.card,borderTop:`3px solid ${C.azul}`}}>
-                  <p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 6px",fontSize:13}}>{inst.name}</p>
-                  <p style={{color:C.textoS,fontSize:11,margin:"0 0 10px"}}>{inst.city||"Sin ciudad"}</p>
-                  <div style={{display:"flex",gap:8}}>
-                    <div style={{textAlign:"center",flex:1}}><p style={{color:C.verde,fontSize:18,fontWeight:"bold",margin:0}}>{inst.totalDocentes}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Docentes</p></div>
-                    <div style={{textAlign:"center",flex:1}}><p style={{color:C.naranja,fontSize:18,fontWeight:"bold",margin:0}}>{inst.totalEstudiantes}</p><p style={{color:C.textoS,fontSize:10,margin:0}}>Estudiantes</p></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Modales */}
-      {modalEst&&(
-        <ModalEstudiante
-          estudiante={modalEst==="nuevo"?null:modalEst}
-          instituciones={instituciones}
-          docentes={docentes}
-          onCerrar={()=>setModalEst(null)}
-          onGuardado={(est,msg)=>{mostrarMsg(msg);setModalEst(null);cargarEstudiantes();cargarStats();}}
-        />
-      )}
-      {modalGrado&&(
-        <ModalAsignacionGrado
-          instituciones={instituciones}
-          docentes={docentes}
-          onCerrar={()=>setModalGrado(false)}
-          onDone={()=>{setModalGrado(false);cargarEstudiantes();mostrarMsg("Asignación completada ✅");}}
-        />
-      )}
-      {modalCambioGrado&&(
-        <div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setModalCambioGrado(false)}>
-          <div style={{...S.modal,maxWidth:360}}>
-            <div style={S.mHead}><h3 style={{color:C.naranja,margin:0,fontSize:15}}>📚 Cambiar grado</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setModalCambioGrado(false)}>✕</button></div>
-            <div style={S.mBody}>
-              <p style={{color:C.textoS,fontSize:13,margin:0}}>Cambiar grado de {selIds.length} estudiante{selIds.length!==1?"s":""} seleccionado{selIds.length!==1?"s":""}.</p>
-              <div><p style={S.lbl}>Nuevo grado</p><select style={S.sel} value={nuevoGrado} onChange={e=>setNuevoGrado(e.target.value)}><option value="">Seleccionar grado</option>{GRADOS.map(g=><option key={g}>{g}</option>)}</select></div>
-            </div>
-            <div style={S.mFoot}>
-              <button style={S.btnG} onClick={()=>setModalCambioGrado(false)}>Cancelar</button>
-              <button style={S.btnN} onClick={cambiarGradoMasivo} disabled={!nuevoGrado}>📚 Cambiar grado</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
   </script>
