@@ -206,12 +206,6 @@ body {
         <div class="modulo-desc">Malla curricular, estudiantes, configuraciones de la institución.</div>
         <div class="modulo-btn">Abrir →</div>
       </a>
-      <a href="notas.html" class="modulo-card" style="--c:#0891b2">
-        <div class="modulo-icon">📊</div>
-        <div class="modulo-titulo">Libro de Notas</div>
-        <div class="modulo-desc">Registra notas parciales por periodo, actividad y estudiante. Los estudiantes las ven en su portal.</div>
-        <div class="modulo-btn">Abrir →</div>
-      </a>
       <a href="panel-horarios.html" class="modulo-card solo-admin" id="modulo-horarios" style="--c:#DC2626">
         <div class="badge-admin">ADMIN</div>
         <div class="modulo-icon">🗓️</div>
@@ -237,7 +231,7 @@ const API = 'https://educlass-backend-4kk0.onrender.com';
     try {
       const e = JSON.parse(rawEst);
       if (e && e.name) {
-        window.location.href = 'planeacion/index.html';
+        window.location.href = 'estudiantes.html';
         return;
       }
     } catch(_) {}
@@ -347,7 +341,7 @@ async function doLoginEst() {
     if (r.ok && d.token) {
       localStorage.setItem('edutokenest', d.token);
       localStorage.setItem('educlass_estudiante', JSON.stringify(d.estudiante));
-      window.location.href = 'planeacion/index.html';
+      window.location.href = 'estudiantes.html';
     } else {
       errEl.textContent = d.mensaje || 'Usuario o contraseña incorrectos';
       errEl.style.display = 'block';

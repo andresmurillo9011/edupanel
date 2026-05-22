@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Estudiante · EduPanel IESS</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0e1420;color:#F1F5F9;font-family:"Segoe UI",Arial,sans-serif}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-thumb{background:#1e2d45;border-radius:3px}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+    const {useState, useEffect, useRef} = React;
+    const API = "https://educlass-backend-4kk0.onrender.com";
+    const FC = "'Segoe UI',Arial,sans-serif";
+    const FT = "Georgia,'Times New Roman',serif";
+    const C = {
+      fondo:"#0e1420", panel:"#0a1128", tarjeta:"#111827",
+      borde:"#1e2d45", azul:"#2563EB", azulC:"#60A5FA",
+      verde:"#059669", verdeC:"#34D399", texto:"#F1F5F9",
+      textoS:"#64748B", err:"#F87171", ok:"#4ADE80",
+      naranja:"#F59E0B", rojo:"#DC2626", morado:"#7C3AED"
+    };
+    const S = {
+      fondo:{minHeight:"100vh",background:C.fondo,fontFamily:FC,color:C.texto},
+      pantalla:{
+        minHeight:"100vh",background:C.fondo,
+        display:"flex",justifyContent:"center",alignItems:"center",
+        fontFamily:FC,padding:16
+      },
+      card:{
+        background:C.tarjeta,padding:"32px 28px",borderRadius:16,
+        width:"100%",maxWidth:440,display:"flex",flexDirection:"column",
+        gap:14,boxShadow:"0 12px 40px rgba(0,0,0,0.6)",
+        border:"1px solid "+C.borde
+      },
+      header:{
+        background:C.panel,padding:"0 24px",height:56,
+        display:"flex",justifyContent:"space-between",alignItems:"center",
+        borderBottom:"2px solid "+C.verde,
+        position:"sticky",top:0,zIndex:100
+      },
+      cont:{maxWidth:720,margin:"0 auto",padding:"24px 16px"},
+      bloque:{
+        background:C.tarjeta,padding:20,borderRadius:12,
+        marginBottom:14,border:"1px solid "+C.borde
+      },
+      lbl:{color:C.textoS,fontSize:12,marginBottom:4,fontWeight:"500"},
+      inp:{
+        padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,
+        background:"#0a1128",color:C.texto,fontSize:13,width:"100%",
+        boxSizing:"border-box",fontFamily:FC,outline:"none"
+      },
+      sel:{
+        padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,
+        background:"#0a1128",color:C.texto,fontSize:13,
+        fontFamily:FC,outline:"none",width:"100%"
+      },
+      ta:{
+        padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,
+        background:"#0a1128",color:C.texto,fontSize:13,width:"100%",
+        boxSizing:"border-box",fontFamily:FC,outline:"none",
+        resize:"vertical",minHeight:80
+      },
+      btnA:{
+        padding:"11px 18px",borderRadius:8,border:"none",
+        background:"linear-gradient(135deg,"+C.azul+",#1d4ed8)",
+        color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",
+        width:"100%",fontFamily:FT
+      },
+      btnV:{
+        padding:"11px 18px",borderRadius:8,border:"none",
+        background:"linear-gradient(135deg,"+C.verde+",#047857)",
+        color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",
+        width:"100%",fontFamily:FT
+      },
+      btnG:{
+        padding:"10px 18px",borderRadius:8,border:"1px solid "+C.borde,
+        background:"transparent",color:C.textoS,fontSize:13,
+        cursor:"pointer",fontFamily:FC,width:"100%"
+      },
+      btnM:{
+        padding:"11px 18px",borderRadius:8,border:"none",
+        background:"linear-gradient(135deg,"+C.morado+",#5b21b6)",
+        color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",
+        width:"100%",fontFamily:FT
+      },
+      btnSm:{
+        padding:"5px 11px",borderRadius:6,border:"1px solid "+C.borde,
+        background:"transparent",color:C.textoS,cursor:"pointer",fontSize:11
+      },
+      fila:{display:"flex",gap:10},
+      sep:{borderTop:"1px solid "+C.borde,margin:"14px 0"},
+      err:{color:C.err,textAlign:"center",margin:0,fontSize:12},
+      ok_msg:{color:C.ok,textAlign:"center",margin:0,fontSize:12},
+      overlay:{
+        position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",
+        zIndex:200,display:"flex",alignItems:"center",
+        justifyContent:"center",padding:16
+      },
+      modal:{
+        background:C.tarjeta,borderRadius:14,border:"1px solid "+C.borde,
+        width:"100%",maxWidth:560,maxHeight:"90vh",
+        display:"flex",flexDirection:"column",overflow:"hidden"
+      },
+      mHead:{
+        padding:"18px 22px 14px",borderBottom:"1px solid "+C.borde,
+        display:"flex",justifyContent:"space-between",alignItems:"center"
+      },
+      mBody:{padding:"18px 22px",overflowY:"auto",flex:1},
+      mFoot:{padding:"14px 22px",borderTop:"1px solid "+C.borde,display:"flex",gap:8}
+    };
+
+    const authHEst = () => ({
+      "Content-Type":"application/json",
+      "Authorization":"Bearer "+(localStorage.getItem("edutokenest")||"")
+    });
+
+    const TODOS_GRADOS = [
+      "Transicion","1°","2°","3°","4°","5°",
+      "6°","7°","8°","9°","10°","11°"
+    ];
+
+    function VerActividad({actividad, tipo, resps, setResps}) {
+      const pregs = actividad?.preguntas || actividad?.pares || [];
+      const setR = (i, v) => setResps(prev => ({...prev, [i]:v}));
+
+      if (tipo==="relacionar" && actividad?.pares) return (
+        <div>
+          {actividad.pares.map((par,i)=>(
+            <div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+              <div style={{
+                flex:1,background:"#0a1128",padding:"7px 10px",
+                borderRadius:7,border:"1px solid "+C.borde,
+                color:C.texto,fontSize:12
+              }}>{par.columnaA}</div>
+              <span style={{color:C.textoS}}>→</span>
+              <select style={{...S.sel,flex:1,fontSize:12}}
+                value={resps[i]||""}
+                onChange={e=>setR(i,e.target.value)}>
+                <option value="">Seleccionar...</option>
+                {actividad.pares.map((op,j)=>(
+                  <option key={j} value={op.columnaB}>{op.columnaB}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      );
+
+      return (
+        <div>
+          {pregs.map((p,i)=>(
+            <div key={i} style={{
+              marginBottom:14,background:"#0a1128",
+              padding:12,borderRadius:8,border:"1px solid "+C.borde
+            }}>
+              <p style={{
+                color:C.azulC,fontWeight:"bold",
+                fontSize:12,margin:"0 0 8px"
+              }}>{i+1}. {p.pregunta||p.enunciado||p.afirmacion}</p>
+              {(tipo==="quiz"||p.tipo==="seleccion")&&p.opciones&&(
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  {p.opciones.map((op,j)=>(
+                    <div key={j} style={{
+                      padding:"7px 10px",borderRadius:8,cursor:"pointer",
+                      border:resps[i]===op
+                        ?"2px solid "+C.azulC:"1px solid "+C.borde,
+                      background:resps[i]===op?"#0f2a47":"#0a1128"
+                    }} onClick={()=>setR(i,op)}>
+                      <p style={{color:C.texto,fontWeight:"700",fontSize:11}}>
+                        {op}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {tipo==="completar"&&(
+                <input style={S.inp}
+                  placeholder="Escribe la respuesta..."
+                  value={resps[i]||""}
+                  onChange={e=>setR(i,e.target.value)}/>
+              )}
+              {tipo==="verdadero_falso"&&(
+                <div style={S.fila}>
+                  <div style={{
+                    flex:1,padding:"7px 10px",borderRadius:8,
+                    textAlign:"center",cursor:"pointer",
+                    border:resps[i]==="Verdadero"
+                      ?"2px solid "+C.azulC:"1px solid "+C.borde,
+                    background:resps[i]==="Verdadero"?"#0f2a47":"#0a1128"
+                  }} onClick={()=>setR(i,"Verdadero")}>
+                    <p style={{color:C.texto,fontWeight:"700",fontSize:12}}>
+                      Verdadero
+                    </p>
+                  </div>
+                  <div style={{
+                    flex:1,padding:"7px 10px",borderRadius:8,
+                    textAlign:"center",cursor:"pointer",
+                    border:resps[i]==="Falso"
+                      ?"2px solid "+C.err:"1px solid "+C.borde,
+                    background:resps[i]==="Falso"?"#2d0a0a":"#0a1128"
+                  }} onClick={()=>setR(i,"Falso")}>
+                    <p style={{color:C.texto,fontWeight:"700",fontSize:12}}>
+                      Falso
+                    </p>
+                  </div>
+                </div>
+              )}
+              {(tipo==="taller"||tipo==="evaluacion"||p.tipo==="abierta")&&(
+                <textarea style={{...S.ta,minHeight:60}}
+                  placeholder="Tu respuesta..."
+                  value={resps[i]||""}
+                  onChange={e=>setR(i,e.target.value)}/>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function ModalTarea({tarea, onCerrar, onEntregada}) {
+      const [resps, setResps] = useState({});
+      const [texto, setTexto] = useState("");
+      const [archivo, setArchivo] = useState(null);
+      const [enviando, setEnviando] = useState(false);
+      const [entregada, setEntregada] = useState(tarea.entregada||false);
+      const [notaAuto, setNotaAuto] = useState(null);
+      const archivoRef = useRef();
+
+      const actividad = typeof tarea.actividad==="string"
+        ? (()=>{ try{return JSON.parse(tarea.actividad);}catch{return null;} })()
+        : tarea.actividad;
+
+      const entregar = async () => {
+        if (!Object.keys(resps).length && !texto && !archivo) {
+          alert("Responde o adjunta algo antes de entregar");
+          return;
+        }
+        setEnviando(true);
+        try {
+          const form = new FormData();
+          form.append("tareaId", tarea.id);
+          form.append("respuesta", texto);
+          form.append("respuestasActividad", JSON.stringify(resps));
+          if (archivo) form.append("archivo", archivo);
+          const r = await fetch(API+"/tasks/entregar", {
+            method:"POST",
+            headers:{"Authorization":"Bearer "+(localStorage.getItem("edutokenest")||"")},
+            body:form
+          });
+          const d = await r.json();
+          if (r.ok) {
+            setEntregada(true);
+            setNotaAuto(d.notaAuto);
+            onEntregada(tarea.id);
+          } else alert(d.mensaje);
+        } catch(_) { alert("Error al entregar"); }
+        setEnviando(false);
+      };
+
+      return (
+        <div style={S.overlay}
+          onClick={e=>e.target===e.currentTarget&&onCerrar()}>
+          <div style={S.modal}>
+            <div style={S.mHead}>
+              <div>
+                <h3 style={{color:C.azulC,margin:0,fontSize:15}}>
+                  {tarea.titulo}
+                </h3>
+                <p style={{color:C.textoS,margin:"3px 0 0",fontSize:11}}>
+                  {tarea.area} - Grado {tarea.grado}
+                </p>
+              </div>
+              <button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>
+                x
+              </button>
+            </div>
+            <div style={S.mBody}>
+              {tarea.descripcion&&(
+                <div style={{
+                  background:"#0f2a47",borderRadius:7,
+                  padding:"10px 12px",
+                  border:"1px solid "+C.azul,
+                  marginBottom:14
+                }}>
+                  <p style={{
+                    color:C.azulC,fontWeight:"bold",
+                    margin:"0 0 3px",fontSize:11
+                  }}>Instrucciones:</p>
+                  <p style={{color:C.texto,fontSize:12,margin:0}}>
+                    {tarea.descripcion}
+                  </p>
+                </div>
+              )}
+              {entregada ? (
+                <div style={{
+                  background:"#052e16",
+                  border:"1px solid "+C.ok,
+                  borderRadius:8,padding:24,textAlign:"center"
+                }}>
+                  <p style={{fontSize:40,margin:"0 0 8px"}}>✅</p>
+                  <p style={{
+                    color:C.ok,fontWeight:"bold",
+                    fontSize:16,margin:"0 0 8px"
+                  }}>Tarea entregada</p>
+                  {notaAuto!=null ? (
+                    <p style={{
+                      color:C.naranja,fontSize:40,
+                      fontWeight:"bold",margin:0,fontFamily:FT
+                    }}>{notaAuto}</p>
+                  ) : (
+                    <p style={{color:C.textoS,fontSize:12,margin:0}}>
+                      Tu docente la revisara pronto.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {actividad&&(
+                    <div style={{marginBottom:14}}>
+                      <p style={{
+                        color:C.texto,fontWeight:"bold",
+                        margin:"0 0 10px",fontSize:13
+                      }}>Resuelve la actividad:</p>
+                      <VerActividad
+                        actividad={actividad}
+                        tipo={tarea.tipo}
+                        resps={resps}
+                        setResps={setResps}/>
+                    </div>
+                  )}
+                  <div style={{marginBottom:10}}>
+                    <p style={S.lbl}>Tu respuesta escrita:</p>
+                    <textarea style={{...S.ta,minHeight:90}}
+                      placeholder="Escribe aqui tu respuesta..."
+                      value={texto}
+                      onChange={e=>setTexto(e.target.value)}/>
+                  </div>
+                  <div style={{marginBottom:10}}>
+                    <p style={S.lbl}>Adjuntar archivo (opcional):</p>
+                    <div style={S.fila}>
+                      <button style={{
+                        ...S.btnG,width:"auto",padding:"7px 12px",fontSize:12
+                      }} onClick={()=>archivoRef.current.click()}>
+                        Seleccionar archivo
+                      </button>
+                      {archivo&&(
+                        <span style={{
+                          color:C.ok,fontSize:11,alignSelf:"center"
+                        }}>{archivo.name}</span>
+                      )}
+                    </div>
+                    <input ref={archivoRef} type="file"
+                      accept=".pdf,.docx,.doc,.jpg,.jpeg,.png"
+                      style={{display:"none"}}
+                      onChange={e=>setArchivo(e.target.files[0])}/>
+                  </div>
+                </>
+              )}
+            </div>
+            {!entregada&&(
+              <div style={S.mFoot}>
+                <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
+                <button style={{
+                  ...S.btnV,flex:1,opacity:enviando?0.7:1
+                }} disabled={enviando} onClick={entregar}>
+                  {enviando?"Enviando...":"Entregar tarea"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function NotasEstudiante({studentId}) {
+      const [notas, setNotas] = useState([]);
+      const [cargando, setCargando] = useState(true);
+
+      useEffect(()=>{
+        if (!studentId) return;
+        fetch(API+"/notas/estudiante/"+studentId, {headers:authHEst()})
+          .then(r=>r.json())
+          .then(d=>{ setNotas(d.notas||[]); setCargando(false); })
+          .catch(()=>setCargando(false));
+      }, [studentId]);
+
+      if (cargando) return (
+        <p style={{color:C.textoS,fontSize:12,textAlign:"center",padding:16}}>
+          Cargando notas...
+        </p>
+      );
+      if (!notas.length) return (
+        <div style={{
+          background:C.tarjeta,border:"1px solid "+C.borde,
+          borderRadius:8,padding:20,textAlign:"center"
+        }}>
+          <p style={{fontSize:28,margin:"0 0 6px"}}>📊</p>
+          <p style={{color:C.textoS,fontSize:12,margin:0}}>
+            Sin notas registradas aun.
+          </p>
+        </div>
+      );
+
+      return (
+        <div>
+          {notas.map(p=>{
+            const vals = Object.values(p.misNotas)
+              .map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+            const prom = vals.length
+              ? parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2))
+              : null;
+            const avance = Math.round(vals.length/p.actividades.length*100);
+            return (
+              <div key={p.periodoId} style={{
+                background:"#0a1128",
+                border:"1px solid "+C.borde,
+                borderRadius:8,padding:"12px 14px",marginBottom:8
+              }}>
+                <div style={{
+                  display:"flex",justifyContent:"space-between",
+                  alignItems:"flex-start",marginBottom:8
+                }}>
+                  <div>
+                    <p style={{
+                      color:C.verdeC,fontWeight:"bold",
+                      margin:"0 0 2px",fontSize:13
+                    }}>{p.nombre}</p>
+                    <p style={{color:C.textoS,fontSize:11,margin:0}}>
+                      {p.area} - Grado {p.grado} - Vale {p.porcentaje}%
+                    </p>
+                  </div>
+                  {prom!=null&&(
+                    <span style={{
+                      color:prom>=3?C.ok:C.err,
+                      fontWeight:"bold",fontSize:22,fontFamily:FT
+                    }}>{prom}</span>
+                  )}
+                </div>
+                <div style={{
+                  background:"#0d1528",borderRadius:6,padding:"8px 10px"
+                }}>
+                  {p.actividades.map((a,i)=>{
+                    const nota = parseFloat(p.misNotas[i]);
+                    return (
+                      <div key={i} style={{
+                        display:"flex",justifyContent:"space-between",
+                        padding:"3px 0",
+                        borderBottom:i<p.actividades.length-1
+                          ?"1px solid "+C.borde:"none"
+                      }}>
+                        <span style={{color:C.textoS,fontSize:11}}>{a}</span>
+                        <span style={{
+                          color:!isNaN(nota)?nota>=3?C.ok:C.err:C.borde,
+                          fontWeight:"bold",fontSize:12
+                        }}>{!isNaN(nota)?nota:"-"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{marginTop:8}}>
+                  <div style={{
+                    display:"flex",justifyContent:"space-between",marginBottom:3
+                  }}>
+                    <span style={{color:C.textoS,fontSize:10}}>Progreso</span>
+                    <span style={{color:C.textoS,fontSize:10}}>{avance}%</span>
+                  </div>
+                  <div style={{
+                    background:"#0d1528",borderRadius:10,
+                    overflow:"hidden",height:6
+                  }}>
+                    <div style={{
+                      width:avance+"%",height:"100%",
+                      background:avance===100?C.ok:C.azulC,
+                      transition:"width 0.5s"
+                    }}/>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function App() {
+      const getSesion = () => {
+        try {
+          const tok = localStorage.getItem("edutokenest");
+          const est = JSON.parse(localStorage.getItem("educlass_estudiante")||"null");
+          return tok && est ? est : null;
+        } catch { return null; }
+      };
+
+      const [seccion, setSeccion] = useState("tareas");
+      const [sesion, setSesion] = useState(getSesion());
+      const [vista, setVista] = useState("login");
+      const [usuario, setUsuario] = useState("");
+      const [password, setPassword] = useState("");
+      const [msg, setMsg] = useState("");
+      const [nombre, setNombre] = useState("");
+      const [grado, setGrado] = useState("");
+      const [inst, setInst] = useState("");
+      const [tareas, setTareas] = useState([]);
+      const [tareaActiva, setTareaActiva] = useState(null);
+      const [cargando, setCargando] = useState(false);
+
+      useEffect(()=>{
+        if (sesion) cargarTareas();
+      }, [sesion]);
+
+      const cargarTareas = async () => {
+        setCargando(true);
+        try {
+          const r = await fetch(API+"/tasks/mis-tareas-estudiante", {
+            headers:authHEst()
+          });
+          const d = await r.json();
+          setTareas(d.tareas||[]);
+        } catch(_) {}
+        setCargando(false);
+      };
+
+      const login = async () => {
+        if (!usuario||!password) { setMsg("Completa usuario y contrasena"); return; }
+        setMsg("");
+        try {
+          const r = await fetch(API+"/auth/login-estudiante", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({usuario, password})
+          });
+          const d = await r.json();
+          if (r.ok) {
+            localStorage.setItem("edutokenest", d.token);
+            localStorage.setItem("educlass_estudiante", JSON.stringify(d.estudiante));
+            setSesion(d.estudiante);
+          } else setMsg(d.mensaje||"Error");
+        } catch(_) { setMsg("Sin conexion al servidor"); }
+      };
+
+      const registro = async () => {
+        if (!nombre||!usuario||!password||!inst) {
+          setMsg("Completa todos los campos"); return;
+        }
+        setMsg("");
+        try {
+          const r = await fetch(API+"/auth/registro-estudiante", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({nombre, usuario, password, grado, institucion:inst})
+          });
+          const d = await r.json();
+          if (r.ok) {
+            setMsg("Cuenta creada. Ahora inicia sesion.");
+            setVista("login");
+          } else setMsg(d.mensaje||"Error");
+        } catch(_) { setMsg("Error al registrar"); }
+      };
+
+      const salir = () => {
+        localStorage.removeItem("edutokenest");
+        localStorage.removeItem("educlass_estudiante");
+        setSesion(null);
+        setTareas([]);
+        setUsuario(""); setPassword("");
+      };
+
+      // LOGIN
+      if (!sesion && vista==="login") return (
+        <div style={S.pantalla}>
+          <div style={S.card}>
+            <div style={{textAlign:"center"}}>
+              <span style={{fontSize:44}}>📚</span>
+              <h1 style={{
+                color:C.verdeC,fontSize:20,fontWeight:"bold",
+                margin:"8px 0 4px",fontFamily:FT
+              }}>Portal del Estudiante</h1>
+              <p style={{color:C.textoS,fontSize:13}}>EduPanel IESS</p>
+            </div>
+            <div>
+              <p style={S.lbl}>Usuario</p>
+              <input style={S.inp}
+                placeholder="Tu usuario"
+                value={usuario}
+                onChange={e=>setUsuario(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&login()}/>
+            </div>
+            <div>
+              <p style={S.lbl}>Contrasena</p>
+              <input type="password" style={S.inp}
+                placeholder="••••••••"
+                value={password}
+                onChange={e=>setPassword(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&login()}/>
+            </div>
+            <button style={S.btnV} onClick={login}>
+              Ingresar
+            </button>
+            <button style={{...S.btnG,borderColor:C.morado,color:"#a78bfa"}}
+              onClick={()=>setVista("registro")}>
+              Sin cuenta? Registrate
+            </button>
+            <button style={S.btnG}
+              onClick={()=>window.location.href="/edupanel/login.html"}>
+              Soy docente
+            </button>
+            {msg&&<p style={
+              msg.includes("creada")?S.ok_msg:S.err
+            }>{msg}</p>}
+          </div>
+        </div>
+      );
+
+      // REGISTRO
+      if (!sesion && vista==="registro") return (
+        <div style={S.pantalla}>
+          <div style={S.card}>
+            <h1 style={{
+              color:C.ok,fontSize:18,fontWeight:"bold",
+              margin:0,fontFamily:FT
+            }}>Crear cuenta</h1>
+            <div>
+              <p style={S.lbl}>Nombre completo *</p>
+              <input style={S.inp}
+                placeholder="Ej: Juan Perez"
+                value={nombre}
+                onChange={e=>setNombre(e.target.value)}/>
+            </div>
+            <div>
+              <p style={S.lbl}>Usuario * (sin espacios)</p>
+              <input style={S.inp}
+                placeholder="juanperez"
+                value={usuario}
+                onChange={e=>setUsuario(
+                  e.target.value.toLowerCase().replace(/\s+/g,"")
+                )}/>
+            </div>
+            <div>
+              <p style={S.lbl}>Contrasena *</p>
+              <input type="password" style={S.inp}
+                value={password}
+                onChange={e=>setPassword(e.target.value)}/>
+            </div>
+            <div style={S.fila}>
+              <div style={{flex:1}}>
+                <p style={S.lbl}>Grado</p>
+                <select style={S.sel} value={grado}
+                  onChange={e=>setGrado(e.target.value)}>
+                  <option value="">Seleccionar</option>
+                  {TODOS_GRADOS.map(g=>(
+                    <option key={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{flex:1}}>
+                <p style={S.lbl}>Institucion *</p>
+                <input style={S.inp}
+                  placeholder="Nombre del colegio"
+                  value={inst}
+                  onChange={e=>setInst(e.target.value)}/>
+              </div>
+            </div>
+            <button style={S.btnV} onClick={registro}>
+              Crear cuenta
+            </button>
+            <button style={S.btnG} onClick={()=>setVista("login")}>
+              Ya tengo cuenta
+            </button>
+            {msg&&<p style={
+              msg.includes("creada")?S.ok_msg:S.err
+            }>{msg}</p>}
+          </div>
+        </div>
+      );
+
+      if (!sesion) return null;
+
+      const tareasPendientes = tareas.filter(t=>!t.entregada);
+      const tareasEntregadas = tareas.filter(t=>t.entregada);
+
+      return (
+        <div style={S.fondo}>
+          {tareaActiva&&(
+            <ModalTarea
+              tarea={tareaActiva}
+              onCerrar={()=>setTareaActiva(null)}
+              onEntregada={id=>{
+                setTareas(prev=>prev.map(t=>
+                  t.id===id?{...t,entregada:true}:t
+                ));
+                setTimeout(()=>setTareaActiva(null), 2000);
+              }}/>
+          )}
+          <div style={S.header}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{
+                color:C.verdeC,fontSize:16,fontWeight:"bold",fontFamily:FT
+              }}>📚 Portal Estudiante</span>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <span style={{color:C.textoS,fontSize:12}}>
+                {sesion.name}
+              </span>
+              <button style={{
+                ...S.btnSm,color:C.err,borderColor:C.rojo
+              }} onClick={salir}>Salir</button>
+            </div>
+          </div>
+          <div style={S.cont}>
+            <div style={{
+              background:"linear-gradient(135deg,#0f2a47,#0a1a35)",
+              borderRadius:12,padding:"18px 20px",marginBottom:18,
+              border:"1px solid "+C.azul
+            }}>
+              <h2 style={{
+                color:C.texto,fontSize:16,margin:"0 0 3px",fontFamily:FT
+              }}>Hola, {sesion.name}!</h2>
+              <p style={{color:C.textoS,margin:0,fontSize:12}}>
+                Grado {sesion.grade}
+              </p>
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:16}}>
+              {[
+                {id:"tareas",label:"Mis tareas"},
+                {id:"notas",label:"Mis notas"}
+              ].map(s=>(
+                <button key={s.id} style={{
+                  ...S.btnSm,
+                  color:seccion===s.id?C.verdeC:C.textoS,
+                  borderColor:seccion===s.id?C.verde:C.borde,
+                  background:seccion===s.id?"rgba(5,150,105,.1)":"transparent",
+                  padding:"8px 16px",fontSize:12
+                }} onClick={()=>setSeccion(s.id)}>
+                  {s.label}
+                  {s.id==="tareas"&&tareasPendientes.length>0&&(
+                    <span style={{
+                      background:C.naranja,color:"#fff",
+                      fontSize:10,fontWeight:"bold",
+                      padding:"1px 5px",borderRadius:10,marginLeft:6
+                    }}>{tareasPendientes.length}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {seccion==="tareas"&&(
+              <div>
+                {cargando ? (
+                  <p style={{color:C.textoS,textAlign:"center",padding:24}}>
+                    Cargando tareas...
+                  </p>
+                ) : tareas.length===0 ? (
+                  <div style={{...S.bloque,textAlign:"center",padding:32}}>
+                    <p style={{fontSize:36,margin:"0 0 10px"}}>📋</p>
+                    <p style={{color:C.textoS,fontSize:13,margin:0}}>
+                      No tienes tareas asignadas aun.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {tareasPendientes.length>0&&(
+                      <div style={{marginBottom:16}}>
+                        <p style={{
+                          color:C.textoS,fontSize:11,fontWeight:"600",
+                          letterSpacing:1,textTransform:"uppercase",
+                          margin:"0 0 8px"
+                        }}>Pendientes ({tareasPendientes.length})</p>
+                        {tareasPendientes.map(t=>(
+                          <div key={t.id} style={{
+                            background:"#0a1128",
+                            border:"1px solid "+C.borde,
+                            borderRadius:8,padding:"12px 14px",marginBottom:6
+                          }}>
+                            <div style={{
+                              display:"flex",justifyContent:"space-between",
+                              alignItems:"flex-start",gap:6
+                            }}>
+                              <div style={{flex:1}}>
+                                <p style={{
+                                  color:C.azulC,fontWeight:"bold",
+                                  margin:"0 0 2px",fontSize:13
+                                }}>{t.titulo}</p>
+                                <p style={{
+                                  color:C.textoS,fontSize:11,margin:"0 0 4px"
+                                }}>{t.area} - Grado {t.grado}</p>
+                                <p style={{
+                                  color:C.naranja,fontSize:11,
+                                  margin:0,fontWeight:"bold"
+                                }}>Pendiente</p>
+                              </div>
+                              <button style={{
+                                ...S.btnSm,color:C.azulC,
+                                borderColor:C.azul,padding:"6px 12px"
+                              }} onClick={()=>setTareaActiva(t)}>
+                                Resolver
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {tareasEntregadas.length>0&&(
+                      <div>
+                        <p style={{
+                          color:C.textoS,fontSize:11,fontWeight:"600",
+                          letterSpacing:1,textTransform:"uppercase",
+                          margin:"0 0 8px"
+                        }}>Entregadas ({tareasEntregadas.length})</p>
+                        {tareasEntregadas.map(t=>(
+                          <div key={t.id} style={{
+                            background:"#0a1128",
+                            border:"1px solid "+C.verde,
+                            borderRadius:8,padding:"12px 14px",marginBottom:6
+                          }}>
+                            <div style={{
+                              display:"flex",justifyContent:"space-between",
+                              alignItems:"flex-start",gap:6
+                            }}>
+                              <div style={{flex:1}}>
+                                <p style={{
+                                  color:C.texto,fontWeight:"bold",
+                                  margin:"0 0 2px",fontSize:13
+                                }}>{t.titulo}</p>
+                                <p style={{
+                                  color:C.textoS,fontSize:11,margin:"0 0 4px"
+                                }}>{t.area} - Grado {t.grado}</p>
+                                {t.calificacion!=null ? (
+                                  <p style={{
+                                    color:C.naranja,fontSize:13,
+                                    margin:0,fontWeight:"bold"
+                                  }}>Nota: {t.calificacion}</p>
+                                ) : (
+                                  <p style={{
+                                    color:C.ok,fontSize:11,margin:0
+                                  }}>Entregada - En revision</p>
+                                )}
+                              </div>
+                              <button style={{
+                                ...S.btnSm,padding:"6px 12px"
+                              }} onClick={()=>setTareaActiva(t)}>
+                                Ver
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {seccion==="notas"&&(
+              <NotasEstudiante studentId={sesion.id}/>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
