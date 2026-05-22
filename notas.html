@@ -543,7 +543,13 @@
       })();
       const savedToken = localStorage.getItem("edutoken");
 
-      const [usuario, setUsuario] = useState(savedUser&&savedToken?savedUser:null);
+      // Si no hay sesion, redirigir al login de EduPanel
+      if (!savedUser || !savedToken) {
+        window.location.href = "/edupanel/login.html";
+        return null;
+      }
+
+      const [usuario, setUsuario] = useState(savedUser);
       const [periodos, setPeriodos] = useState([]);
       const [cargando, setCargando] = useState(false);
       const [showNuevo, setShowNuevo] = useState(false);
@@ -584,7 +590,7 @@
         setPeriodos([]);
       };
 
-      if (!usuario) return <Login onLogin={u=>{setUsuario(u);}}/>;
+      // No login needed - session handled by EduPanel
 
       if (periodoActivo) return (
         <VistaPeriodo
