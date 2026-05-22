@@ -808,6 +808,201 @@
       );
     }
 
+
+    function ViewNotas({S,C,Header,showNuevoPeriodo,setShowNuevoPeriodo,
+      npNombre,setNpNombre,npArea,setNpArea,npGrado,setNpGrado,
+      npPorcentaje,setNpPorcentaje,npCantAct,setNpCantAct,
+      npNombresAct,setNpNombresAct,crearPeriodo,periodoActivo,
+      setPeriodoActivo,estudiantesPeriodo,notasEditadas,setNotasEditadas,
+      calcNota,periodos,abrirPeriodo,eliminarPeriodo,guardarNotas}) {
+      return (
+<div style={S.fondo}><Header/><div style={S.cont}>{showNuevoPeriodo&&<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setShowNuevoPeriodo(false)}><div style={{...S.modal,maxWidth:480}}><div style={S.mHead}><h3 style={{color:C.verdeC,margin:0,fontSize:15}}>📊 Nuevo periodo de notas</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setShowNuevoPeriodo(false)}>✕</button></div><div style={S.mBody}><div style={{marginBottom:10}}><p style={S.lbl}>Nombre del periodo *</p><input style={S.inp} placeholder="Ej: Primer Periodo 2026" value={npNombre} onChange={e=>setNpNombre(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Area *</p><input style={S.inp} placeholder="Ej: Tecnologia" value={npArea} onChange={e=>setNpArea(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Grado *</p><select style={S.sel} value={npGrado} onChange={e=>setNpGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Porcentaje total (%)</p><input style={S.inp} type="number" min="1" max="100" value={
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        npPorcentaje} onChange={e=>setNpPorcentaje(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Numero de actividades</p><input style={S.inp} type="number" min="1" max="10" value={npCantAct} onChange={e=>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        {const n=parseInt(e.target.value)||1;setNpCantAct(n);setNpNombresAct(Array.from({length:n},
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        (_,i)=>npNombresAct[i]||"Actividad "+i+1));}}/></div></div><div style={{marginBottom:10}}><p style={{...S.lbl,marginBottom:6}}>Nombres de actividades</p>{Array.from({length:npCantAct},(_,i)=>(<input key={i} style={{...S.inp,marginBottom:5}} placeholder={"Actividad "+i+1} value={npNombresAct[i]||""} onChange={e=>{const a=[...npNombresAct];a[i]=e.target.value;setNpNombresAct(a);}}/>))}</div><div style={{background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)",borderRadius:6,padding:10,marginBottom:10,fontSize:11,color:C.textoS}}>💡 El porcentaje indica cuanto vale este periodo (ej: 30% del ano). Las notas de 0-5 se promediaran y mostraran al estudiante progresivamente.</div><button style={S.btnV} onClick={crearPeriodo}>✅ Crear periodo</button></div></div></div>}{periodoActivo?(<div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><button style={{...S.btnSm}} onClick={()=>setPeriodoActivo(null)}>← Periodos</button><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:15}}>📊 {periodoActivo.nombre}</h2><span style={{color:C.textoS,fontSize:11}}>{periodoActivo.area} - Grado {periodoActivo.grado} - {periodoActivo.porcentaje}%</span></div>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <div style={S.bloque}><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}><th style={{padding:"9px 10px",textAlign:"left",
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          color:C.azulC,borderBottom:"1px solid "+C.borde,minWidth:160}}>Estudiante</th>{periodoActivo.actividades.map((a,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        i)=>(<th key={i} style={{padding:"9px 10px",textAlign:"center",color:C.verdeC,borderBottom:"1px solid "+C.borde,minWidth:110,fontSize:11}}>{a}<br/><span style={{color:C.textoS,fontSize:9}}>({(periodoActivo.porcentaje/periodoActivo.actividades.length).toFixed(1)}%)</span></th>))}<th style={{padding:"9px 10px",textAlign:"center",color:C.naranja,borderBottom:"1px solid "+C.borde,minWidth:80}}>Promedio</th><th style={{padding:"9px 10px",textAlign:"center",color:C.textoS,borderBottom:"1px solid "+C.borde,minWidth:80}}>Avance</th></tr></thead><tbody>{estudiantesPeriodo.length===0?<tr><td colSpan={periodoActivo.actividades.length+3} style={{padding:20,textAlign:"center",color:C.textoS}}>Cargando estudiantes...</td></tr>:estudiantesPeriodo.map((est,i)=>{const notasEst=notasEditadas[est.id]||{};const prom=calcNota(notasEst);const completadas=Object.values(notasEst).filter(v=>v!=="").length;const avance=Math.round(completadas/periodoActivo.actividades.length*100);return(<tr key={est.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}><td style={{padding:"8px 10px",color:C.texto,fontWeight:"bold",fontSize:12}}>{est.name}</td>{periodoActivo.actividades.map((_,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          j)=>(<td key={j} style={{padding:"6px 8px",textAlign:"center"}}><input style={{width:60,background:"#0f2a47",border:"1px solid "+C.borde,borderRadius:4,padding:"4px 6px",color:C.texto,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          textAlign:"center",fontSize:12}} type="number" min="0" max="5" step="0.1" placeholder="—" value={notasEst[j]||""} onChange={e=>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        {const v=e.target.value;setNotasEditadas(prev=>({...prev,[est.id]:{...prev[est.id]||{},[j]:v}}));}}/></td>))}<td style={{padding:"8px 10px",textAlign:"center"}}>{prom!=null?<span style={{color:prom>=3?C.ok:C.err,fontWeight:"bold",fontSize:14,fontFamily:FT}}>{prom}</span>:<span style={{color:C.textoS}}>—</span>}</td><td style={{padding:"8px 10px",textAlign:"center"}}><div style={{background:"#0a1128",borderRadius:10,overflow:"hidden",height:8,marginBottom:2}}><div style={{width:avance+"%",height:"100%",background:avance===100?C.ok:C.azulC,transition:"width 0.3s"}}/></div><span style={{color:C.textoS,fontSize:9}}>{avance}%</span></td></tr>)})}</tbody></table></div><div style={{...S.fila,marginTop:14,justifyContent:"flex-end"}}><button style={{...S.btnV,width:"auto",padding:"9px 18px"}} onClick={guardarNotas}>💾 Guardar notas</button></div></div></div>):(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:16}}>📊 Libro de Notas</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>setShowNuevoPeriodo(true)}>+ Nuevo periodo</button></div>{periodos.length===0?(<div style={
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          {...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📊</p><p style={{color:C.textoS,fontSize:13}}>Sin periodos creados.</p><button style={{...S.btnV,
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          width:"auto",padding:"9px 16px",marginTop:10}} onClick={()=>setShowNuevoPeriodo(true)}>+ Crear primer periodo</button>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        </div>):(periodos.map(p=>{const totalEst=Object.keys(p.notas||{}).length;const conNota=Object.values(p.notas||{}).filter(n=>Object.values(n).some(v=>v!=="")).length;
+return(<div key={p.id} style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"14px 16px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+<div style={{flex:1}}><p style={{color:C.verdeC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{p.nombre}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 4px"}}>{p.area} - Grado {p.grado} - {p.porcentaje}% del periodo</p><p style={{color:C.textoS,fontSize:10,margin:0}}>{p.actividades.length} actividades - {conNota} estudiantes con notas</p></div>
+<div style={{display:"flex",gap:6}}><button style={{...S.btnV,width:"auto",padding:"7px 12px",fontSize:11}} onClick={()=>abrirPeriodo(p)}>Ingresar notas</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>eliminarPeriodo(p.id)}>X</button></div></div>)}))})</div>}</div></div>
+      );
+    }
+
     function App(){
       const urlParams=new URLSearchParams(window.location.search);const codigoUrl=urlParams.get("codigo");
       // ── CAMBIO 1: Detectar sesion de estudiante en localStorage ──
@@ -1394,190 +1589,23 @@
           
         fontSize:11}}>—</span>}</td>                        <td style={{padding:"9px 10px"}}>{e.entregada&&<div style={{display:"flex",gap:4}}><button style={{...S.btnSm,color:C.naranja,borderColor:C.naranja,fontSize:10}} onClick={()=>{setVerRespModal(null);setCalId(e.entregaId);setCalNota(e.calificacion||"");setCalComent(e.comentario||"");}}>{e.calificacion!=null?"✏️":"📝 Cal."}</button><button style={{...S.btnSm,color:C.azulC,borderColor:C.azul,fontSize:10}} onClick={()=>setVerRespModal({nombre:e.nombreEstudiante,respuesta:e.resumenRespuesta,respuestasActividad:e.respuestasActividad,entregaId:e.entregaId,nota:e.calificacion||"",comentario:e.comentario||""})}>👁 Ver</button></div>}</td></tr>))}</tbody></table></div>)}</div></div></div>);
       if(vista==="perfil")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><button style={{...S.btnSm,marginBottom:14}} onClick={()=>setVista("dashboard")}>← Volver</button><h2 style={S.tBloque}>⚙️ Mi perfil</h2><div style={{display:"flex",gap:32,justifyContent:"center",marginBottom:20}}><SubirImg label="🏫 Escudo" preview={logoPreview} inputRef={logoRef} onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f));}}}/><SubirImg label="🚩 Bandera" preview={banderaPreview} inputRef={banderaRef} onChange={e=>{const f=e.target.files[0];if(f){setBanderaFile(f);setBanderaPreview(URL.createObjectURL(f));}}}/></div><div style={S.sep}/><div style={{...S.fila,marginBottom:10}}><div style={{flex:1}}><p style={S.lbl}>Cargo</p><select style={S.sel} value={usuario?.cargo||"Docente"} onChange={e=>setUsuario({...usuario,cargo:e.target.value})}>{["Docente","Coordinador/a","Rector/a","Orientador/a"].map(c=><option key={c}>{c}</option>)}</select></div></div><button style={{...S.btnV,width:"auto",padding:"10px 20px"}} onClick={subirPerfil}>💾 Guardar</button></div></div></div>);
-      if(vista==="notas")return(<div style={S.fondo}><Header/><div style={S.cont}>{showNuevoPeriodo&&<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&setShowNuevoPeriodo(false)}><div style={{...S.modal,maxWidth:480}}><div style={S.mHead}><h3 style={{color:C.verdeC,margin:0,fontSize:15}}>📊 Nuevo periodo de notas</h3><button style={{...S.btnSm,fontSize:16}} onClick={()=>setShowNuevoPeriodo(false)}>✕</button></div><div style={S.mBody}><div style={{marginBottom:10}}><p style={S.lbl}>Nombre del periodo *</p><input style={S.inp} placeholder="Ej: Primer Periodo 2026" value={npNombre} onChange={e=>setNpNombre(e.target.value)}/></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Area *</p><input style={S.inp} placeholder="Ej: Tecnologia" value={npArea} onChange={e=>setNpArea(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Grado *</p><select style={S.sel} value={npGrado} onChange={e=>setNpGrado(e.target.value)}><option value="">Seleccionar</option>{TODOS_GRADOS.map(g=><option key={g}>{g}</option>)}</select></div></div><div style={S.fila}><div style={{flex:1}}><p style={S.lbl}>Porcentaje total (%)</p><input style={S.inp} type="number" min="1" max="100" value={
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        npPorcentaje} onChange={e=>setNpPorcentaje(e.target.value)}/></div><div style={{flex:1}}><p style={S.lbl}>Numero de actividades</p><input style={S.inp} type="number" min="1" max="10" value={npCantAct} onChange={e=>
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        {const n=parseInt(e.target.value)||1;setNpCantAct(n);setNpNombresAct(Array.from({length:n},
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        (_,i)=>npNombresAct[i]||"Actividad "+i+1));}}/></div></div><div style={{marginBottom:10}}><p style={{...S.lbl,marginBottom:6}}>Nombres de actividades</p>{Array.from({length:npCantAct},(_,i)=>(<input key={i} style={{...S.inp,marginBottom:5}} placeholder={"Actividad "+i+1} value={npNombresAct[i]||""} onChange={e=>{const a=[...npNombresAct];a[i]=e.target.value;setNpNombresAct(a);}}/>))}</div><div style={{background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)",borderRadius:6,padding:10,marginBottom:10,fontSize:11,color:C.textoS}}>💡 El porcentaje indica cuanto vale este periodo (ej: 30% del ano). Las notas de 0-5 se promediaran y mostraran al estudiante progresivamente.</div><button style={S.btnV} onClick={crearPeriodo}>✅ Crear periodo</button></div></div></div>}{periodoActivo?(<div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><button style={{...S.btnSm}} onClick={()=>setPeriodoActivo(null)}>← Periodos</button><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:15}}>📊 {periodoActivo.nombre}</h2><span style={{color:C.textoS,fontSize:11}}>{periodoActivo.area} - Grado {periodoActivo.grado} - {periodoActivo.porcentaje}%</span></div>
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          <div style={S.bloque}><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#0a1128"}}><th style={{padding:"9px 10px",textAlign:"left",
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          color:C.azulC,borderBottom:"1px solid "+C.borde,minWidth:160}}>Estudiante</th>{periodoActivo.actividades.map((a,
-          
-          
-          
-          
-          
-          
-          
-          
-          
-        i)=>(<th key={i} style={{padding:"9px 10px",textAlign:"center",color:C.verdeC,borderBottom:"1px solid "+C.borde,minWidth:110,fontSize:11}}>{a}<br/><span style={{color:C.textoS,fontSize:9}}>({(periodoActivo.porcentaje/periodoActivo.actividades.length).toFixed(1)}%)</span></th>))}<th style={{padding:"9px 10px",textAlign:"center",color:C.naranja,borderBottom:"1px solid "+C.borde,minWidth:80}}>Promedio</th><th style={{padding:"9px 10px",textAlign:"center",color:C.textoS,borderBottom:"1px solid "+C.borde,minWidth:80}}>Avance</th></tr></thead><tbody>{estudiantesPeriodo.length===0?<tr><td colSpan={periodoActivo.actividades.length+3} style={{padding:20,textAlign:"center",color:C.textoS}}>Cargando estudiantes...</td></tr>:estudiantesPeriodo.map((est,i)=>{const notasEst=notasEditadas[est.id]||{};const prom=calcNota(notasEst);const completadas=Object.values(notasEst).filter(v=>v!=="").length;const avance=Math.round(completadas/periodoActivo.actividades.length*100);return(<tr key={est.id} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}><td style={{padding:"8px 10px",color:C.texto,fontWeight:"bold",fontSize:12}}>{est.name}</td>{periodoActivo.actividades.map((_,
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          j)=>(<td key={j} style={{padding:"6px 8px",textAlign:"center"}}><input style={{width:60,background:"#0f2a47",border:"1px solid "+C.borde,borderRadius:4,padding:"4px 6px",color:C.texto,
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          textAlign:"center",fontSize:12}} type="number" min="0" max="5" step="0.1" placeholder="—" value={notasEst[j]||""} onChange={e=>
-          
-          
-          
-          
-          
-          
-          
-          
-          
-        {const v=e.target.value;setNotasEditadas(prev=>({...prev,[est.id]:{...prev[est.id]||{},[j]:v}}));}}/></td>))}<td style={{padding:"8px 10px",textAlign:"center"}}>{prom!=null?<span style={{color:prom>=3?C.ok:C.err,fontWeight:"bold",fontSize:14,fontFamily:FT}}>{prom}</span>:<span style={{color:C.textoS}}>—</span>}</td><td style={{padding:"8px 10px",textAlign:"center"}}><div style={{background:"#0a1128",borderRadius:10,overflow:"hidden",height:8,marginBottom:2}}><div style={{width:avance+"%",height:"100%",background:avance===100?C.ok:C.azulC,transition:"width 0.3s"}}/></div><span style={{color:C.textoS,fontSize:9}}>{avance}%</span></td></tr>)})}</tbody></table></div><div style={{...S.fila,marginTop:14,justifyContent:"flex-end"}}><button style={{...S.btnV,width:"auto",padding:"9px 18px"}} onClick={guardarNotas}>💾 Guardar notas</button></div></div></div>):(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={{color:C.verdeC,margin:0,fontFamily:FT,fontSize:16}}>📊 Libro de Notas</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>setShowNuevoPeriodo(true)}>+ Nuevo periodo</button></div>{periodos.length===0?(<div style={
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          {...S.bloque,textAlign:"center",padding:32}}><p style={{fontSize:36,margin:"0 0 10px"}}>📊</p><p style={{color:C.textoS,fontSize:13}}>Sin periodos creados.</p><button style={{...S.btnV,
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          width:"auto",padding:"9px 16px",marginTop:10}} onClick={()=>setShowNuevoPeriodo(true)}>+ Crear primer periodo</button>
-          
-          
-          
-          
-          
-          
-          
-          
-          
-        </div>):(periodos.map(p=>{const totalEst=Object.keys(p.notas||{}).length;const conNota=Object.values(p.notas||{}).filter(n=>Object.values(n).some(v=>v!=="")).length;
-return(<div key={p.id} style={{background:"#0a1128",border:"1px solid "+C.borde,borderRadius:8,padding:"14px 16px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
-<div style={{flex:1}}><p style={{color:C.verdeC,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{p.nombre}</p><p style={{color:C.textoS,fontSize:11,margin:"0 0 4px"}}>{p.area} - Grado {p.grado} - {p.porcentaje}% del periodo</p><p style={{color:C.textoS,fontSize:10,margin:0}}>{p.actividades.length} actividades - {conNota} estudiantes con notas</p></div>
-<div style={{display:"flex",gap:6}}><button style={{...S.btnV,width:"auto",padding:"7px 12px",fontSize:11}} onClick={()=>abrirPeriodo(p)}>Ingresar notas</button><button style={{...S.btnSm,color:C.err,borderColor:C.rojo}} onClick={()=>eliminarPeriodo(p.id)}>X</button></div></div>)}))})</div>}</div></div>);
+      if(vista==="notas")return(<ViewNotas
+        S={S} C={C} Header={Header}
+        showNuevoPeriodo={showNuevoPeriodo}
+        setShowNuevoPeriodo={setShowNuevoPeriodo}
+        npNombre={npNombre} setNpNombre={setNpNombre}
+        npArea={npArea} setNpArea={setNpArea}
+        npGrado={npGrado} setNpGrado={setNpGrado}
+        npPorcentaje={npPorcentaje} setNpPorcentaje={setNpPorcentaje}
+        npCantAct={npCantAct} setNpCantAct={setNpCantAct}
+        npNombresAct={npNombresAct} setNpNombresAct={setNpNombresAct}
+        crearPeriodo={crearPeriodo} periodoActivo={periodoActivo}
+        setPeriodoActivo={setPeriodoActivo}
+        estudiantesPeriodo={estudiantesPeriodo}
+        notasEditadas={notasEditadas} setNotasEditadas={setNotasEditadas}
+        calcNota={calcNota} periodos={periodos}
+        abrirPeriodo={abrirPeriodo} eliminarPeriodo={eliminarPeriodo}
+        guardarNotas={guardarNotas}/>);
       if(vista==="historial")return(<div style={S.fondo}><Header/><div style={S.cont}><div style={S.bloque}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={S.tBloque}>📂 Mis clases</h2><button style={{...S.btnV,width:"auto",padding:"8px 14px"}} onClick={()=>{reset();setVista("ia");}}>+ Nueva</button></div>{misClases.length===0?<p style={{color:C.textoS,textAlign:"center",padding:24,fontSize:13}}>Sin clases guardadas.</p>:misClases.map(c=>(<TarjetaClase key={c.id} clase={c} onVer={async cl=>{const r=await fetch(API+"/clase/"+cl.id,{headers:authH()});const d=await r.json();setClaseActiva(d.clase);setVista("verClase");}} onEliminar={eliminarClase}/>))}</div></div></div>);
       if(vista==="verClase"&&claseActiva)return(<div style={S.fondo}><Header/><div style={S.cont}><button style={{...S.btnSm,marginBottom:12}} onClick={()=>setVista("historial")}>← Volver</button><div style={{background:C.tarjeta,padding:20,borderRadius:12,border:"1px solid "+C.borde}}><h2 style={{color:C.azulC,fontSize:17,marginBottom:3,marginTop:0,fontFamily:FT}}>{claseActiva.datos?.tema}</h2><p style={{color:C.textoS,fontSize:12,marginBottom:16}}>{claseActiva.datos?.area} - Grado {claseActiva.datos?.grado}</p><div style={S.sep}/><pre style={S.pre}>{claseActiva.contenido}</pre></div></div></div>);
 
