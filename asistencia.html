@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistencia · EduPanel IESS</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0e1420;color:#F1F5F9;font-family:"Segoe UI",Arial,sans-serif}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-thumb{background:#1e2d45;border-radius:3px}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+    const {useState, useEffect} = React;
+    const API = "https://educlass-backend-4kk0.onrender.com";
+    const FC = "'Segoe UI',Arial,sans-serif";
+    const FT = "Georgia,'Times New Roman',serif";
+    const C = {
+      fondo:"#0e1420", panel:"#0a1128", tarjeta:"#111827",
+      borde:"#1e2d45", azul:"#2563EB", azulC:"#60A5FA",
+      verde:"#059669", verdeC:"#34D399", texto:"#F1F5F9",
+      textoS:"#64748B", err:"#F87171", ok:"#4ADE80",
+      naranja:"#F59E0B", rojo:"#DC2626", morado:"#7C3AED",
+      amarillo:"#EAB308"
+    };
+    const S = {
+      fondo:{minHeight:"100vh",background:C.fondo,fontFamily:FC,color:C.texto},
+      header:{
+        background:C.panel,padding:"0 24px",height:56,
+        display:"flex",justifyContent:"space-between",alignItems:"center",
+        borderBottom:"2px solid "+C.azul,position:"sticky",top:0,zIndex:100
+      },
+      cont:{maxWidth:1100,margin:"0 auto",padding:"24px 16px"},
+      bloque:{background:C.tarjeta,padding:20,borderRadius:12,marginBottom:14,border:"1px solid "+C.borde},
+      lbl:{color:C.textoS,fontSize:12,marginBottom:4,fontWeight:"500"},
+      inp:{padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,background:"#0a1128",color:C.texto,fontSize:13,width:"100%",boxSizing:"border-box",outline:"none"},
+      sel:{padding:"10px 13px",borderRadius:8,border:"1px solid "+C.borde,background:"#0a1128",color:C.texto,fontSize:13,outline:"none"},
+      btnA:{padding:"10px 18px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+C.azul+",#1d4ed8)",color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",fontFamily:FT},
+      btnV:{padding:"10px 18px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+C.verde+",#047857)",color:"#fff",fontWeight:"700",fontSize:13,cursor:"pointer",fontFamily:FT},
+      btnG:{padding:"9px 16px",borderRadius:8,border:"1px solid "+C.borde,background:"transparent",color:C.textoS,fontSize:13,cursor:"pointer"},
+      btnSm:{padding:"5px 11px",borderRadius:6,border:"1px solid "+C.borde,background:"transparent",color:C.textoS,cursor:"pointer",fontSize:11},
+      fila:{display:"flex",gap:10}
+    };
+
+    const authH = () => ({
+      "Content-Type":"application/json",
+      "Authorization":"Bearer "+(localStorage.getItem("edutoken")||"")
+    });
+
+    const GRADOS = ["6°","7°","8°","9°","10°","11°"];
+    const ESTADOS = {
+      P: {label:"Presente", color:C.ok, bg:"#052e16"},
+      A: {label:"Ausente", color:C.err, bg:"#2d0a0a"},
+      T: {label:"Tardanza", color:C.amarillo, bg:"#2d1f00"},
+      E: {label:"Excusa", color:C.naranja, bg:"#2d1500"}
+    };
+
+    function getStorageKey(grado, fecha) {
+      return "asistencia_"+grado.replace("°","")+"_"+fecha;
+    }
+
+    function App() {
+      const savedUser = (()=>{
+        try {
+          const tok = localStorage.getItem("edutoken");
+          const u = localStorage.getItem("educlass_usuario");
+          return tok && u ? JSON.parse(u) : null;
+        } catch { return null; }
+      })();
+
+      if (!savedUser) {
+        window.location.href = "/edupanel/login.html";
+        return null;
+      }
+
+      const hoy = new Date().toISOString().split("T")[0];
+      const [grado, setGrado] = useState("");
+      const [fecha, setFecha] = useState(hoy);
+      const [estudiantes, setEstudiantes] = useState([]);
+      const [asistencia, setAsistencia] = useState({});
+      const [cargando, setCargando] = useState(false);
+      const [guardando, setGuardando] = useState(false);
+      const [msg, setMsg] = useState("");
+      const [semanaRef, setSemanaRef] = useState(hoy);
+
+      const cargarEstudiantes = async (g) => {
+        if (!g) return;
+        setCargando(true);
+        try {
+          const r = await fetch(
+            API+"/students/grado/"+encodeURIComponent(g),
+            {headers:authH()}
+          );
+          const d = await r.json();
+          setEstudiantes(d.estudiantes||[]);
+          // Load saved attendance for this date
+          const key = getStorageKey(g, fecha);
+          const saved = localStorage.getItem(key);
+          setAsistencia(saved ? JSON.parse(saved) : {});
+        } catch(_) {}
+        setCargando(false);
+      };
+
+      useEffect(()=>{
+        if (grado) cargarEstudiantes(grado);
+      }, [grado, fecha]);
+
+      const setEstado = (id, estado) => {
+        setAsistencia(prev => ({...prev, [id]: estado}));
+      };
+
+      const guardar = () => {
+        if (!grado || !fecha) { setMsg("Selecciona grado y fecha"); return; }
+        setGuardando(true);
+        const key = getStorageKey(grado, fecha);
+        localStorage.setItem(key, JSON.stringify(asistencia));
+        setTimeout(() => {
+          setGuardando(false);
+          setMsg("ok");
+          setTimeout(() => setMsg(""), 2000);
+        }, 400);
+      };
+
+      const marcarTodos = (estado) => {
+        const nuevo = {};
+        estudiantes.forEach(e => { nuevo[e.id] = estado; });
+        setAsistencia(nuevo);
+      };
+
+      // Get week dates from semanaRef
+      const getSemana = (fechaRef) => {
+        const d = new Date(fechaRef+"T12:00:00");
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        const lunes = new Date(d);
+        lunes.setDate(d.getDate() + diff);
+        return Array.from({length:5}, (_,i) => {
+          const dia = new Date(lunes);
+          dia.setDate(lunes.getDate() + i);
+          return dia.toISOString().split("T")[0];
+        });
+      };
+
+      const exportarSemana = () => {
+        if (!grado) { alert("Selecciona un grado primero"); return; }
+        const dias = getSemana(semanaRef);
+        const diasLabels = ["Lunes","Martes","Miercoles","Jueves","Viernes"];
+
+        // Build data
+        const rows = [];
+        // Header
+        rows.push(["Estudiante", ...dias.map((d,i) => diasLabels[i]+" "+d), "Presentes","Ausentes","Tardanzas","Excusas"]);
+
+        estudiantes.forEach(est => {
+          const row = [est.name];
+          let P=0, A=0, T=0, E=0;
+          dias.forEach(dia => {
+            const key = getStorageKey(grado, dia);
+            const saved = localStorage.getItem(key);
+            const reg = saved ? JSON.parse(saved) : {};
+            const estado = reg[est.id] || "-";
+            row.push(estado);
+            if(estado==="P") P++;
+            else if(estado==="A") A++;
+            else if(estado==="T") T++;
+            else if(estado==="E") E++;
+          });
+          row.push(P, A, T, E);
+          rows.push(row);
+        });
+
+        // Summary row
+        const totRow = ["TOTAL"];
+        dias.forEach(dia => {
+          const key = getStorageKey(grado, dia);
+          const saved = localStorage.getItem(key);
+          const reg = saved ? JSON.parse(saved) : {};
+          const presentes = estudiantes.filter(e => reg[e.id]==="P").length;
+          totRow.push("P:"+presentes+"/"+estudiantes.length);
+        });
+        totRow.push("","","","");
+        rows.push(totRow);
+
+        // Export with XLSX
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        // Column widths
+        ws["!cols"] = [
+          {wch:30},
+          ...dias.map(()=>({wch:18})),
+          {wch:10},{wch:10},{wch:10},{wch:10}
+        ];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
+        const semana = getSemana(semanaRef);
+        XLSX.writeFile(wb, "Asistencia_Grado"+grado.replace("°","")+"_Semana_"+semana[0]+".xlsx");
+      };
+
+      const resumen = {
+        P: estudiantes.filter(e=>asistencia[e.id]==="P").length,
+        A: estudiantes.filter(e=>asistencia[e.id]==="A").length,
+        T: estudiantes.filter(e=>asistencia[e.id]==="T").length,
+        E: estudiantes.filter(e=>asistencia[e.id]==="E").length,
+        sin: estudiantes.filter(e=>!asistencia[e.id]).length,
+      };
+
+      const fechaDisplay = fecha
+        ? new Date(fecha+"T12:00:00").toLocaleDateString("es-CO",{
+            weekday:"long",day:"2-digit",month:"long",year:"numeric"
+          })
+        : "";
+
+      return (
+        <div style={S.fondo}>
+          <div style={S.header}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <a href="/edupanel/login.html" style={{
+                color:C.textoS,fontSize:11,textDecoration:"none",
+                padding:"4px 8px",border:"1px solid "+C.borde,borderRadius:6
+              }}>← EduPanel</a>
+              <span style={{
+                color:C.azulC,fontSize:17,fontWeight:"bold",fontFamily:FT
+              }}>📋 Registro de Asistencia</span>
+            </div>
+            <span style={{color:C.textoS,fontSize:12}}>{savedUser.name}</span>
+          </div>
+
+          <div style={S.cont}>
+            {/* Selector */}
+            <div style={S.bloque}>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
+                <div>
+                  <p style={S.lbl}>Grado</p>
+                  <select style={{...S.sel,minWidth:120}}
+                    value={grado}
+                    onChange={e=>setGrado(e.target.value)}>
+                    <option value="">Seleccionar</option>
+                    {GRADOS.map(g=><option key={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <p style={S.lbl}>Fecha</p>
+                  <input type="date" style={{...S.sel}}
+                    value={fecha}
+                    onChange={e=>setFecha(e.target.value)}/>
+                </div>
+                {grado && estudiantes.length>0 && (
+                  <>
+                    <button style={S.btnV} onClick={guardar} disabled={guardando}>
+                      {guardando?"Guardando...":"Guardar asistencia"}
+                    </button>
+                    {msg==="ok" && (
+                      <span style={{color:C.ok,fontSize:12,alignSelf:"center"}}>
+                        Guardado
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Export semana */}
+            <div style={{
+              ...S.bloque,
+              display:"flex",gap:12,alignItems:"flex-end",flexWrap:"wrap"
+            }}>
+              <div style={{flex:1}}>
+                <p style={{...S.lbl}}>Exportar semana a Excel</p>
+                <p style={{color:C.textoS,fontSize:11,margin:"2px 0 0"}}>
+                  Selecciona cualquier dia de la semana que quieres exportar
+                </p>
+              </div>
+              <div>
+                <p style={S.lbl}>Semana que contiene:</p>
+                <input type="date" style={S.sel}
+                  value={semanaRef}
+                  onChange={e=>setSemanaRef(e.target.value)}/>
+              </div>
+              <button style={{
+                ...S.btnA,
+                opacity:!grado?0.5:1
+              }} onClick={exportarSemana}>
+                Exportar Excel
+              </button>
+            </div>
+
+            {/* Lista */}
+            {!grado ? (
+              <div style={{...S.bloque,textAlign:"center",padding:40}}>
+                <p style={{fontSize:44,margin:"0 0 10px"}}>📋</p>
+                <p style={{color:C.textoS,fontSize:14}}>
+                  Selecciona un grado para tomar asistencia
+                </p>
+              </div>
+            ) : cargando ? (
+              <div style={{...S.bloque,textAlign:"center",padding:40}}>
+                <p style={{color:C.textoS}}>Cargando estudiantes...</p>
+              </div>
+            ) : estudiantes.length===0 ? (
+              <div style={{...S.bloque,textAlign:"center",padding:40}}>
+                <p style={{color:C.textoS}}>
+                  No hay estudiantes en grado {grado}
+                </p>
+              </div>
+            ) : (
+              <div style={S.bloque}>
+                <div style={{
+                  display:"flex",justifyContent:"space-between",
+                  alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8
+                }}>
+                  <div>
+                    <h2 style={{
+                      color:C.azulC,fontSize:16,margin:"0 0 2px",fontFamily:FT
+                    }}>Grado {grado}</h2>
+                    <p style={{color:C.textoS,fontSize:12,margin:0,textTransform:"capitalize"}}>
+                      {fechaDisplay}
+                    </p>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {Object.entries(ESTADOS).map(([k,v])=>(
+                      <button key={k} style={{
+                        ...S.btnSm,
+                        color:v.color,
+                        borderColor:v.color,
+                        fontSize:11
+                      }} onClick={()=>marcarTodos(k)}>
+                        Todos {v.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resumen */}
+                <div style={{
+                  display:"grid",
+                  gridTemplateColumns:"repeat(5,1fr)",
+                  gap:6,marginBottom:16
+                }}>
+                  {[
+                    {l:"Presentes",v:resumen.P,c:C.ok},
+                    {l:"Ausentes",v:resumen.A,c:C.err},
+                    {l:"Tardanzas",v:resumen.T,c:C.amarillo},
+                    {l:"Excusas",v:resumen.E,c:C.naranja},
+                    {l:"Sin marcar",v:resumen.sin,c:C.textoS}
+                  ].map(s=>(
+                    <div key={s.l} style={{
+                      background:"#0a1128",
+                      border:"1px solid "+C.borde,
+                      borderRadius:8,padding:"8px 10px",textAlign:"center"
+                    }}>
+                      <p style={{
+                        color:s.c,fontSize:20,fontWeight:"bold",
+                        margin:"0 0 2px",fontFamily:FT
+                      }}>{s.v}</p>
+                      <p style={{color:C.textoS,fontSize:10,margin:0}}>{s.l}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lista estudiantes */}
+                <div>
+                  {estudiantes.map((est,i)=>{
+                    const estado = asistencia[est.id];
+                    const info = estado ? ESTADOS[estado] : null;
+                    return (
+                      <div key={est.id} style={{
+                        display:"flex",alignItems:"center",
+                        gap:10,padding:"10px 12px",
+                        borderRadius:8,marginBottom:5,
+                        background:info ? info.bg : i%2===0?"#0a1128":"#0d1528",
+                        border:"1px solid "+(info?info.color:C.borde),
+                        transition:"all 0.15s"
+                      }}>
+                        <span style={{
+                          color:C.textoS,fontSize:12,
+                          minWidth:24,textAlign:"right"
+                        }}>{i+1}.</span>
+                        <span style={{
+                          flex:1,color:C.texto,
+                          fontWeight:"bold",fontSize:13
+                        }}>{est.name}</span>
+                        <div style={{display:"flex",gap:5}}>
+                          {Object.entries(ESTADOS).map(([k,v])=>(
+                            <button key={k} style={{
+                              padding:"5px 10px",borderRadius:6,
+                              border:"1px solid "+(estado===k?v.color:C.borde),
+                              background:estado===k?v.bg:"transparent",
+                              color:estado===k?v.color:C.textoS,
+                              cursor:"pointer",fontSize:11,
+                              fontWeight:estado===k?"bold":"normal",
+                              transition:"all 0.15s"
+                            }} onClick={()=>setEstado(est.id, estado===k?null:k)}>
+                              {k}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{
+                  display:"flex",justifyContent:"flex-end",marginTop:14
+                }}>
+                  <button style={{...S.btnV,opacity:guardando?0.7:1}}
+                    disabled={guardando} onClick={guardar}>
+                    {guardando?"Guardando...":"Guardar asistencia"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
