@@ -172,7 +172,7 @@
     <div id="est-table-wrap" style="display:none">
       <input id="est-buscar" type="text" placeholder="🔍 Buscar estudiante..." oninput="filtrarEstudiantes()" style="width:100%;padding:8px 12px;margin-bottom:10px;background:#0a1128;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-size:13px;">
       <table class="user-table" style="width:100%">
-        <thead><tr><th>Nombre</th><th>Usuario</th><th>Contraseña</th><th>Grado</th></tr></thead>
+        <thead><tr><th>Grado</th><th>Nombre</th><th>Usuario</th><th>Contraseña</th><th>Acciones</th></tr></thead>
         <tbody id="tbody-est"></tbody>
       </table>
     </div>
@@ -424,7 +424,7 @@ async function cargarEstudiantes() {
 }
 function renderEstudiantes(lista) {
   const tbody = document.getElementById("tbody-est");
-  if (!lista.length) { tbody.innerHTML = `<tr><td colspan="4" class="empty">Sin estudiantes</td></tr>`; return; }
+  if (!lista.length) { tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin estudiantes</td></tr>`; return; }
   // Agrupar por grado
   const porGrado = {};
   lista.forEach(e => { if (!porGrado[e.grade]) porGrado[e.grade] = []; porGrado[e.grade].push(e); });
@@ -435,6 +435,16 @@ function renderEstudiantes(lista) {
       <td><strong>${e.name}</strong></td>
       <td><span class="mono">${e.username}</span></td>
       <td><span class="pass-hidden" onclick="togglePass(this,'${e.username}')">••••••••</span></td>
+      <td style="white-space:nowrap">
+        <button onclick="editarEstudiante('${e.id}','${e.name}','${e.username}','${e.grade}')"
+          style="padding:4px 8px;border-radius:5px;border:1px solid #2563EB;background:transparent;color:#60A5FA;cursor:pointer;font-size:11px;margin-right:4px">
+          Editar
+        </button>
+        <button onclick="eliminarEstudiante('${e.id}','${e.name}')"
+          style="padding:4px 8px;border-radius:5px;border:1px solid #DC2626;background:transparent;color:#F87171;cursor:pointer;font-size:11px">
+          Eliminar
+        </button>
+      </td>
     </tr>
   `).join("")).join("");
 }
@@ -462,6 +472,88 @@ function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ── Eliminar estudiante ──────────────────────────────
+async function eliminarEstudiante(id, nombre) {
+  if (!confirm('Eliminar a ' + nombre + '? Esta accion no se puede deshacer.')) return;
+  const ecTok = localStorage.getItem("edutoken");
+  try {
+    const r = await fetch('https://educlass-backend-4kk0.onrender.com/superadmin/students/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + ecTok }
+    });
+    const d = await r.json();
+    if (r.ok) {
+      alert('Estudiante eliminado');
+      cargarEstudiantes();
+    } else {
+      alert(d.mensaje || 'Error al eliminar');
+    }
+  } catch(e) {
+    alert('Error de conexion');
+  }
+}
+
+// ── Editar estudiante ────────────────────────────────
+function editarEstudiante(id, nombre, usuario, grado) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#111827;border:1px solid #1e2d45;border-radius:14px;padding:24px;width:100%;max-width:420px">
+      <h3 style="color:#60A5FA;margin:0 0 16px;font-size:15px">Editar estudiante</h3>
+      <p style="color:#64748B;font-size:12px;margin:0 0 4px">Nombre</p>
+      <input id="edit-nombre" value="${nombre}"
+        style="width:100%;padding:9px 12px;border-radius:7px;border:1px solid #1e2d45;background:#0a1128;color:#F1F5F9;font-size:13px;margin-bottom:10px;box-sizing:border-box"/>
+      <p style="color:#64748B;font-size:12px;margin:0 0 4px">Grado</p>
+      <select id="edit-grado"
+        style="width:100%;padding:9px 12px;border-radius:7px;border:1px solid #1e2d45;background:#0a1128;color:#F1F5F9;font-size:13px;margin-bottom:10px">
+        ${["6°","7°","8°","9°","10°","11°"].map(g=>`<option value="${g}" ${g===grado?"selected":""}>${g}</option>`).join("")}
+      </select>
+      <p style="color:#64748B;font-size:12px;margin:0 0 4px">Nueva contrasena (dejar vacio para no cambiar)</p>
+      <input id="edit-pass" type="password" placeholder="Nueva contrasena..."
+        style="width:100%;padding:9px 12px;border-radius:7px;border:1px solid #1e2d45;background:#0a1128;color:#F1F5F9;font-size:13px;margin-bottom:16px;box-sizing:border-box"/>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="this.closest('div[style]').remove()"
+          style="padding:9px 16px;border-radius:7px;border:1px solid #1e2d45;background:transparent;color:#64748B;cursor:pointer">
+          Cancelar
+        </button>
+        <button onclick="guardarEdicionEst('${id}')"
+          style="padding:9px 16px;border-radius:7px;border:none;background:#059669;color:#fff;font-weight:bold;cursor:pointer">
+          Guardar
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+}
+
+async function guardarEdicionEst(id) {
+  const nombre = document.getElementById('edit-nombre').value.trim();
+  const grado = document.getElementById('edit-grado').value;
+  const pass = document.getElementById('edit-pass').value;
+  if (!nombre) { alert('El nombre es requerido'); return; }
+  const ecTok = localStorage.getItem("edutoken");
+  const body = { nombre, grado };
+  if (pass) body.password = pass;
+  try {
+    const r = await fetch('https://educlass-backend-4kk0.onrender.com/superadmin/students/' + id, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + ecTok, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (r.ok) {
+      alert('Estudiante actualizado');
+      document.querySelector('div[style*="position:fixed"]')?.remove();
+      cargarEstudiantes();
+    } else {
+      alert(d.mensaje || 'Error al actualizar');
+    }
+  } catch(e) {
+    alert('Error de conexion');
+  }
 }
 </script>
 </body>
