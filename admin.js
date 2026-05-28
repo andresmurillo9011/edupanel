@@ -1,4 +1,4 @@
-const BACKEND_API = "https://educlass-backend-4kk0.onrender.com";
+const ADMIN_API = "https://educlass-backend-4kk0.onrender.com";
 // ============================================================
 // ADMIN.JS — Panel de administración I.E.R. Santiago de la Selva
 // Usa: Auth (auth.js) · DB (db.js) · data.js
@@ -133,7 +133,7 @@ async function renderDocentesGrid() {
   try {
     const tok = localStorage.getItem("edutoken");
     if (tok) {
-      const r = await fetch(BACKEND_API + "/users", {
+      const r = await fetch(ADMIN_API + "/users", {
         headers: { "Authorization": "Bearer " + tok }
       });
       if (r.ok) {
@@ -282,7 +282,7 @@ async function saveDocente() {
     try {
       const tok = localStorage.getItem("edutoken");
       if (tok) {
-        await fetch(BACKEND_API + "/users/" + editingId2 + "/asignaciones", {
+        await fetch(ADMIN_API + "/users/" + editingId2 + "/asignaciones", {
           method: "PUT",
           headers: { "Authorization": "Bearer " + tok, "Content-Type": "application/json" },
           body: JSON.stringify({ asignaciones: asignacionesTemp })
