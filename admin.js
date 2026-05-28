@@ -193,6 +193,7 @@ async function renderDocentesGrid() {
   }).join("");
 }
 async function saveDocente() {
+  const editingId     = document.getElementById("edit-user-id")?.value || "";
   const name          = document.getElementById("doc-name").value.trim();
   const username      = document.getElementById("doc-username").value.trim();
   const pass          = document.getElementById("doc-pass").value.trim();
@@ -206,6 +207,21 @@ async function saveDocente() {
     errEl.style.display="block"; return;
   }
   errEl.style.display = "none";
+
+  // Modo edición
+  if (editingId) {
+    Auth.updateUser(editingId, {
+      name, username, password: pass, email,
+      emailEduclass, passEduclass,
+      asignaciones: asignacionesTemp
+    });
+    document.getElementById("edit-user-id").value = "";
+    document.getElementById("modal-docente-title").textContent = "Nuevo docente";
+    closeModal("modal-docente");
+    renderDocentesGrid().catch(()=>{});
+    showToast("✅ Docente actualizado");
+    return;
+  }
 
   const grados   = [...new Set(asignacionesTemp.map(a=>a.grado))];
   const materias = [...new Set(asignacionesTemp.map(a=>a.area))];
@@ -277,6 +293,31 @@ async function saveDocente() {
 
   closeModal("modal-docente");
   renderDocentesGrid().catch(()=>{});
+}
+
+function editDocente(id) {
+  const u = Auth.getAllUsers().find(u => u.id === id);
+  if (!u) return;
+
+  // Poblar el modal con los datos del docente
+  document.getElementById("modal-docente-title").textContent = "Editar docente";
+  document.getElementById("edit-user-id").value = id;
+  document.getElementById("doc-name").value = u.name || "";
+  document.getElementById("doc-username").value = u.username || "";
+  document.getElementById("doc-pass").value = u.password || "";
+  document.getElementById("doc-email").value = u.email || "";
+  if (document.getElementById("doc-email-educlass"))
+    document.getElementById("doc-email-educlass").value = u.emailEduclass || u.email || "";
+  if (document.getElementById("doc-pass-educlass"))
+    document.getElementById("doc-pass-educlass").value = u.passEduclass || "";
+
+  // Restaurar asignaciones
+  asignacionesTemp = (u.asignaciones || []).map(a => ({ ...a }));
+  renderAsigLista();
+
+  // Abrir modal
+  const modal = document.getElementById("modal-docente");
+  if (modal) modal.style.display = "flex";
 }
 
 function deleteDocente(id) {
