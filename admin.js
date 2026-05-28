@@ -1,7 +1,7 @@
 // ============================================================
 // ADMIN.JS
 const BACKEND_API = "https://educlass-backend-4kk0.onrender.com";
- — Panel de administración I.E.R. Santiago de la Selva
+// — Panel de administración I.E.R. Santiago de la Selva
 // Usa: Auth (auth.js) · DB (db.js) · data.js
 // ============================================================
 
