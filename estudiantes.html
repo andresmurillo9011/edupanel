@@ -330,6 +330,16 @@
                   </p>
                 </div>
               )}
+              {tarea.materialRef&&(
+                <div style={{background:"#1a1040",borderRadius:7,padding:"10px 12px",border:"1px solid #6366f1",marginBottom:14}}>
+                  <p style={{color:"#a5b4fc",fontWeight:"bold",margin:"0 0 3px",fontSize:11}}>📎 Material de referencia:</p>
+                  {tarea.materialRef.startsWith("http")?(
+                    <a href={tarea.materialRef} target="_blank" rel="noreferrer" style={{color:"#818cf8",fontSize:12,wordBreak:"break-all"}}>{tarea.materialRef}</a>
+                  ):(
+                    <p style={{color:"#c7d2fe",fontSize:12,margin:0,lineHeight:1.5}}>{tarea.materialRef}</p>
+                  )}
+                </div>
+              )}
               {entregada ? (
                 <div style={{
                   background:"#052e16",
