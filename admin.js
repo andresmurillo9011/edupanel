@@ -322,7 +322,7 @@ function editDocente(id) {
     document.getElementById("doc-pass-educlass").value = u.passEduclass || "";
 
   asignacionesTemp = (u.asignaciones || []).map(a => ({ ...a }));
-  renderAsigLista();
+  renderAsignacionesLista();
 
   const modal = document.getElementById("modal-docente");
   if (modal) { modal.style.display = "flex"; }
