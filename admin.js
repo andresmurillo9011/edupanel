@@ -1,5 +1,7 @@
 // ============================================================
-// ADMIN.JS — Panel de administración I.E.R. Santiago de la Selva
+// ADMIN.JS
+const BACKEND_API = "https://educlass-backend-4kk0.onrender.com";
+ — Panel de administración I.E.R. Santiago de la Selva
 // Usa: Auth (auth.js) · DB (db.js) · data.js
 // ============================================================
 
@@ -23,14 +25,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
-function showSection(name, btn) {
+async function showSection(name, btn) {
   document.querySelectorAll(".admin-section").forEach(s => s.style.display = "none");
   document.querySelectorAll(".anav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(`sec-${name}`).style.display = "block";
   if (btn) btn.classList.add("active");
   else document.querySelector(`[data-sec="${name}"]`)?.classList.add("active");
 
-  if (name === "docentes")    renderDocentesGrid();
+  if (name === "docentes")    renderDocentesGrid().catch(()=>{});
   if (name === "estudiantes") { renderGradosResumen(); renderEstudiantesList(); }
   if (name === "malla")       renderMallasResumen();
   if (name === "resumen")     renderResumen();
@@ -136,7 +138,7 @@ async function renderDocentesGrid() {
   try {
     const tok = localStorage.getItem("edutoken");
     if (tok) {
-      const r = await fetch(API + "/users", {
+      const r = await fetch(BACKEND_API + "/users", {
         headers: { "Authorization": "Bearer " + tok, "Content-Type": "application/json" }
       });
       if (r.ok) {
@@ -326,7 +328,7 @@ async function saveDocente() {
   }
 
   closeModal("modal-docente");
-  renderDocentesGrid();
+  renderDocentesGrid().catch(()=>{});
 }
 
 function deleteDocente(id) {
