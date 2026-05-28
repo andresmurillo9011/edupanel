@@ -127,7 +127,7 @@ function renderAsignacionesLista() {
 
 async function renderDocentesGrid() {
   const grid = document.getElementById("docentes-grid");
-  grid.innerHTML = "<p style=\'color:#64748b;padding:20px\'>Cargando docentes...</p>";
+  grid.innerHTML = "<p style='color:#64748b;padding:20px'>Cargando...</p>";
   const localUsers = Auth.getAllUsers().filter(u => u.role !== "admin");
   let backendUsers = [];
   try {
@@ -150,10 +150,10 @@ async function renderDocentesGrid() {
   const soloLocales = localUsers.filter(u => !backendEmails.includes((u.email||"").toLowerCase()));
   const users = [...backendUsers, ...soloLocales];
   if (users.length === 0) {
-    grid.innerHTML = "<p style=\'color:#64748b;padding:20px\'>No hay docentes registrados.</p>";
+    grid.innerHTML = "<p style='color:#64748b;padding:20px'>No hay docentes registrados.</p>";
     return;
   }
-  grid.innerHTML = users.map(u => {
+    grid.innerHTML = users.map(u => {
     const asigs = u.asignaciones || [];
     const porGrado = {};
     asigs.forEach(a => { if(!porGrado[a.grado]) porGrado[a.grado]=[]; porGrado[a.grado].push(a.area); });
@@ -192,44 +192,6 @@ async function renderDocentesGrid() {
       </div>`;
   }).join("");
 }
-
-function openModal(id)  { document.getElementById(id).style.display = "flex"; }
-
-function closeModal(id) {
-  document.getElementById(id).style.display = "none";
-  if (id === "modal-docente") {
-    editingUserId = null; asignacionesTemp = [];
-    ["doc-name","doc-username","doc-pass","doc-email","doc-email-educlass","doc-pass-educlass","edit-user-id"]
-      .forEach(i => { const el=document.getElementById(i); if(el) el.value=""; });
-    document.getElementById("modal-doc-error").style.display = "none";
-    renderAsignacionesLista(); renderAreasGrado();
-  }
-  if (id === "modal-import") {
-    document.getElementById("csv-paste").value = "";
-    document.getElementById("csv-preview").style.display = "none";
-    const f = document.getElementById("csv-upload"); if(f) f.value="";
-  }
-}
-
-function editDocente(id) {
-  const user = Auth.getAllUsers().find(u => u.id === id);
-  if (!user) return;
-  editingUserId    = id;
-  asignacionesTemp = JSON.parse(JSON.stringify(user.asignaciones || []));
-  document.getElementById("modal-docente-title").textContent = "Editar docente";
-  document.getElementById("edit-user-id").value  = id;
-  document.getElementById("doc-name").value      = user.name;
-  document.getElementById("doc-username").value  = user.username;
-  document.getElementById("doc-pass").value      = user.password;
-  document.getElementById("doc-email").value     = user.email || "";
-  const ecEmail = document.getElementById("doc-email-educlass");
-  const ecPass  = document.getElementById("doc-pass-educlass");
-  if(ecEmail) ecEmail.value = user.emailEduclass || "";
-  if(ecPass)  ecPass.value  = user.passEduclass  || "";
-  renderAsignacionesLista(); renderAreasGrado();
-  openModal("modal-docente");
-}
-
 async function saveDocente() {
   const name          = document.getElementById("doc-name").value.trim();
   const username      = document.getElementById("doc-username").value.trim();
