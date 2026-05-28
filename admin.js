@@ -1,4 +1,5 @@
 const BACKEND_API = "https://educlass-backend-4kk0.onrender.com";
+const BACKEND_API = "https://educlass-backend-4kk0.onrender.com";
 // ============================================================
 // ADMIN.JS — Panel de administración I.E.R. Santiago de la Selva
 // Usa: Auth (auth.js) · DB (db.js) · data.js
@@ -180,7 +181,7 @@ async function renderDocentesGrid() {
               : '<span class="tag empty">Sin asignaciones</span>'}
           </div>
           <div class="doc-actions">
-            <button class="icon-btn edit" onclick="editDocente('${u.id}')">✏️ Editar</button>
+            <button class="icon-btn edit" data-edit-id="${u.id}" data-user="${encodeURIComponent(JSON.stringify({id:u.id,name:u.name,email:u.email,username:u.email,password:u.password||'',asignaciones:u.asignaciones||[]}))}" onclick="editDocente('${u.id}')">✏️ Editar</button>
             <button class="icon-btn del"  onclick="deleteDocente('${u.id}')">🗑 Eliminar</button>
           </div>
           <div style="background:#0A1A0C;border:1px solid #1A3D1E;border-radius:7px;padding:7px 10px;margin-top:4px;font-size:.68rem">
@@ -193,7 +194,7 @@ async function renderDocentesGrid() {
   }).join("");
 }
 async function saveDocente() {
-  const editingId     = document.getElementById("edit-user-id")?.value || "";
+  const editingId     = document.getElementById("edit-user-id")?.value?.trim() || "";
   const name          = document.getElementById("doc-name").value.trim();
   const username      = document.getElementById("doc-username").value.trim();
   const pass          = document.getElementById("doc-pass").value.trim();
@@ -207,21 +208,6 @@ async function saveDocente() {
     errEl.style.display="block"; return;
   }
   errEl.style.display = "none";
-
-  // Modo edición
-  if (editingId) {
-    Auth.updateUser(editingId, {
-      name, username, password: pass, email,
-      emailEduclass, passEduclass,
-      asignaciones: asignacionesTemp
-    });
-    document.getElementById("edit-user-id").value = "";
-    document.getElementById("modal-docente-title").textContent = "Nuevo docente";
-    closeModal("modal-docente");
-    renderDocentesGrid().catch(()=>{});
-    showToast("✅ Docente actualizado");
-    return;
-  }
 
   const grados   = [...new Set(asignacionesTemp.map(a=>a.grado))];
   const materias = [...new Set(asignacionesTemp.map(a=>a.area))];
@@ -291,19 +277,44 @@ async function saveDocente() {
     }
   }
 
+  // Guardar asignaciones en backend si es edición
+  const editingId2 = document.getElementById("edit-user-id")?.value?.trim() || "";
+  if (editingId2) {
+    try {
+      const tok = localStorage.getItem("edutoken");
+      if (tok) {
+        await fetch(BACKEND_API + "/users/" + editingId2 + "/asignaciones", {
+          method: "PUT",
+          headers: { "Authorization": "Bearer " + tok, "Content-Type": "application/json" },
+          body: JSON.stringify({ asignaciones: asignacionesTemp })
+        });
+        showToast("✅ Carga académica guardada en el sistema");
+      }
+    } catch(e) { console.warn("Error guardando en backend:", e); }
+    document.getElementById("edit-user-id").value = "";
+    document.getElementById("modal-docente-title").textContent = "Nuevo docente";
+  }
   closeModal("modal-docente");
   renderDocentesGrid().catch(()=>{});
 }
 
-function editDocente(id) {
-  const u = Auth.getAllUsers().find(u => u.id === id);
-  if (!u) return;
 
-  // Poblar el modal con los datos del docente
+function editDocente(id) {
+  // Buscar en localStorage primero, luego en el cache del grid
+  let u = Auth.getAllUsers().find(u => u.id === id);
+  if (!u) {
+    // Buscar en el dataset del botón (guardado como data attribute)
+    const btn = document.querySelector(`[data-edit-id="${id}"]`);
+    if (btn) {
+      try { u = JSON.parse(decodeURIComponent(btn.dataset.user)); } catch(_) {}
+    }
+  }
+  if (!u) { alert("No se pudo cargar el docente"); return; }
+
   document.getElementById("modal-docente-title").textContent = "Editar docente";
   document.getElementById("edit-user-id").value = id;
   document.getElementById("doc-name").value = u.name || "";
-  document.getElementById("doc-username").value = u.username || "";
+  document.getElementById("doc-username").value = u.username || u.email || "";
   document.getElementById("doc-pass").value = u.password || "";
   document.getElementById("doc-email").value = u.email || "";
   if (document.getElementById("doc-email-educlass"))
@@ -311,13 +322,11 @@ function editDocente(id) {
   if (document.getElementById("doc-pass-educlass"))
     document.getElementById("doc-pass-educlass").value = u.passEduclass || "";
 
-  // Restaurar asignaciones
   asignacionesTemp = (u.asignaciones || []).map(a => ({ ...a }));
   renderAsigLista();
 
-  // Abrir modal
   const modal = document.getElementById("modal-docente");
-  if (modal) modal.style.display = "flex";
+  if (modal) { modal.style.display = "flex"; }
 }
 
 function deleteDocente(id) {
