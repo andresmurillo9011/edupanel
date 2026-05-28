@@ -1,7 +1,7 @@
 const BACKEND_API = "https://educlass-backend-4kk0.onrender.com";
 // ============================================================
-// ADMIN.JS - Panel de administracion I.E.R. Santiago de la Selva
-// Usa: Auth (auth.js), DB (db.js), data.js
+// ADMIN.JS — Panel de administración I.E.R. Santiago de la Selva
+// Usa: Auth (auth.js) · DB (db.js) · data.js
 // ============================================================
 
 let editingUserId    = null;
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ============================================================
-// NAVEGACI?N
+// NAVEGACIÓN
 // ============================================================
 async function showSection(name, btn) {
   document.querySelectorAll(".admin-section").forEach(s => s.style.display = "none");
@@ -79,11 +79,11 @@ function agregarGradoCompleto() {
   const grado = document.getElementById("asig-grado-sel").value;
   const areas = [...document.querySelectorAll(".asig-area-chk input:checked")]
     .map(el => el.closest('.asig-area-chk').dataset.area);
-  if (!areas.length) { showToast("? Selecciona al menos un ?rea"); return; }
+  if (!areas.length) { showToast("⚠ Selecciona al menos un área"); return; }
   asignacionesTemp = asignacionesTemp.filter(a => a.grado !== grado);
   areas.forEach(area => asignacionesTemp.push({ grado, area }));
   renderAsignacionesLista();
-  showToast(`? ${GRADOS_LABEL[grado]}: ${areas.length} ?reas asignadas`);
+  showToast(`✓ ${GRADOS_LABEL[grado]}: ${areas.length} áreas asignadas`);
 }
 
 function quitarAreaAsig(grado, area) {
@@ -117,53 +117,40 @@ function renderAsignacionesLista() {
         ${areas.map(area=>`
           <span class="asig-area-chip" style="--ac:${MATERIAS_CONFIG[area]?.color||'#888'}">
             ${MATERIAS_CONFIG[area]?.icon||''} ${area}
-            <button class="asig-remove" onclick="quitarAreaAsig('${grado}','${area}')">?</button>
+            <button class="asig-remove" onclick="quitarAreaAsig('${grado}','${area}')">×</button>
           </span>`).join("")}
       </div>
-      <button class="asig-remove-grado" onclick="quitarGradoAsig('${grado}')" title="Quitar grado">?</button>`;
+      <button class="asig-remove-grado" onclick="quitarGradoAsig('${grado}')" title="Quitar grado">🗑</button>`;
     cont.appendChild(row);
   });
 }
 
 async function renderDocentesGrid() {
   const grid = document.getElementById("docentes-grid");
-  grid.innerHTML = "<p style='color:#64748b;padding:20px'>Cargando docentes...</p>";
-  
-  // Cargar docentes locales
+  grid.innerHTML = "<p style=\'color:#64748b;padding:20px\'>Cargando docentes...</p>";
   const localUsers = Auth.getAllUsers().filter(u => u.role !== "admin");
-  
-  // Cargar docentes del backend EduClass
   let backendUsers = [];
   try {
     const tok = localStorage.getItem("edutoken");
     if (tok) {
       const r = await fetch(BACKEND_API + "/users", {
-        headers: { "Authorization": "Bearer " + tok, "Content-Type": "application/json" }
+        headers: { "Authorization": "Bearer " + tok }
       });
       if (r.ok) {
         const d = await r.json();
-        backendUsers = (d.usuarios || d.users || []).map(u => ({
-          id: "ec_" + u.id,
-          name: u.name || u.nombre || "",
-          username: u.email || "",
-          email: u.email || "",
-          role: "docente",
-          cargo: u.cargo || "Docente",
-          asignaciones: u.asignaciones || [],
-          _desdeBackend: true,
-          _backendId: u.id
+        backendUsers = (d.usuarios || []).map(u => ({
+          id: "ec_" + u.id, name: u.name || "", username: u.email || "",
+          email: u.email || "", role: "docente", asignaciones: [],
+          _desdeBackend: true, _backendId: u.id
         }));
       }
     }
   } catch(_) {}
-
-  // Fusionar: mostrar backend primero, luego locales que no est?n en backend
   const backendEmails = backendUsers.map(u => u.email.toLowerCase());
   const soloLocales = localUsers.filter(u => !backendEmails.includes((u.email||"").toLowerCase()));
   const users = [...backendUsers, ...soloLocales];
-  
   if (users.length === 0) {
-    grid.innerHTML = "<p style='color:#64748b;padding:20px'>No hay docentes registrados.</p>";
+    grid.innerHTML = "<p style=\'color:#64748b;padding:20px\'>No hay docentes registrados.</p>";
     return;
   }
   grid.innerHTML = users.map(u => {
@@ -177,7 +164,7 @@ async function renderDocentesGrid() {
           <div class="doc-meta">
             <strong class="doc-name">${u.name}</strong>
             <span class="doc-user">@${u.username}</span>
-            <span class="doc-role-badge ${u.role}">${u.role==='admin'?'? Admin':'? Docente'}</span>
+            <span class="doc-role-badge ${u.role}">${u.role==='admin'?'👑 Admin':'👤 Docente'}</span>
           </div>
         </div>
         ${u.role!=='admin' ? `
@@ -193,13 +180,13 @@ async function renderDocentesGrid() {
               : '<span class="tag empty">Sin asignaciones</span>'}
           </div>
           <div class="doc-actions">
-            <button class="icon-btn edit" onclick="editDocente('${u.id}')">?? Editar</button>
-            <button class="icon-btn del"  onclick="deleteDocente('${u.id}')">? Eliminar</button>
+            <button class="icon-btn edit" onclick="editDocente('${u.id}')">✏️ Editar</button>
+            <button class="icon-btn del"  onclick="deleteDocente('${u.id}')">🗑 Eliminar</button>
           </div>
           <div style="background:#0A1A0C;border:1px solid #1A3D1E;border-radius:7px;padding:7px 10px;margin-top:4px;font-size:.68rem">
             ${u.emailEduclass
-              ? `<span style="color:#66BB6A">? EduClass:</span> <span style="color:#E8EEF8">${u.emailEduclass}</span>`
-              : `<span style="color:#3A5580">? Sin credenciales EduClass</span>`}
+              ? `<span style="color:#66BB6A">✨ EduClass:</span> <span style="color:#E8EEF8">${u.emailEduclass}</span>`
+              : `<span style="color:#3A5580">✨ Sin credenciales EduClass</span>`}
           </div>`
         : `<div class="doc-admin-note">Acceso completo al sistema</div>`}
       </div>`;
@@ -253,7 +240,7 @@ async function saveDocente() {
   const errEl         = document.getElementById("modal-doc-error");
 
   if (!name||!username||!pass) {
-    errEl.textContent="Nombre, usuario y contrase?a son obligatorios";
+    errEl.textContent="Nombre, usuario y contraseña son obligatorios";
     errEl.style.display="block"; return;
   }
   errEl.style.display = "none";
@@ -264,7 +251,7 @@ async function saveDocente() {
 
   // Registrar en EduClass si tiene credenciales
   if (emailEduclass && passEduclass && !editingUserId) {
-    showToast("? Registrando en EduClass...");
+    showToast("⏳ Registrando en EduClass...");
     try {
       const r = await fetch("https://educlass-backend-4kk0.onrender.com/auth/registro", {
         method: "POST",
@@ -275,15 +262,15 @@ async function saveDocente() {
           password:   passEduclass,
           institucion:"I.E.R. Santiago de la Selva",
           cargo:      "Docente",
-          ciudad:     "Valpara?so"
+          ciudad:     "Valparaíso"
         })
       });
       const d = await r.json();
-      if (r.ok) showToast("? Registrado en EduClass");
-      else if ((d.mensaje||"").includes("ya")) showToast("?? Correo EduClass ya registrado");
-      else showToast("?? EduClass: " + (d.mensaje||"sin respuesta"));
+      if (r.ok) showToast("✅ Registrado en EduClass");
+      else if ((d.mensaje||"").includes("ya")) showToast("ℹ️ Correo EduClass ya registrado");
+      else showToast("⚠️ EduClass: " + (d.mensaje||"sin respuesta"));
     } catch(e) {
-      showToast("?? No se pudo conectar a EduClass");
+      showToast("⚠️ No se pudo conectar a EduClass");
     }
   }
 
@@ -291,12 +278,12 @@ async function saveDocente() {
   let savedUserId = editingUserId;
   if (editingUserId) {
     Auth.updateUser(editingUserId, { ...payload, role: "docente" });
-    showToast("? Docente actualizado");
+    showToast("✓ Docente actualizado");
   } else {
     const r = Auth.createUser({ ...payload, role:"docente" });
     if (!r.ok) { errEl.textContent=r.message; errEl.style.display="block"; return; }
     savedUserId = r.user.id;
-    showToast("? Docente creado");
+    showToast("✓ Docente creado");
   }
 
   // Guardar asignaciones en el backend de EduClass para que el docente las vea en su horario
@@ -318,7 +305,7 @@ async function saveDocente() {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${tok}` },
             body: JSON.stringify({ asignaciones: asignacionesTemp })
           });
-          showToast("? Asignaciones sincronizadas en EduClass");
+          showToast("✅ Asignaciones sincronizadas en EduClass");
         }
       }
     } catch(e) {
@@ -331,8 +318,8 @@ async function saveDocente() {
 }
 
 function deleteDocente(id) {
-  if (!confirm("?Eliminar este docente?")) return;
-  Auth.deleteUser(id); renderDocentesGrid(); showToast("? Docente eliminado");
+  if (!confirm("¿Eliminar este docente?")) return;
+  Auth.deleteUser(id); renderDocentesGrid(); showToast("✓ Docente eliminado");
 }
 
 // ============================================================
@@ -363,8 +350,8 @@ async function renderEstudiantesList() {
   }
   cont.innerHTML = `
     <div class="est-list-header">
-      <span class="est-list-title">${GRADOS_LABEL[grado]} ? ${lista.length} estudiantes</span>
-      <button class="icon-btn-act exp" onclick="exportarEst('${grado}')">? CSV</button>
+      <span class="est-list-title">${GRADOS_LABEL[grado]} — ${lista.length} estudiantes</span>
+      <button class="icon-btn-act exp" onclick="exportarEst('${grado}')">⬇ CSV</button>
     </div>
     <table class="est-table">
       <thead><tr><th>#</th><th>Nombre completo</th><th></th></tr></thead>
@@ -377,9 +364,9 @@ async function renderEstudiantesList() {
               onkeydown="if(event.key==='Enter')confirmEditEst('${e.id}');if(event.key==='Escape')cancelEditEst('${e.id}')">
           </td>
           <td class="est-acts">
-            <button class="icon-btn-sm" style="color:#34D399;border-color:#059669" onclick="crearCredencialesEst(this)">?</button>
-            <button class="icon-btn-sm edit" onclick="toggleEditEst('${e.id}')">??</button>
-            <button class="icon-btn-sm del"  onclick="delEst('${e.id}')">?</button>
+            <button class="icon-btn-sm" style="color:#34D399;border-color:#059669" onclick="crearCredencialesEst(this)">🔑</button>
+            <button class="icon-btn-sm edit" onclick="toggleEditEst('${e.id}')">✏️</button>
+            <button class="icon-btn-sm del"  onclick="delEst('${e.id}')">🗑</button>
           </td>
         </tr>`).join("")}
       </tbody>
@@ -398,11 +385,11 @@ function cancelEditEst(id) {
 async function confirmEditEst(id) {
   const input = document.getElementById(`di-${id}`);
   const name  = input.value.trim();
-  if (name) { await DB.updateEstudiante(id, { nombre:name }); showToast("? Nombre actualizado"); }
+  if (name) { await DB.updateEstudiante(id, { nombre:name }); showToast("✓ Nombre actualizado"); }
   renderEstudiantesList();
 }
 async function delEst(id) {
-  if (!confirm("?Eliminar estudiante?")) return;
+  if (!confirm("¿Eliminar estudiante?")) return;
   await DB.deleteEstudiante(id); renderEstudiantesList(); renderGradosResumen();
 }
 function abrirModalEst() {
@@ -417,13 +404,13 @@ async function saveEstudiante() {
   const grado  = document.getElementById("modal-est-grado").value;
   const nombre = document.getElementById("est-name").value.trim();
   const num    = document.getElementById("est-num").value;
-  if (!nombre) { showToast("? Ingresa el nombre"); return; }
+  if (!nombre) { showToast("⚠ Ingresa el nombre"); return; }
   await DB.addEstudiante(grado, nombre, num?parseInt(num):null);
   closeModal("modal-est");
   document.getElementById("est-name").value = ""; document.getElementById("est-num").value = "";
   document.getElementById("grado-select-est").value = grado;
   renderEstudiantesList(); renderGradosResumen();
-  showToast(`? Estudiante agregado a ${GRADOS_LABEL[grado]}`);
+  showToast(`✓ Estudiante agregado a ${GRADOS_LABEL[grado]}`);
 }
 function previewCSV(e) {
   const f=e.target.files[0]; if(!f) return;
@@ -434,7 +421,7 @@ function livePreviewCSV(text) {
   const p=document.getElementById("csv-preview");
   if(!nombres.length){p.style.display="none";return;}
   p.style.display="block";
-  p.innerHTML=`<strong>${nombres.length} nombres:</strong><br>${nombres.slice(0,6).map(n=>`<span class="csv-name-pill">${n}</span>`).join("")}${nombres.length>6?`<span class="csv-more">+${nombres.length-6} m?s</span>`:""}`;
+  p.innerHTML=`<strong>${nombres.length} nombres:</strong><br>${nombres.slice(0,6).map(n=>`<span class="csv-name-pill">${n}</span>`).join("")}${nombres.length>6?`<span class="csv-more">+${nombres.length-6} más</span>`:""}`;
 }
 function parseCSV(text) {
   return text.split(/\r?\n/).map(line=>{
@@ -448,7 +435,7 @@ async function importarEstudiantes() {
   const grado  = document.getElementById("import-grado-sel").value;
   const text   = document.getElementById("csv-paste").value.trim();
   const nombres = parseCSV(text);
-  if (!nombres.length) { showToast("? No se encontraron nombres"); return; }
+  if (!nombres.length) { showToast("⚠ No se encontraron nombres"); return; }
   const existing = await DB.getEstudiantes(grado);
   let count=0;
   for (const nombre of nombres) {
@@ -459,13 +446,13 @@ async function importarEstudiantes() {
   closeModal("modal-import");
   document.getElementById("grado-select-est").value = grado;
   renderEstudiantesList(); renderGradosResumen();
-  showToast(count>0?`? ${count} importados en ${GRADOS_LABEL[grado]}`:"? Todos ya exist?an");
+  showToast(count>0?`✓ ${count} importados en ${GRADOS_LABEL[grado]}`:"ℹ Todos ya existían");
 }
 async function exportarEst(grado) {
   const lista = await DB.getEstudiantes(grado);
   const csv   = "numero,nombre\n"+lista.map(e=>`${e.numero},"${e.nombre}"`).join("\n");
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=`estudiantes_${grado}.csv`; a.click();
-  showToast("? CSV exportado");
+  showToast("✓ CSV exportado");
 }
 
 // ============================================================
@@ -480,7 +467,7 @@ function poblarMallaMateriaSel() {
 
 async function loadMallaData() {
   const materia = document.getElementById("malla-materia").value;
-  if (!materia) { showToast("? Selecciona primero un ?rea"); return; }
+  if (!materia) { showToast("⚠ Selecciona primero un área"); return; }
   mallaActual = materia;
   const malla = await DB.getMalla(materia);
   document.getElementById("malla-p1").value = malla.p1||"";
@@ -490,17 +477,17 @@ async function loadMallaData() {
   const cfg=MATERIAS_CONFIG[materia];
   const badge=document.getElementById("malla-current-badge");
   badge.style.display="flex";
-  badge.innerHTML=`<span class="badge-icon">${cfg?.icon||"?"}</span>
-    <span>Editando: <strong>${materia}</strong> ? todos los grados</span>
+  badge.innerHTML=`<span class="badge-icon">${cfg?.icon||"📚"}</span>
+    <span>Editando: <strong>${materia}</strong> — todos los grados</span>
     ${malla.updatedAt?`<span class="badge-date">${new Date(malla.updatedAt).toLocaleDateString("es-CO")}</span>`:""}`;
   document.getElementById("malla-editor").style.display="block";
   renderMallaPreviewLocal();
   renderMallaDocsList(malla);
-  showToast(`? Malla de ${materia} cargada`);
+  showToast(`✓ Malla de ${materia} cargada`);
 }
 
 async function saveMalla() {
-  if (!mallaActual) { showToast("? Primero carga un ?rea"); return; }
+  if (!mallaActual) { showToast("⚠ Primero carga un área"); return; }
   await DB.saveMalla(mallaActual, {
     p1:document.getElementById("malla-p1").value,
     p2:document.getElementById("malla-p2").value,
@@ -508,7 +495,7 @@ async function saveMalla() {
     p4:document.getElementById("malla-p4").value,
   });
   renderMallaPreviewLocal(); renderMallasResumen();
-  showToast(`? Malla de ${mallaActual} guardada`);
+  showToast(`✓ Malla de ${mallaActual} guardada`);
 }
 
 function renderMallaPreviewLocal() {
@@ -520,36 +507,36 @@ function renderMallaPreviewLocal() {
   ].join("\n").split("\n").map(t=>t.trim()).filter(Boolean);
   document.getElementById("malla-preview-list").innerHTML = temas.length
     ? temas.map((t,i)=>`<div class="preview-tema"><span class="tema-n">${i+1}</span>${t}</div>`).join("")
-    : `<div class="empty-state">Sin temas a?n</div>`;
+    : `<div class="empty-state">Sin temas aún</div>`;
 }
 
 function renderMallaDocsList(malla) {
   const archivos = malla?.archivos||[];
   const cont = document.getElementById("malla-docs-list"); if(!cont) return;
-  const icons = {pdf:"?",doc:"?",docx:"?",ppt:"?",pptx:"?",xls:"?",xlsx:"?"};
+  const icons = {pdf:"📕",doc:"📘",docx:"📘",ppt:"📙",pptx:"📙",xls:"📗",xlsx:"📗"};
   if (!archivos.length) { cont.innerHTML=`<div style="font-size:.72rem;color:var(--text-muted);padding:8px">Sin documentos.</div>`; return; }
   cont.innerHTML = archivos.map(f=>`
     <div class="doc-item">
-      <span class="doc-icon">${icons[f.nombre.split(".").pop().toLowerCase()]||"?"}</span>
-      <div class="doc-info"><div class="doc-name" title="${f.nombre}">${f.nombre}</div><div class="doc-meta">${f.tama?o} ? ${f.fechaSubida}</div></div>
+      <span class="doc-icon">${icons[f.nombre.split(".").pop().toLowerCase()]||"📄"}</span>
+      <div class="doc-info"><div class="doc-name" title="${f.nombre}">${f.nombre}</div><div class="doc-meta">${f.tamaño} · ${f.fechaSubida}</div></div>
       <div class="doc-actions-row">
-        <button class="doc-dl-btn" onclick="descargarDocMalla('${encodeURIComponent(f.nombre)}')">?</button>
-        <button class="doc-del-btn" onclick="eliminarDocMalla('${encodeURIComponent(f.nombre)}')">?</button>
+        <button class="doc-dl-btn" onclick="descargarDocMalla('${encodeURIComponent(f.nombre)}')">⬇</button>
+        <button class="doc-del-btn" onclick="eliminarDocMalla('${encodeURIComponent(f.nombre)}')">🗑</button>
       </div>
     </div>`).join("");
 }
 
 async function subirDocMalla(event) {
   const file = event.target.files[0];
-  if (!file||!mallaActual) { showToast("? Primero carga un ?rea"); return; }
-  if (file.size>4*1024*1024) { showToast("? El archivo supera 4MB"); return; }
+  if (!file||!mallaActual) { showToast("⚠ Primero carga un área"); return; }
+  if (file.size>4*1024*1024) { showToast("⚠ El archivo supera 4MB"); return; }
   const reader = new FileReader();
   reader.onload = async e => {
-    const info = { nombre:file.name, tipo:file.type, tama?o:(file.size/1024).toFixed(1)+" KB", data:e.target.result, fechaSubida:new Date().toLocaleDateString("es-CO") };
+    const info = { nombre:file.name, tipo:file.type, tamaño:(file.size/1024).toFixed(1)+" KB", data:e.target.result, fechaSubida:new Date().toLocaleDateString("es-CO") };
     await DB.saveMallaArchivo(mallaActual, info);
     const malla = await DB.getMalla(mallaActual);
     renderMallaDocsList(malla);
-    showToast(`? "${file.name}" subido`);
+    showToast(`✓ "${file.name}" subido`);
     event.target.value="";
   };
   reader.readAsDataURL(file);
@@ -565,11 +552,11 @@ async function descargarDocMalla(enc) {
 
 async function eliminarDocMalla(enc) {
   const nombre = decodeURIComponent(enc);
-  if (!confirm(`?Eliminar "${nombre}"?`)) return;
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
   await DB.deleteMallaArchivo(mallaActual, nombre);
   const malla = await DB.getMalla(mallaActual);
   renderMallaDocsList(malla);
-  showToast("? Documento eliminado");
+  showToast("✓ Documento eliminado");
 }
 
 async function renderMallasResumen() {
@@ -583,10 +570,10 @@ async function renderMallasResumen() {
     const has   = temas.length > 0;
     cont.innerHTML += `
       <div class="malla-guard-card ${has?'has-data':'no-data'}">
-        <div class="mgc-top"><span class="mgc-grado">${cfg?.icon||''} ${m}</span><span class="mgc-count">${has?temas.length+' temas':'?'}</span></div>
-        ${has?`<div class="mgc-temas">${temas.slice(0,3).map(t=>`<span class="mgc-tema">? ${t}</span>`).join("")}${temas.length>3?`<span class="mgc-more">+${temas.length-3} m?s</span>`:""}</div>`:`<div class="mgc-empty">Sin malla</div>`}
+        <div class="mgc-top"><span class="mgc-grado">${cfg?.icon||''} ${m}</span><span class="mgc-count">${has?temas.length+' temas':'—'}</span></div>
+        ${has?`<div class="mgc-temas">${temas.slice(0,3).map(t=>`<span class="mgc-tema">• ${t}</span>`).join("")}${temas.length>3?`<span class="mgc-more">+${temas.length-3} más</span>`:""}</div>`:`<div class="mgc-empty">Sin malla</div>`}
         ${malla.updatedAt?`<div class="mgc-date">${new Date(malla.updatedAt).toLocaleDateString("es-CO")}</div>`:""}
-        <button class="mgc-edit-btn" onclick="editarMalla('${m}')">${has?'?? Editar':'+ Crear'}</button>
+        <button class="mgc-edit-btn" onclick="editarMalla('${m}')">${has?'✏️ Editar':'+ Crear'}</button>
       </div>`;
   }
 }
@@ -612,18 +599,18 @@ async function renderResumen() {
     <div class="stats-grid">
       <div class="stat-card"><span class="stat-num">${diarios.length}</span><span class="stat-label">Clases registradas</span></div>
       <div class="stat-card"><span class="stat-num">${conTema}</span><span class="stat-label">Con tema documentado</span></div>
-      <div class="stat-card"><span class="stat-num">${guiasOk}</span><span class="stat-label">Gu?as terminadas</span></div>
+      <div class="stat-card"><span class="stat-num">${guiasOk}</span><span class="stat-label">Guías terminadas</span></div>
       <div class="stat-card"><span class="stat-num">${users.length}</span><span class="stat-label">Docentes activos</span></div>
-      <div class="stat-card"><span class="stat-num">${totalEst}</span><span class="stat-label">Estudiantes 6??11?</span></div>
+      <div class="stat-card"><span class="stat-num">${totalEst}</span><span class="stat-label">Estudiantes 6°–11°</span></div>
     </div>
     <h3 class="resumen-sub">Actividad reciente</h3>
     <div class="activity-list">
       ${diarios.filter(d=>d&&d.updatedAt).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,12).map(d=>`
         <div class="activity-item">
-          <span class="act-icon">${MATERIAS_CONFIG[d.materia]?.icon||"?"}</span>
-          <div class="act-info"><strong>${d.materia||"?"}</strong> ? ${GRADOS_LABEL[d.grado]||d.grado} ? ${d.dia||""} ${d.hora||""}${d.temaVisto?`<br><small>? ${d.temaVisto}</small>`:""}</div>
+          <span class="act-icon">${MATERIAS_CONFIG[d.materia]?.icon||"📋"}</span>
+          <div class="act-info"><strong>${d.materia||"—"}</strong> · ${GRADOS_LABEL[d.grado]||d.grado} · ${d.dia||""} ${d.hora||""}${d.temaVisto?`<br><small>📌 ${d.temaVisto}</small>`:""}</div>
           <span class="act-time">${new Date(d.updatedAt).toLocaleDateString("es-CO")}</span>
-        </div>`).join("")||`<div class="empty-state">Sin actividad a?n</div>`}
+        </div>`).join("")||`<div class="empty-state">Sin actividad aún</div>`}
     </div>`;
 }
 
@@ -637,7 +624,7 @@ async function crearCredencialesEst(btn) {
   const nombre = fila ? (fila.querySelector(".est-name-cell span")?.textContent?.trim() || "estudiante") : "estudiante";
   const estId = fila ? fila.querySelector(".est-name-cell span")?.id?.replace("dn-","") : Date.now().toString();
   const usuario = nombre.toLowerCase()
-    .normalize("NFD").replace(/[?-?]/g, "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/\s+/g, ".").replace(/[^a-z0-9.]/g, "")
     .substring(0, 20);
   const password = Math.random().toString(36).substring(2, 8);
@@ -654,24 +641,24 @@ async function crearCredencialesEst(btn) {
     });
     const d = await r.json();
     if (r.ok || (d.mensaje && d.mensaje.includes("ya existe"))) {
-      showToast(`? Credenciales: usuario="${usuario}" pass="${password}"`);
+      showToast(`✅ Credenciales: usuario="${usuario}" pass="${password}"`);
       // Mostrar modal con credenciales
       const msg = `Credenciales para ${nombre}:
 
 Usuario: ${usuario}
-Contrase?a: ${password}
+Contraseña: ${password}
 
-?Copiar al portapapeles?`;
+¿Copiar al portapapeles?`;
       if (confirm(msg)) {
         navigator.clipboard.writeText(`Usuario: ${usuario}
-Contrase?a: ${password}`);
-        showToast("? Copiado al portapapeles");
+Contraseña: ${password}`);
+        showToast("✅ Copiado al portapapeles");
       }
     } else {
-      showToast("?? " + (d.mensaje || "Error creando credenciales"));
+      showToast("⚠️ " + (d.mensaje || "Error creando credenciales"));
     }
   } catch(e) {
-    showToast("?? Sin conexi?n al servidor");
+    showToast("⚠️ Sin conexión al servidor");
   }
 }
 
