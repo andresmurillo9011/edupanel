@@ -1,98 +1,102 @@
 // ============================================================
 // AUTH.JS — I.E.R. Santiago de la Selva
-// Autenticación con localStorage · sesión en sessionStorage
-// Compatible con EduClass (JWT token)
+// Login unificado via backend EduClass (Neon/Render)
 // ============================================================
 
 const Auth = (() => {
 
-  const USERS_KEY = "edupanel_users";
+  const API = "https://educlass-backend-4kk0.onrender.com";
+  const SESSION_KEY = "ep_session";
 
-  const DEFAULT_USERS = [
-    {
-      id: "u_admin",
-      username: "admin",
-      password: "admin123",
-      name: "Administrador",
-      role: "admin",
-      email: "admin@iess.edu.co",
-      asignaciones: [],
-      grados: [],
-      materias: [],
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  function _init() {
-    if (!localStorage.getItem(USERS_KEY)) {
-      localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
-    }
+  // ── Guardar/leer sesión ──────────────────────────────────
+  function _saveSession(user) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    // Compatibilidad con EduClass
+    localStorage.setItem("educlass_usuario", JSON.stringify(user));
   }
 
-  function _getUsers() {
-    _init();
-    return JSON.parse(localStorage.getItem(USERS_KEY));
+  function _clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("edutoken");
+    localStorage.removeItem("educlass_usuario");
+    sessionStorage.removeItem("ep_user");
   }
 
-  function _saveUsers(u) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(u));
+  function _buildUser(u, token) {
+    const rolRaw = (u.cargo || u.role || "").toLowerCase();
+    const esAdmin = rolRaw === "admin" || rolRaw === "superadmin" || u.isSuperAdmin;
+    return {
+      id:           u.id,
+      username:     u.email,
+      name:         u.name || u.nombre || "Docente",
+      role:         esAdmin ? "admin" : "docente",
+      email:        u.email || "",
+      cargo:        u.cargo || "",
+      institutionId: u.institutionId || u.institution?.id || "",
+      asignaciones: u.asignaciones || [],
+      grados:       u.grados || [],
+      materias:     u.materias || [],
+      token:        token,
+      _desdeBackend: true
+    };
   }
 
-  // ── Construir usuario desde sesión EduClass ──────────────
-  function _usuarioDesdeEduClass() {
+  // ── LOGIN ────────────────────────────────────────────────
+  async function login(email, password) {
     try {
-      const tok = localStorage.getItem("edutoken");
-      const raw = localStorage.getItem("educlass_usuario");
-      if (!tok || !raw) return null;
-      const u = JSON.parse(raw);
-      if (!u || (!u.email && !u.id)) return null;
-      // Determinar rol — leer todos los campos posibles
-      const rolRaw = u.rol || u.role || u.cargo || "";
-      const esAdmin = ["admin","superadmin"].includes(rolRaw.toLowerCase());
-      return {
-        id:           u.id || "ec_" + (u.email||""),
-        username:     u.email || u.username || u.id,
-        password:     "",
-        name:         u.name || u.nombre || "Docente",
-        role:         esAdmin ? "admin" : "docente",
-        email:        u.email || "",
-        asignaciones: u.asignaciones || [],
-        grados:       u.grados || [],
-        materias:     u.materias || [],
-        _desdeEduClass: true
-      };
-    } catch(_) { return null; }
-  }
-
-  // ---- LOGIN / LOGOUT / SESIÓN ----
-  function login(username, password) {
-    const user = _getUsers().find(u => u.username === username && u.password === password);
-    if (!user) return { ok: false, message: "Usuario o contraseña incorrectos. Contacta al administrador." };
-    sessionStorage.setItem("ep_user", JSON.stringify(user));
-    return { ok: true, user };
+      const r = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const d = await r.json();
+      if (!r.ok || !d.token) {
+        return { ok: false, message: d.mensaje || "Correo o contraseña incorrectos" };
+      }
+      localStorage.setItem("edutoken", d.token);
+      const user = _buildUser(d.usuario || d.user || {}, d.token);
+      _saveSession(user);
+      return { ok: true, user };
+    } catch(e) {
+      return { ok: false, message: "Error de conexión con el servidor" };
+    }
   }
 
   function logout() {
-    sessionStorage.removeItem("ep_user");
-    localStorage.removeItem("edutoken");
-    localStorage.removeItem("educlass_usuario");
+    _clearSession();
     window.location.href = "login.html";
   }
 
   function currentUser() {
-    // 1. Intentar sesión local (sessionStorage)
-    const raw = sessionStorage.getItem("ep_user");
-    if (raw) {
-      const u = JSON.parse(raw);
-      const fresh = _getUsers().find(x => x.id === u.id);
-      if (fresh) {
-        sessionStorage.setItem("ep_user", JSON.stringify(fresh));
-        return fresh;
+    // 1. Sesión guardada localmente
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && u.id && u.token) return u;
       }
-      return u;
-    }
-    // 2. Fallback: sesión de EduClass (localStorage)
-    return _usuarioDesdeEduClass();
+    } catch(_) {}
+
+    // 2. Compatibilidad: sesión de EduClass
+    try {
+      const tok = localStorage.getItem("edutoken");
+      const raw = localStorage.getItem("educlass_usuario");
+      if (tok && raw) {
+        const u = JSON.parse(raw);
+        if (u && u.id) return _buildUser(u, tok);
+      }
+    } catch(_) {}
+
+    // 3. Compatibilidad: sesión local antigua (sessionStorage)
+    try {
+      const raw = sessionStorage.getItem("ep_user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && u.id) return u;
+      }
+    } catch(_) {}
+
+    return null;
   }
 
   function require(redirect = "login.html") {
@@ -104,9 +108,7 @@ const Auth = (() => {
   function requireAdmin() {
     const u = require();
     if (!u) return null;
-    // Si viene de EduClass con rol admin/superadmin → permitir
     if (u.role === "admin") return u;
-    // Docente sin permisos admin → redirigir al horario
     window.location.href = "horario.html";
     return null;
   }
@@ -117,50 +119,38 @@ const Auth = (() => {
     return (user.asignaciones || []).some(a => a.grado === grado && a.area === materia);
   }
 
-  // ---- CRUD USUARIOS ----
-  function getAllUsers() { return _getUsers(); }
+  // ── CRUD compatibilidad (localStorage fallback) ──────────
+  function getAllUsers() {
+    try {
+      return JSON.parse(localStorage.getItem("edupanel_users") || "[]");
+    } catch { return []; }
+  }
 
   function createUser(data) {
-    const users = _getUsers();
+    const users = getAllUsers();
     if (users.find(u => u.username === data.username)) return { ok: false, message: "El usuario ya existe" };
-    const u = {
-      id:           "u_" + Date.now(),
-      username:     data.username,
-      password:     data.password,
-      name:         data.name,
-      role:         data.role || "docente",
-      email:        data.email || "",
-      asignaciones: data.asignaciones || [],
-      grados:       data.grados || [],
-      materias:     data.materias || [],
-      createdAt:    new Date().toISOString()
-    };
+    const u = { id: "u_" + Date.now(), ...data, createdAt: new Date().toISOString() };
     users.push(u);
-    _saveUsers(users);
+    localStorage.setItem("edupanel_users", JSON.stringify(users));
     return { ok: true, user: u };
   }
 
   function updateUser(id, changes) {
-    const users = _getUsers();
-    const idx   = users.findIndex(u => u.id === id);
+    const users = getAllUsers();
+    const idx = users.findIndex(u => u.id === id);
     if (idx === -1) return { ok: false };
-    users[idx] = {
-      ...users[idx], ...changes,
-      asignaciones: changes.asignaciones !== undefined
-        ? changes.asignaciones
-        : users[idx].asignaciones || []
-    };
-    _saveUsers(users);
+    users[idx] = { ...users[idx], ...changes };
+    localStorage.setItem("edupanel_users", JSON.stringify(users));
     return { ok: true, user: users[idx] };
   }
 
   function deleteUser(id) {
-    _saveUsers(_getUsers().filter(u => u.id !== id));
+    const users = getAllUsers().filter(u => u.id !== id);
+    localStorage.setItem("edupanel_users", JSON.stringify(users));
   }
 
   return { login, logout, currentUser, require, requireAdmin, canAccess,
            getAllUsers, createUser, updateUser, deleteUser };
 })();
 
-// Exponer como FireAuth también para compatibilidad
 window.FireAuth = Auth;
