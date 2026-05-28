@@ -123,6 +123,36 @@
       "Authorization":"Bearer "+(localStorage.getItem("edutokenest")||"")
     });
 
+      const cargarPizarraEst = async () => {
+        if (!sesion) return;
+        setPizCargando(true);
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
+          const d = await r.json();
+          setPizMensajes(d.mensajes || []);
+        } catch(_) {}
+        setPizCargando(false);
+      };
+      const enviarPostit = async (mensajeId) => {
+        const texto = (postitTexto[mensajeId]||"").trim();
+        if (!texto) return;
+        const color = postitColor[mensajeId] || "#fef08a";
+        const instId = sesion.institutionId || sesion.institution?.id;
+        try {
+          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
+            method: "POST",
+            headers: { ...authHEst(), "Content-Type": "application/json" },
+            body: JSON.stringify({ texto, color })
+          });
+          const d = await r.json();
+          if (d.ok) {
+            setPostitTexto(p => ({ ...p, [mensajeId]: "" }));
+            setPostitModal(null);
+            cargarPizarraEst();
+          }
+        } catch(_) {}
+      };
     const TODOS_GRADOS = [
       "Transicion","1°","2°","3°","4°","5°",
       "6°","7°","8°","9°","10°","11°"
@@ -501,6 +531,11 @@
       };
 
       const [seccion, setSeccion] = useState("tareas");
+      const [pizMensajes, setPizMensajes] = useState([]);
+      const [pizCargando, setPizCargando] = useState(false);
+      const [postitTexto, setPostitTexto] = useState({});
+      const [postitColor, setPostitColor] = useState({});
+      const [postitModal, setPostitModal] = useState(null);
       const [sesion, setSesion] = useState(getSesion());
       const [vista, setVista] = useState("login");
       const [usuario, setUsuario] = useState("");
@@ -575,6 +610,10 @@
       };
 
       // LOGIN
+      React.useEffect(() => {
+        if (seccion === "pizarra" && sesion) cargarPizarraEst();
+      }, [seccion, sesion]);
+
       if (!sesion && vista==="login") return (
         <div style={S.pantalla}>
           <div style={S.card}>
@@ -730,8 +769,9 @@
             </div>
             <div style={{display:"flex",gap:6,marginBottom:16}}>
               {[
-                {id:"tareas",label:"Mis tareas"},
-                {id:"notas",label:"Mis notas"}
+                {id:"tareas",label:"📋 Mis tareas"},
+                {id:"notas",label:"📊 Mis notas"},
+                {id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -861,6 +901,61 @@
 
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
+            )}
+            {seccion==="pizarra"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🖊️ Pizarra de {sesion.grade}</h3>
+                  <button onClick={cargarPizarraEst} style={{...S.btnSm,fontSize:12}}>🔄 Actualizar</button>
+                </div>
+                {pizCargando?<p style={{color:C.textoS,textAlign:"center",padding:30}}>Cargando...</p>:
+                pizMensajes.length===0?
+                <div style={{textAlign:"center",padding:50,background:C.tarj,borderRadius:14,color:C.textoS}}>
+                  <p style={{fontSize:48,margin:0}}>📭</p>
+                  <p>No hay mensajes en la pizarra todavía</p>
+                </div>:
+                <div>
+                  {pizMensajes.map((m,i)=>{
+                    const BORDE={anuncio:"#10b981",tarea:"#6366f1",felicitacion:"#f59e0b",recordatorio:"#ef4444"}[m.tipo]||"#10b981";
+                    const ETIQUETA={anuncio:"📢 Anuncio",tarea:"📝 Tarea",felicitacion:"🌟 Felicitación",recordatorio:"⏰ Recordatorio"}[m.tipo]||"📢";
+                    const COLORES_POSTIT=["#fef08a","#86efac","#93c5fd","#f9a8d4","#fca5a5","#fed7aa"];
+                    return(
+                    <div key={m.id} style={{background:C.tarj,border:`2px solid ${BORDE}`,borderRadius:14,padding:18,marginBottom:18}}>
+                      <span style={{fontSize:11,background:BORDE+"22",color:BORDE,padding:"3px 10px",borderRadius:99,fontWeight:"bold",display:"inline-block",marginBottom:8}}>{ETIQUETA}</span>
+                      <p style={{margin:"0 0 8px",fontSize:15,color:C.txt,lineHeight:1.6}}>{m.texto}</p>
+                      <p style={{fontSize:11,color:C.textoS,margin:"0 0 12px"}}>👤 {m.autor} • {new Date(m.fecha).toLocaleDateString("es-CO",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</p>
+                      {(m.postits||[]).length>0&&(
+                        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+                          {(m.postits||[]).map(p=>(
+                            <div key={p.id} style={{background:p.color||"#fef08a",borderRadius:8,padding:"10px 14px",maxWidth:180,boxShadow:"2px 3px 8px rgba(0,0,0,0.15)",transform:"rotate(-1deg)"}}>
+                              <p style={{margin:0,fontSize:12,color:"#1e293b",lineHeight:1.4}}>{p.texto}</p>
+                              <p style={{margin:"4px 0 0",fontSize:10,color:"#64748b",fontStyle:"italic"}}>— {p.autor}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {postitModal===m.id?(
+                        <div style={{background:C.fondo,borderRadius:10,padding:12,border:`1px solid ${C.borde}`}}>
+                          <p style={{color:C.textoS,fontSize:12,margin:"0 0 8px",fontWeight:"bold"}}>✏️ Tu post-it</p>
+                          <textarea style={{...S.inp,width:"100%",minHeight:70,resize:"vertical",boxSizing:"border-box",marginBottom:8,fontFamily:"inherit"}} placeholder="Escribe tu respuesta o comentario..." value={postitTexto[m.id]||""} onChange={e=>setPostitTexto(p=>({...p,[m.id]:e.target.value}))}/>
+                          <p style={{color:C.textoS,fontSize:11,margin:"0 0 6px"}}>Color del post-it:</p>
+                          <div style={{display:"flex",gap:8,marginBottom:10}}>
+                            {COLORES_POSTIT.map(c=>(
+                              <div key={c} onClick={()=>setPostitColor(p=>({...p,[m.id]:c}))} style={{width:28,height:28,borderRadius:"50%",background:c,cursor:"pointer",border:(postitColor[m.id]||"#fef08a")===c?"3px solid #334155":"2px solid transparent",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
+                            ))}
+                          </div>
+                          <div style={{display:"flex",gap:8}}>
+                            <button onClick={()=>enviarPostit(m.id)} style={{...S.btn,flex:1,fontSize:13}}>📌 Pegar post-it</button>
+                            <button onClick={()=>setPostitModal(null)} style={{...S.btnSm,flex:1,fontSize:13}}>Cancelar</button>
+                          </div>
+                        </div>
+                      ):(
+                        <button onClick={()=>setPostitModal(m.id)} style={{...S.btnSm,fontSize:12,width:"100%",justifyContent:"center"}}>💬 Responder con post-it</button>
+                      )}
+                    </div>);
+                  })}
+                </div>}
+              </div>
             )}
           </div>
         </div>
