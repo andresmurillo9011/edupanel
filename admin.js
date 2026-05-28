@@ -124,9 +124,47 @@ function renderAsignacionesLista() {
   });
 }
 
-function renderDocentesGrid() {
-  const users = Auth.getAllUsers();
-  const grid  = document.getElementById("docentes-grid");
+async function renderDocentesGrid() {
+  const grid = document.getElementById("docentes-grid");
+  grid.innerHTML = "<p style='color:#64748b;padding:20px'>Cargando docentes...</p>";
+  
+  // Cargar docentes locales
+  const localUsers = Auth.getAllUsers().filter(u => u.role !== "admin");
+  
+  // Cargar docentes del backend EduClass
+  let backendUsers = [];
+  try {
+    const tok = localStorage.getItem("edutoken");
+    if (tok) {
+      const r = await fetch(API + "/users", {
+        headers: { "Authorization": "Bearer " + tok, "Content-Type": "application/json" }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        backendUsers = (d.usuarios || d.users || []).map(u => ({
+          id: "ec_" + u.id,
+          name: u.name || u.nombre || "",
+          username: u.email || "",
+          email: u.email || "",
+          role: "docente",
+          cargo: u.cargo || "Docente",
+          asignaciones: u.asignaciones || [],
+          _desdeBackend: true,
+          _backendId: u.id
+        }));
+      }
+    }
+  } catch(_) {}
+
+  // Fusionar: mostrar backend primero, luego locales que no estén en backend
+  const backendEmails = backendUsers.map(u => u.email.toLowerCase());
+  const soloLocales = localUsers.filter(u => !backendEmails.includes((u.email||"").toLowerCase()));
+  const users = [...backendUsers, ...soloLocales];
+  
+  if (users.length === 0) {
+    grid.innerHTML = "<p style='color:#64748b;padding:20px'>No hay docentes registrados.</p>";
+    return;
+  }
   grid.innerHTML = users.map(u => {
     const asigs = u.asignaciones || [];
     const porGrado = {};
