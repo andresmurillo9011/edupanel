@@ -123,12 +123,13 @@
       "Authorization":"Bearer "+(localStorage.getItem("edutokenest")||"")
     });
 
-      const cargarPizarraEst = async () => {
-        if (!sesion) return;
+      const cargarPizarraEst = async (sesionParam) => {
+        const s = sesionParam || sesion;
+        if (!s) return;
         setPizCargando(true);
         try {
-          const instId = sesion.institutionId || sesion.institution?.id;
-          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
+          const instId = s.institutionId || s.institution?.id;
+          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(s.grade)}`, { headers: authHEst() });
           const d = await r.json();
           setPizMensajes(d.mensajes || []);
         } catch(_) {}
@@ -136,7 +137,7 @@
       };
       const enviarPostit = async (mensajeId) => {
         const texto = (postitTexto[mensajeId]||"").trim();
-        if (!texto) return;
+        if (!texto || !sesion) return;
         const color = postitColor[mensajeId] || "#fef08a";
         const instId = sesion.institutionId || sesion.institution?.id;
         try {
@@ -621,7 +622,7 @@
 
       // LOGIN
       React.useEffect(() => {
-        if (seccion === "pizarra" && sesion) cargarPizarraEst();
+        if (seccion === "pizarra" && sesion) cargarPizarraEst(sesion);
       }, [seccion, sesion]);
 
       if (!sesion && vista==="login") return (
