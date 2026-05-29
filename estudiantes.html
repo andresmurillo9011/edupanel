@@ -534,8 +534,8 @@
       const [grid, setGrid] = React.useState(null);
       const [placed, setPlaced] = React.useState([]);
       const [encontradas, setEncontradas] = React.useState([]);
-      const [seleccion, setSeleccion] = React.useState([]);
-      const [arrastrando, setArrastrando] = React.useState(false);
+      const [inicio, setInicio] = React.useState(null);
+      const [hover, setHover] = React.useState(null);
 
       React.useEffect(()=>{
         if(!juego?.palabras) return;
@@ -544,7 +544,7 @@
         const p=[];
         for(const pal of juego.palabras){
           let ok=false;
-          for(let t=0;t<200&&!ok;t++){
+          for(let t=0;t<300&&!ok;t++){
             const [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
             const sr=Math.floor(Math.random()*size),sc=Math.floor(Math.random()*size);
             let fits=true;
@@ -557,42 +557,53 @@
         setGrid(g);setPlaced(p);
       },[juego]);
 
-      const toggleCell=(r,c)=>{
-        if(!arrastrando) return;
-        setSeleccion(prev=>{
-          const key=`${r},${c}`;
-          if(prev.includes(key)) return prev;
-          return [...prev,key];
-        });
+      const getCeldas=(a,b)=>{
+        if(!a||!b) return [];
+        const dr=Math.sign(b[0]-a[0]),dc=Math.sign(b[1]-a[1]);
+        const len=Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))+1;
+        return Array.from({length:len},(_,i)=>[a[0]+dr*i,a[1]+dc*i]);
       };
 
-      const verificar=()=>{
-        const letrasSeq=seleccion.map(k=>k.split(",")).map(([r,c])=>grid[r][c]).join("");
-        const encontrada=placed.find(p=>p.palabra===letrasSeq||p.palabra===letrasSeq.split("").reverse().join(""));
-        if(encontrada&&!encontradas.includes(encontrada.palabra)){
-          setEncontradas(prev=>[...prev,encontrada.palabra]);
+      const estaEncontrada=(r,c)=>encontradas.some(ep=>{
+        const pl=placed.find(x=>x.palabra===ep);
+        return pl&&[...Array(pl.palabra.length)].some((_,i)=>pl.sr+pl.dr*i===r&&pl.sc+pl.dc*i===c);
+      });
+
+      const selCeldas=getCeldas(inicio,hover);
+      const enSeleccion=(r,c)=>selCeldas.some(([sr,sc])=>sr===r&&sc===c);
+
+      const handleClick=(r,c)=>{
+        if(!inicio){setInicio([r,c]);setHover([r,c]);return;}
+        const celdas=getCeldas(inicio,[r,c]);
+        const palabra=celdas.map(([sr,sc])=>grid[sr][sc]).join("");
+        const rev=palabra.split("").reverse().join("");
+        const enc=placed.find(p=>p.palabra===palabra||p.palabra===rev);
+        if(enc&&!encontradas.includes(enc.palabra)){
+          setEncontradas(prev=>[...prev,enc.palabra]);
         }
-        setSeleccion([]);setArrastrando(false);
+        setInicio(null);setHover(null);
       };
 
       if(!grid) return <p style={{color:C.textoS}}>Generando sopa...</p>;
       return(
         <div>
+          <p style={{color:C.textoS,fontSize:11,marginBottom:8}}>💡 Clic en la primera letra → clic en la última letra de la palabra</p>
           <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-            <div onMouseUp={verificar} onTouchEnd={verificar}>
+            <div style={{overflowX:"auto"}}>
               {grid.map((row,ri)=>(
                 <div key={ri} style={{display:"flex"}}>
                   {row.map((cell,ci)=>{
-                    const key=`${ri},${ci}`;
-                    const selec=seleccion.includes(key);
-                    const enc=encontradas.some(p=>placed.find(pl=>pl.palabra===p&&[...Array(p.length)].some((_,i)=>pl.sr+pl.dr*i===ri&&pl.sc+pl.dc*i===ci)));
+                    const enc=estaEncontrada(ri,ci);
+                    const sel=enSeleccion(ri,ci);
+                    const esInicio=inicio&&inicio[0]===ri&&inicio[1]===ci;
                     return(<div key={ci}
-                      onMouseDown={()=>{setArrastrando(true);setSeleccion([key]);}}
-                      onMouseEnter={()=>toggleCell(ri,ci)}
-                      onTouchStart={()=>{setArrastrando(true);setSeleccion([key]);}}
-                      onTouchMove={e=>{const t=e.touches[0];const el=document.elementFromPoint(t.clientX,t.clientY);if(el?.dataset?.rc)toggleCell(...el.dataset.rc.split(",").map(Number));}}
-                      data-rc={`${ri},${ci}`}
-                      style={{width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:"bold",cursor:"pointer",userSelect:"none",background:enc?"#10b981":selec?"#6366f1":"transparent",color:enc||selec?"#fff":C.texto,borderRadius:3,border:"1px solid transparent"}}>
+                      onClick={()=>handleClick(ri,ci)}
+                      onMouseEnter={()=>inicio&&setHover([ri,ci])}
+                      style={{width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:"bold",cursor:"pointer",userSelect:"none",
+                        background:enc?"#10b981":esInicio?"#f59e0b":sel?"#6366f1":"transparent",
+                        color:enc||sel||esInicio?"#fff":C.texto,
+                        borderRadius:3,border:esInicio?"2px solid #f59e0b":"1px solid transparent",
+                        transition:"background 0.1s"}}>
                       {cell}
                     </div>);
                   })}
@@ -607,6 +618,7 @@
                   <p style={{margin:0,fontSize:10,color:C.textoS}}>{juego.pistas?.[i]}</p>
                 </div>
               ))}
+              {inicio&&<p style={{color:"#f59e0b",fontSize:11,marginTop:8}}>⚡ Seleccionando desde ({inicio[0]+1},{inicio[1]+1})... clic en la última letra</p>}
               {encontradas.length===juego.palabras.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,marginTop:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Completaste la sopa!</p></div>}
             </div>
           </div>
@@ -653,6 +665,131 @@
             ))}
             {correctas===pals.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Crucigrama completo!</p></div>}
           </div>
+        </div>
+      );
+    }
+
+
+    function UnirDefiniciones({juego}) {
+      const pares = juego.pares || [];
+      const [selTermino, setSelTermino] = React.useState(null);
+      const [unidos, setUnidos] = React.useState({});
+      const [defs] = React.useState(()=>[...pares].sort(()=>Math.random()-0.5));
+      
+      const handleTermino=(i)=>{
+        if(unidos[i]!==undefined) return;
+        setSelTermino(i===selTermino?null:i);
+      };
+      const handleDef=(di)=>{
+        if(selTermino===null) return;
+        const defCorrecta=pares[selTermino].definicion;
+        const defElegida=defs[di].definicion;
+        if(defCorrecta===defElegida){
+          setUnidos(prev=>({...prev,[selTermino]:di}));
+        } else {
+          setUnidos(prev=>({...prev,[selTermino]:"error"}));
+          setTimeout(()=>setUnidos(prev=>{const n={...prev};delete n[selTermino];return n;}),800);
+        }
+        setSelTermino(null);
+      };
+      const correctas=Object.values(unidos).filter(v=>v!=="error").length;
+      return(
+        <div>
+          <p style={{color:C.textoS,fontSize:11,marginBottom:12}}>💡 Selecciona un término → luego su definición correcta</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div>
+              <p style={{color:C.azulC,fontWeight:"bold",fontSize:12,marginBottom:8}}>Términos:</p>
+              {pares.map((p,i)=>(
+                <div key={i} onClick={()=>handleTermino(i)} style={{padding:"8px 12px",marginBottom:6,borderRadius:8,cursor:unidos[i]!==undefined&&unidos[i]!=="error"?"default":"pointer",
+                  background:unidos[i]!==undefined&&unidos[i]!=="error"?"#10b98122":unidos[i]==="error"?"#ef444422":selTermino===i?"#6366f122":"#0a1128",
+                  border:`1px solid ${unidos[i]!==undefined&&unidos[i]!=="error"?"#10b981":unidos[i]==="error"?"#ef4444":selTermino===i?"#6366f1":C.borde}`}}>
+                  <p style={{margin:0,fontWeight:"bold",fontSize:13,color:C.texto}}>{p.termino}</p>
+                </div>
+              ))}
+            </div>
+            <div>
+              <p style={{color:C.azulC,fontWeight:"bold",fontSize:12,marginBottom:8}}>Definiciones:</p>
+              {defs.map((d,di)=>{
+                const yaUnida=Object.entries(unidos).find(([ti,dii])=>dii===di&&dii!=="error");
+                return(<div key={di} onClick={()=>!yaUnida&&handleDef(di)} style={{padding:"8px 12px",marginBottom:6,borderRadius:8,cursor:yaUnida?"default":"pointer",
+                  background:yaUnida?"#10b98122":"#0a1128",border:`1px solid ${yaUnida?"#10b981":C.borde}`}}>
+                  <p style={{margin:0,fontSize:12,color:C.textoS}}>{d.definicion}</p>
+                </div>);
+              })}
+            </div>
+          </div>
+          <p style={{color:"#10b981",marginTop:12,fontWeight:"bold"}}>{correctas}/{pares.length} correctas</p>
+          {correctas===pares.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Completaste el juego!</p></div>}
+        </div>
+      );
+    }
+
+    function CompletarOraciones({juego}) {
+      const oraciones = juego.oraciones || [];
+      const [respuestas, setRespuestas] = React.useState({});
+      const correctas = oraciones.filter((o,i)=>(respuestas[i]||"").toLowerCase().trim()===o.respuesta.toLowerCase()).length;
+      return(
+        <div>
+          <p style={{color:C.textoS,fontSize:11,marginBottom:12}}>✏️ Completa cada oración con la palabra correcta</p>
+          {oraciones.map((o,i)=>{
+            const resp=(respuestas[i]||"").toLowerCase().trim();
+            const ok=resp===o.respuesta.toLowerCase();
+            const partes=o.texto.split("___");
+            return(<div key={i} style={{marginBottom:16,padding:"12px 14px",borderRadius:10,border:`1px solid ${resp?ok?"#10b981":"#ef4444":C.borde}`,background:resp?ok?"#10b98111":"#ef444411":"#0a1128"}}>
+              <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:4,fontSize:14,color:C.texto}}>
+                <span>{partes[0]}</span>
+                <input value={respuestas[i]||""} onChange={e=>setRespuestas(prev=>({...prev,[i]:e.target.value}))}
+                  disabled={ok}
+                  style={{...S.inp,width:120,display:"inline-block",textAlign:"center",padding:"4px 8px",fontWeight:"bold",borderColor:resp?ok?"#10b981":"#ef4444":C.borde}}
+                  placeholder="___"/>
+                <span>{partes[1]||""}</span>
+                {ok&&<span style={{color:"#10b981",fontSize:18}}>✅</span>}
+              </div>
+              {o.pista&&!ok&&<p style={{color:C.textoS,fontSize:11,margin:"6px 0 0"}}>💡 {o.pista}</p>}
+              {resp&&!ok&&<p style={{color:"#ef4444",fontSize:11,margin:"4px 0 0"}}>Intenta de nuevo</p>}
+            </div>);
+          })}
+          <p style={{color:"#10b981",fontWeight:"bold"}}>{correctas}/{oraciones.length} correctas</p>
+          {correctas===oraciones.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Todas correctas!</p></div>}
+        </div>
+      );
+    }
+
+    function ElImpostor({juego}) {
+      const grupos = juego.grupos || [];
+      const [selecciones, setSelecciones] = React.useState({});
+      const [verificados, setVerificados] = React.useState({});
+      const correctas = grupos.filter((g,i)=>selecciones[i]===g.impostor).length;
+      return(
+        <div>
+          <p style={{color:C.textoS,fontSize:11,marginBottom:12}}>🕵️ Encuentra la palabra que NO pertenece al grupo</p>
+          {grupos.map((g,i)=>(
+            <div key={i} style={{marginBottom:20,padding:"14px",borderRadius:12,border:`1px solid ${verificados[i]?selecciones[i]===g.impostor?"#10b981":"#ef4444":C.borde}`,background:"#0a1128"}}>
+              <p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 10px",fontSize:13}}>Grupo {i+1}:</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:10}}>
+                {[...g.palabras].sort(()=>Math.random()-0.5).map((p,pi)=>(
+                  <button key={pi} onClick={()=>!verificados[i]&&setSelecciones(prev=>({...prev,[i]:p}))}
+                    style={{...S.btnSm,background:selecciones[i]===p?verificados[i]?selecciones[i]===g.impostor?"#10b981":"#ef4444":"#6366f1":"transparent",
+                    color:selecciones[i]===p?"#fff":C.textoS,borderColor:selecciones[i]===p?"#6366f1":C.borde,fontSize:13,fontWeight:"bold"}}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+              {selecciones[i]&&!verificados[i]&&(
+                <button onClick={()=>setVerificados(prev=>({...prev,[i]:true}))} style={{...S.btn,background:"#6366f1",fontSize:12,padding:"6px 14px"}}>Verificar</button>
+              )}
+              {verificados[i]&&(
+                <div style={{marginTop:8,padding:"8px 12px",borderRadius:8,background:selecciones[i]===g.impostor?"#10b98122":"#ef444422"}}>
+                  <p style={{margin:0,color:selecciones[i]===g.impostor?"#10b981":"#ef4444",fontSize:12,fontWeight:"bold"}}>
+                    {selecciones[i]===g.impostor?"✅ ¡Correcto!":"❌ Era: "+g.impostor}
+                  </p>
+                  <p style={{margin:"4px 0 0",color:C.textoS,fontSize:11}}>{g.explicacion}</p>
+                </div>
+              )}
+            </div>
+          ))}
+          <p style={{color:"#10b981",fontWeight:"bold"}}>{correctas}/{grupos.length} correctos</p>
+          {correctas===grupos.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Eres un gran detective!</p></div>}
         </div>
       );
     }
@@ -1094,6 +1231,9 @@
                   <h4 style={{color:C.texto,marginBottom:12}}>{juegoActivo.tipo==="sopa"?"🔤 Sopa de letras":"➕ Crucigrama"}: {juegoActivo.tema}</h4>
                   {juegoActivo.tipo==="sopa"&&(<SopaLetrasEst juego={juegoActivo}/>)}
                   {juegoActivo.tipo==="crucigrama"&&(<CrucigramaEst juego={juegoActivo}/>)}
+                  {juegoActivo.tipo==="unir"&&(<UnirDefiniciones juego={juegoActivo}/>)}
+                  {juegoActivo.tipo==="completar"&&(<CompletarOraciones juego={juegoActivo}/>)}
+                  {juegoActivo.tipo==="impostor"&&(<ElImpostor juego={juegoActivo}/>)}
                 </div>):(
                   juegos.length===0?
                   <div style={{textAlign:"center",padding:50,background:C.tarjeta,borderRadius:14,color:C.textoS}}>
@@ -1102,8 +1242,8 @@
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
                     {juegos.map(j=>(
                       <div key={j.id} onClick={()=>setJuegoActivo(j)} style={{background:C.tarjeta,borderRadius:12,padding:16,border:"1px solid "+C.borde,cursor:"pointer"}}>
-                        <p style={{fontSize:32,margin:"0 0 8px"}}>{j.tipo==="sopa"?"🔤":"➕"}</p>
-                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>{j.tipo==="sopa"?"Sopa de letras":"Crucigrama"}</p>
+                        <p style={{fontSize:32,margin:"0 0 8px"}}>{"sopa":"🔤","crucigrama":"➕","unir":"🔗","completar":"✏️","impostor":"🕵️"}[j.tipo]||"🎮"</p>
+                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>{"sopa":"Sopa de letras","crucigrama":"Crucigrama","unir":"Unir definiciones","completar":"Completar","impostor":"El Impostor"}[j.tipo]||j.tipo</p>
                         <p style={{color:C.textoS,fontSize:12,margin:"0 0 4px"}}>Tema: {j.tema}</p>
                         <p style={{color:C.textoS,fontSize:11,margin:0}}>{j.area} · Docente: {j.docente}</p>
                       </div>
