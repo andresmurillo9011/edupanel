@@ -1,4 +1,22 @@
 const ADMIN_API = "https://educlass-backend-4kk0.onrender.com";
+
+function openModal(id) {
+  // Limpiar modo edición si es modal de docente nuevo
+  if (id === "modal-docente") {
+    const editId = document.getElementById("edit-user-id");
+    if (editId) editId.value = "";
+    const title = document.getElementById("modal-docente-title");
+    if (title) title.textContent = "Nuevo docente";
+  }
+  const el = document.getElementById(id);
+  if (el) el.style.display = "flex";
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "none";
+}
+
 // ============================================================
 // ADMIN.JS — Panel de administración I.E.R. Santiago de la Selva
 // Usa: Auth (auth.js) · DB (db.js) · data.js
