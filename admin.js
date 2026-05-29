@@ -19,6 +19,25 @@ document.addEventListener("DOMContentLoaded", () => {
   poblarMallaMateriaSel();
   renderAreasGrado();
   showSection("docentes");
+
+  // Auto-sugerir asignaciones del Excel al escribir nombre en modal Nuevo docente
+  const docNameInput = document.getElementById("doc-name");
+  if (docNameInput) {
+    let _asigTimer = null;
+    docNameInput.addEventListener("input", () => {
+      clearTimeout(_asigTimer);
+      _asigTimer = setTimeout(() => {
+        if (asignacionesTemp.length > 0) return;
+        const asigExcel = buscarAsignacionesExcel(docNameInput.value);
+        if (asigExcel) {
+          asignacionesTemp = asigExcel.map(a => ({ ...a }));
+          renderAsignacionesLista();
+          renderAreasGrado();
+          showToast("✨ Asignaciones del horario 2026 cargadas automáticamente");
+        }
+      }, 600);
+    });
+  }
 });
 
 // ============================================================
@@ -298,6 +317,29 @@ async function saveDocente() {
 }
 
 
+// ============================================================
+// MAPEO NOMBRE DOCENTE → ASIGNACIONES DEL EXCEL
+// Compara el nombre del docente (ignorando mayúsculas/tildes)
+// con las claves de DOCENTES_ASIGNACIONES definido en data.js
+// ============================================================
+function buscarAsignacionesExcel(nombreDocente) {
+  if (typeof DOCENTES_ASIGNACIONES === "undefined") return null;
+  const norm = s => (s||"").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9\s]/g,"").trim();
+  const nombreNorm = norm(nombreDocente);
+  for (const [clave, asigs] of Object.entries(DOCENTES_ASIGNACIONES)) {
+    const claveNorm = norm(clave);
+    // Match exacto, o el nombre contiene la clave o viceversa
+    if (nombreNorm === claveNorm ||
+        nombreNorm.includes(claveNorm) ||
+        claveNorm.includes(nombreNorm)) {
+      return asigs;
+    }
+  }
+  return null;
+}
+
 function editDocente(id) {
   // Buscar en localStorage primero, luego en el cache del grid
   let u = Auth.getAllUsers().find(u => u.id === id);
@@ -321,8 +363,22 @@ function editDocente(id) {
   if (document.getElementById("doc-pass-educlass"))
     document.getElementById("doc-pass-educlass").value = u.passEduclass || "";
 
-  asignacionesTemp = (u.asignaciones || []).map(a => ({ ...a }));
+  // ── Auto-cargar asignaciones del Excel si el docente no tiene ninguna aún ──
+  const asigExistentes = u.asignaciones || [];
+  if (asigExistentes.length === 0) {
+    const asigExcel = buscarAsignacionesExcel(u.name || u.username || "");
+    if (asigExcel) {
+      asignacionesTemp = asigExcel.map(a => ({ ...a }));
+      showToast(`✨ Asignaciones cargadas del horario 2026 (${asignacionesTemp.length} clases)`);
+    } else {
+      asignacionesTemp = [];
+    }
+  } else {
+    asignacionesTemp = asigExistentes.map(a => ({ ...a }));
+  }
+
   renderAsignacionesLista();
+  renderAreasGrado();
 
   const modal = document.getElementById("modal-docente");
   if (modal) { modal.style.display = "flex"; }
