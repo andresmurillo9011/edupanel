@@ -221,8 +221,9 @@ async function saveDocente() {
   const passEduclass  = document.getElementById("doc-pass-educlass")?.value.trim()  || "";
   const errEl         = document.getElementById("modal-doc-error");
 
-  if (!name||!username||!pass) {
-    errEl.textContent="Nombre, usuario y contraseña son obligatorios";
+  const editingIdCheck = document.getElementById("edit-user-id")?.value?.trim() || "";
+  if (!name || !username || (!pass && !editingIdCheck)) {
+    errEl.textContent = editingIdCheck ? "Nombre y usuario son obligatorios" : "Nombre, usuario y contraseña son obligatorios";
     errEl.style.display="block"; return;
   }
   errEl.style.display = "none";
@@ -357,6 +358,8 @@ function editDocente(id) {
   document.getElementById("doc-name").value = u.name || "";
   document.getElementById("doc-username").value = u.username || u.email || "";
   document.getElementById("doc-pass").value = u.password || "";
+  const passEl = document.getElementById("doc-pass");
+  if (passEl) passEl.placeholder = u.password ? "" : "(dejar vacío = no cambiar)";
   document.getElementById("doc-email").value = u.email || "";
   if (document.getElementById("doc-email-educlass"))
     document.getElementById("doc-email-educlass").value = u.emailEduclass || u.email || "";
