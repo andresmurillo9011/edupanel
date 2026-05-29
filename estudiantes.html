@@ -528,6 +528,135 @@
       );
     }
 
+
+    function SopaLetrasEst({juego}) {
+      const size = 15;
+      const [grid, setGrid] = React.useState(null);
+      const [placed, setPlaced] = React.useState([]);
+      const [encontradas, setEncontradas] = React.useState([]);
+      const [seleccion, setSeleccion] = React.useState([]);
+      const [arrastrando, setArrastrando] = React.useState(false);
+
+      React.useEffect(()=>{
+        if(!juego?.palabras) return;
+        const dirs=[[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];
+        const g=Array.from({length:size},()=>Array(size).fill(""));
+        const p=[];
+        for(const pal of juego.palabras){
+          let ok=false;
+          for(let t=0;t<200&&!ok;t++){
+            const [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
+            const sr=Math.floor(Math.random()*size),sc=Math.floor(Math.random()*size);
+            let fits=true;
+            for(let i=0;i<pal.length;i++){const r=sr+dr*i,c=sc+dc*i;if(r<0||r>=size||c<0||c>=size||(g[r][c]&&g[r][c]!==pal[i])){fits=false;break;}}
+            if(fits){for(let i=0;i<pal.length;i++)g[sr+dr*i][sc+dc*i]=pal[i];p.push({palabra:pal,sr,sc,dr,dc});ok=true;}
+          }
+        }
+        const letras="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for(let r=0;r<size;r++)for(let c=0;c<size;c++)if(!g[r][c])g[r][c]=letras[Math.floor(Math.random()*26)];
+        setGrid(g);setPlaced(p);
+      },[juego]);
+
+      const toggleCell=(r,c)=>{
+        if(!arrastrando) return;
+        setSeleccion(prev=>{
+          const key=`${r},${c}`;
+          if(prev.includes(key)) return prev;
+          return [...prev,key];
+        });
+      };
+
+      const verificar=()=>{
+        const letrasSeq=seleccion.map(k=>k.split(",")).map(([r,c])=>grid[r][c]).join("");
+        const encontrada=placed.find(p=>p.palabra===letrasSeq||p.palabra===letrasSeq.split("").reverse().join(""));
+        if(encontrada&&!encontradas.includes(encontrada.palabra)){
+          setEncontradas(prev=>[...prev,encontrada.palabra]);
+        }
+        setSeleccion([]);setArrastrando(false);
+      };
+
+      if(!grid) return <p style={{color:C.textoS}}>Generando sopa...</p>;
+      return(
+        <div>
+          <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+            <div onMouseUp={verificar} onTouchEnd={verificar}>
+              {grid.map((row,ri)=>(
+                <div key={ri} style={{display:"flex"}}>
+                  {row.map((cell,ci)=>{
+                    const key=`${ri},${ci}`;
+                    const selec=seleccion.includes(key);
+                    const enc=encontradas.some(p=>placed.find(pl=>pl.palabra===p&&[...Array(p.length)].some((_,i)=>pl.sr+pl.dr*i===ri&&pl.sc+pl.dc*i===ci)));
+                    return(<div key={ci}
+                      onMouseDown={()=>{setArrastrando(true);setSeleccion([key]);}}
+                      onMouseEnter={()=>toggleCell(ri,ci)}
+                      onTouchStart={()=>{setArrastrando(true);setSeleccion([key]);}}
+                      onTouchMove={e=>{const t=e.touches[0];const el=document.elementFromPoint(t.clientX,t.clientY);if(el?.dataset?.rc)toggleCell(...el.dataset.rc.split(",").map(Number));}}
+                      data-rc={`${ri},${ci}`}
+                      style={{width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:"bold",cursor:"pointer",userSelect:"none",background:enc?"#10b981":selec?"#6366f1":"transparent",color:enc||selec?"#fff":C.texto,borderRadius:3,border:"1px solid transparent"}}>
+                      {cell}
+                    </div>);
+                  })}
+                </div>
+              ))}
+            </div>
+            <div style={{flex:1,minWidth:160}}>
+              <p style={{color:C.azulC,fontWeight:"bold",marginBottom:8,fontSize:12}}>Palabras ({encontradas.length}/{juego.palabras.length}):</p>
+              {juego.palabras.map((p,i)=>(
+                <div key={i} style={{padding:"4px 8px",marginBottom:4,borderRadius:6,background:encontradas.includes(p)?"#10b98122":"#0a1128",border:"1px solid "+(encontradas.includes(p)?"#10b981":C.borde)}}>
+                  <p style={{margin:0,fontSize:12,color:encontradas.includes(p)?"#10b981":C.texto,textDecoration:encontradas.includes(p)?"line-through":"none"}}>{p}</p>
+                  <p style={{margin:0,fontSize:10,color:C.textoS}}>{juego.pistas?.[i]}</p>
+                </div>
+              ))}
+              {encontradas.length===juego.palabras.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,marginTop:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Completaste la sopa!</p></div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CrucigramaEst({juego}) {
+      const pals = juego.palabras || [];
+      const size = 12;
+      const [respuestas, setRespuestas] = React.useState({});
+      const grid = Array.from({length:size},()=>Array(size).fill(null));
+      pals.forEach((p,idx)=>{
+        const r=p.fila||idx*2,c=p.col||0;
+        for(let i=0;i<p.palabra.length;i++){
+          const ri=p.direccion==="horizontal"?r:r+i,ci=p.direccion==="horizontal"?c+i:c;
+          if(ri<size&&ci<size)grid[ri][ci]={idx,i,letra:p.palabra[i],num:i===0?idx+1:null};
+        }
+      });
+      const correctas=pals.filter((p,i)=>(respuestas[i]||"").toUpperCase()===p.palabra).length;
+      return(
+        <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+          <div>
+            {grid.map((row,ri)=>(
+              <div key={ri} style={{display:"flex"}}>
+                {row.map((cell,ci)=>(
+                  <div key={ci} style={{width:28,height:28,border:cell?"1px solid "+C.borde:"none",background:cell?"#0f1f3d":"transparent",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",fontSize:11,color:C.txt,fontFamily:"monospace"}}>
+                    {cell&&cell.num&&<span style={{position:"absolute",top:1,left:1,fontSize:7,color:C.azulC}}>{cell.num}</span>}
+                    {cell&&(respuestas[cell.idx]?.[cell.i]||"_")}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div style={{flex:1,minWidth:200}}>
+            <p style={{color:C.azulC,fontWeight:"bold",marginBottom:8,fontSize:12}}>Pistas ({correctas}/{pals.length}):</p>
+            {pals.map((p,i)=>(
+              <div key={i} style={{marginBottom:8}}>
+                <p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{i+1}. {p.direccion==="horizontal"?"→":"↓"} {p.pista}</p>
+                <input value={respuestas[i]||""} onChange={e=>setRespuestas(prev=>({...prev,[i]:e.target.value.toUpperCase()}))}
+                  style={{...S.inp,width:"100%",boxSizing:"border-box",fontSize:12,fontFamily:"monospace",letterSpacing:3,background:(respuestas[i]||"").toUpperCase()===p.palabra?"#10b98122":undefined,borderColor:(respuestas[i]||"").toUpperCase()===p.palabra?"#10b981":undefined}}
+                  placeholder={`${p.palabra.length} letras`} maxLength={p.palabra.length}/>
+              </div>
+            ))}
+            {correctas===pals.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Crucigrama completo!</p></div>}
+          </div>
+        </div>
+      );
+    }
+
     function App() {
       const getSesion = () => {
         try {
@@ -539,8 +668,21 @@
 
       const [seccion, setSeccion] = useState("tareas");
       const [pizMensajes, setPizMensajes] = useState([]);
+      const [juegos, setJuegos] = useState([]);
+      const [juegoActivo, setJuegoActivo] = useState(null);
+      const [juegoRespuestas, setJuegoRespuestas] = useState({});
+      const [juegoResuelto, setJuegoResuelto] = useState(false);
       const [pizCargando, setPizCargando] = useState(false);
       const [postitTexto, setPostitTexto] = useState({});
+      const cargarJuegos = async () => {
+        if (!sesion) return;
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          const r = await fetch(`${API}/juegos/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
+          const d = await r.json();
+          setJuegos(d.juegos || []);
+        } catch(_) {}
+      };
       const cargarPizarraEst = async () => {
         if (!sesion) return;
         setPizCargando(true);
@@ -649,6 +791,7 @@
       // LOGIN
       React.useEffect(() => {
         if (seccion === "pizarra" && sesion) cargarPizarraEst();
+        if (seccion === "juegos" && sesion) cargarJuegos();
       }, [seccion, sesion]);
 
       if (!sesion && vista==="login") return (
@@ -808,7 +951,8 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"pizarra",label:"🖊️ Pizarra"}
+                {id:"pizarra",label:"🖊️ Pizarra"},
+                {id:"juegos",label:"🎮 Juegos"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -938,6 +1082,35 @@
 
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
+            )}
+            {seccion==="juegos"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <h3 style={{color:"#f43f5e",margin:0,fontSize:18}}>🎮 Juegos de Grado {sesion.grade}</h3>
+                  <button onClick={cargarJuegos} style={{...S.btnSm,fontSize:12}}>🔄 Actualizar</button>
+                </div>
+                {juegoActivo?(<div>
+                  <button onClick={()=>{setJuegoActivo(null);setJuegoResuelto(false);}} style={{...S.btnSm,marginBottom:16}}>← Volver a juegos</button>
+                  <h4 style={{color:C.texto,marginBottom:12}}>{juegoActivo.tipo==="sopa"?"🔤 Sopa de letras":"➕ Crucigrama"}: {juegoActivo.tema}</h4>
+                  {juegoActivo.tipo==="sopa"&&(<SopaLetrasEst juego={juegoActivo}/>)}
+                  {juegoActivo.tipo==="crucigrama"&&(<CrucigramaEst juego={juegoActivo}/>)}
+                </div>):(
+                  juegos.length===0?
+                  <div style={{textAlign:"center",padding:50,background:C.tarjeta,borderRadius:14,color:C.textoS}}>
+                    <p style={{fontSize:48,margin:0}}>🎮</p><p>No hay juegos asignados todavía</p>
+                  </div>:
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
+                    {juegos.map(j=>(
+                      <div key={j.id} onClick={()=>setJuegoActivo(j)} style={{background:C.tarjeta,borderRadius:12,padding:16,border:"1px solid "+C.borde,cursor:"pointer"}}>
+                        <p style={{fontSize:32,margin:"0 0 8px"}}>{j.tipo==="sopa"?"🔤":"➕"}</p>
+                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>{j.tipo==="sopa"?"Sopa de letras":"Crucigrama"}</p>
+                        <p style={{color:C.textoS,fontSize:12,margin:"0 0 4px"}}>Tema: {j.tema}</p>
+                        <p style={{color:C.textoS,fontSize:11,margin:0}}>{j.area} · Docente: {j.docente}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
             {seccion==="pizarra"&&(
               <div>
