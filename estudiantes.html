@@ -1242,8 +1242,8 @@
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
                     {juegos.map(j=>(
                       <div key={j.id} onClick={()=>setJuegoActivo(j)} style={{background:C.tarjeta,borderRadius:12,padding:16,border:"1px solid "+C.borde,cursor:"pointer"}}>
-                        <p style={{fontSize:32,margin:"0 0 8px"}}>{"sopa":"🔤","crucigrama":"➕","unir":"🔗","completar":"✏️","impostor":"🕵️"}[j.tipo]||"🎮"</p>
-                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>{"sopa":"Sopa de letras","crucigrama":"Crucigrama","unir":"Unir definiciones","completar":"Completar","impostor":"El Impostor"}[j.tipo]||j.tipo</p>
+                        <p style={{fontSize:32,margin:"0 0 8px"}}>(j.tipo==="sopa"?"🔤":j.tipo==="crucigrama"?"➕":j.tipo==="unir"?"🔗":j.tipo==="completar"?"✏️":j.tipo==="impostor"?"🕵️":"🎮")</p>
+                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>(j.tipo==="sopa"?"Sopa de letras":j.tipo==="crucigrama"?"Crucigrama":j.tipo==="unir"?"Unir definiciones":j.tipo==="completar"?"Completar":j.tipo==="impostor"?"El Impostor":j.tipo)</p>
                         <p style={{color:C.textoS,fontSize:12,margin:"0 0 4px"}}>Tema: {j.tema}</p>
                         <p style={{color:C.textoS,fontSize:11,margin:0}}>{j.area} · Docente: {j.docente}</p>
                       </div>
