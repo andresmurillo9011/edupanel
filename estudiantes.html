@@ -123,37 +123,6 @@
       "Authorization":"Bearer "+(localStorage.getItem("edutokenest")||"")
     });
 
-      const cargarPizarraEst = async (sesionParam) => {
-        const s = sesionParam || sesion;
-        if (!s) return;
-        setPizCargando(true);
-        try {
-          const instId = s.institutionId || s.institution?.id;
-          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(s.grade)}`, { headers: authHEst() });
-          const d = await r.json();
-          setPizMensajes(d.mensajes || []);
-        } catch(_) {}
-        setPizCargando(false);
-      };
-      const enviarPostit = async (mensajeId) => {
-        const texto = (postitTexto[mensajeId]||"").trim();
-        if (!texto || !sesion) return;
-        const color = postitColor[mensajeId] || "#fef08a";
-        const instId = sesion.institutionId || sesion.institution?.id;
-        try {
-          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
-            method: "POST",
-            headers: { ...authHEst(), "Content-Type": "application/json" },
-            body: JSON.stringify({ texto, color })
-          });
-          const d = await r.json();
-          if (d.ok) {
-            setPostitTexto(p => ({ ...p, [mensajeId]: "" }));
-            setPostitModal(null);
-            cargarPizarraEst();
-          }
-        } catch(_) {}
-      };
     const TODOS_GRADOS = [
       "Transicion","1°","2°","3°","4°","5°",
       "6°","7°","8°","9°","10°","11°"
@@ -545,6 +514,36 @@
       const [pizMensajes, setPizMensajes] = useState([]);
       const [pizCargando, setPizCargando] = useState(false);
       const [postitTexto, setPostitTexto] = useState({});
+      const cargarPizarraEst = async () => {
+        if (!sesion) return;
+        setPizCargando(true);
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
+          const d = await r.json();
+          setPizMensajes(d.mensajes || []);
+        } catch(_) {}
+        setPizCargando(false);
+      };
+      const enviarPostit = async (mensajeId) => {
+        const texto = (postitTexto[mensajeId]||"").trim();
+        if (!texto) return;
+        const color = postitColor[mensajeId] || "#fef08a";
+        const instId = sesion.institutionId || sesion.institution?.id;
+        try {
+          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
+            method: "POST",
+            headers: { ...authHEst(), "Content-Type": "application/json" },
+            body: JSON.stringify({ texto, color })
+          });
+          const d = await r.json();
+          if (d.ok) {
+            setPostitTexto(p => ({ ...p, [mensajeId]: "" }));
+            setPostitModal(null);
+            cargarPizarraEst();
+          }
+        } catch(_) {}
+      };
       const [postitColor, setPostitColor] = useState({});
       const [postitModal, setPostitModal] = useState(null);
       const [sesion, setSesion] = useState(getSesion());
@@ -622,7 +621,7 @@
 
       // LOGIN
       React.useEffect(() => {
-        if (seccion === "pizarra" && sesion) cargarPizarraEst(sesion);
+        if (seccion === "pizarra" && sesion) cargarPizarraEst();
       }, [seccion, sesion]);
 
       if (!sesion && vista==="login") return (
