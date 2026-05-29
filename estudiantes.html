@@ -1260,8 +1260,8 @@
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
                     {juegos.map(j=>(
                       <div key={j.id} onClick={()=>setJuegoActivo(j)} style={{background:C.tarjeta,borderRadius:12,padding:16,border:"1px solid "+C.borde,cursor:"pointer"}}>
-                        <p style={{fontSize:32,margin:"0 0 8px"}}>juegoIcono(j.tipo)</p>
-                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>juegoNombre(j.tipo)</p>
+                        <p style={{fontSize:32,margin:"0 0 8px"}}>{juegoIcono(j.tipo)}</p>
+                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>{juegoNombre(j.tipo)}</p>
                         <p style={{color:C.textoS,fontSize:12,margin:"0 0 4px"}}>Tema: {j.tema}</p>
                         <p style={{color:C.textoS,fontSize:11,margin:0}}>{j.area} · Docente: {j.docente}</p>
                       </div>
