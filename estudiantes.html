@@ -680,6 +680,13 @@
         setInicio(null);setHover(null);
       };
 
+      const onEnviar = React.useRef(false);
+      React.useEffect(()=>{
+        if(encontradas.length>0 && juego.palabras && encontradas.length===juego.palabras.length && !onEnviar.current){
+          onEnviar.current=true;
+          if(window._enviarResultadoJuego) window._enviarResultadoJuego(juego, encontradas.length, juego.palabras.length);
+        }
+      },[encontradas]);
       if(!grid) return <p style={{color:C.textoS}}>Generando sopa...</p>;
       return(
         <div>
@@ -715,7 +722,10 @@
                 </div>
               ))}
               {inicio&&<p style={{color:"#f59e0b",fontSize:11,marginTop:8}}>⚡ Seleccionando desde ({inicio[0]+1},{inicio[1]+1})... clic en la última letra</p>}
-              {encontradas.length===juego.palabras.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,marginTop:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Completaste la sopa!</p></div>}
+              {encontradas.length===juego.palabras.length&&(<div style={{background:"#10b98133",borderRadius:10,padding:12,marginTop:12,textAlign:"center"}}>
+              <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 8px"}}>🎉 ¡Completaste la sopa!</p>
+              <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente automáticamente</p>
+            </div>)}
             </div>
           </div>
         </div>
@@ -759,7 +769,11 @@
                   placeholder={`${p.palabra.length} letras`} maxLength={p.palabra.length}/>
               </div>
             ))}
-            {correctas===pals.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Crucigrama completo!</p></div>}
+            {correctas===pals.length&&(<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
+              <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Crucigrama completo!</p>
+              {window._enviarResultadoJuego&&window._enviarResultadoJuego(juego,correctas,pals.length)}
+              <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado</p>
+            </div>)}
           </div>
         </div>
       );
@@ -925,6 +939,22 @@
       const [juegoResuelto, setJuegoResuelto] = useState(false);
       const [pizCargando, setPizCargando] = useState(false);
       const [postitTexto, setPostitTexto] = useState({});
+      const enviarResultado = async (juego, correctas, total) => {
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          await fetch(`${API}/juegos/resultado`, {
+            method: "POST",
+            headers: { ...authHEst(), "Content-Type": "application/json" },
+            body: JSON.stringify({
+              juegoId: juego.id,
+              grado: sesion.grade,
+              tipo: juego.tipo,
+              tema: juego.tema,
+              correctas, total
+            })
+          });
+        } catch(_) {}
+      };
       const cargarJuegos = async () => {
         if (!sesion) return;
         try {
@@ -1343,6 +1373,7 @@
                   <h3 style={{color:"#f43f5e",margin:0,fontSize:18}}>🎮 Juegos de Grado {sesion.grade}</h3>
                   <button onClick={cargarJuegos} style={{...S.btnSm,fontSize:12}}>🔄 Actualizar</button>
                 </div>
+                {juegoActivo&&(window._enviarResultadoJuego=enviarResultado)}
                 {juegoActivo?(<div>
                   <button onClick={()=>{setJuegoActivo(null);setJuegoResuelto(false);}} style={{...S.btnSm,marginBottom:16}}>← Volver a juegos</button>
                   <h4 style={{color:C.texto,marginBottom:12}}>{juegoActivo.tipo==="sopa"?"🔤 Sopa de letras":"➕ Crucigrama"}: {juegoActivo.tema}</h4>
