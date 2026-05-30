@@ -769,11 +769,7 @@
                   placeholder={`${p.palabra.length} letras`} maxLength={p.palabra.length}/>
               </div>
             ))}
-            {correctas===pals.length&&(<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
-              <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Crucigrama completo!</p>
-              {window._enviarResultadoJuego&&window._enviarResultadoJuego(juego,correctas,pals.length)}
-              <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado</p>
-            </div>)}
+            {correctas===pals.length&&<CrucigramaWin juego={juego} correctas={correctas} total={pals.length}/>}
           </div>
         </div>
       );
@@ -829,7 +825,7 @@
             </div>
           </div>
           <p style={{color:"#10b981",marginTop:12,fontWeight:"bold"}}>{correctas}/{pares.length} correctas</p>
-          {correctas===pares.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Completaste el juego!</p></div>}
+          {correctas===pares.length&&<UnirWin juego={juego} correctas={correctas} total={pares.length}/>}
         </div>
       );
     }
@@ -860,7 +856,7 @@
             </div>);
           })}
           <p style={{color:"#10b981",fontWeight:"bold"}}>{correctas}/{oraciones.length} correctas</p>
-          {correctas===oraciones.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Todas correctas!</p></div>}
+          {correctas===oraciones.length&&<CompletarWin juego={juego} correctas={correctas} total={oraciones.length}/>}
         </div>
       );
     }
@@ -899,11 +895,76 @@
             </div>
           ))}
           <p style={{color:"#10b981",fontWeight:"bold"}}>{correctas}/{grupos.length} correctos</p>
-          {correctas===grupos.length&&<div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}><p style={{color:"#10b981",fontWeight:"bold",margin:0}}>🎉 ¡Eres un gran detective!</p></div>}
+          {correctas===grupos.length&&(<ImpostorWin juego={juego} correctas={correctas} total={grupos.length}/>)}
         </div>
       );
     }
 
+
+
+    function ImpostorWin({juego, correctas, total}) {
+      const enviado = React.useRef(false);
+      React.useEffect(()=>{
+        if (!enviado.current) {
+          enviado.current = true;
+          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
+        }
+      }, []);
+      return (
+        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
+          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Eres un gran detective!</p>
+          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
+        </div>
+      );
+    }
+
+    function CompletarWin({juego, correctas, total}) {
+      const enviado = React.useRef(false);
+      React.useEffect(()=>{
+        if (!enviado.current) {
+          enviado.current = true;
+          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
+        }
+      }, []);
+      return (
+        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
+          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Todas correctas!</p>
+          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
+        </div>
+      );
+    }
+
+    function CrucigramaWin({juego, correctas, total}) {
+      const enviado = React.useRef(false);
+      React.useEffect(()=>{
+        if (!enviado.current) {
+          enviado.current = true;
+          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
+        }
+      }, []);
+      return (
+        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
+          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Crucigrama completo!</p>
+          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
+        </div>
+      );
+    }
+
+    function UnirWin({juego, correctas, total}) {
+      const enviado = React.useRef(false);
+      React.useEffect(()=>{
+        if (!enviado.current) {
+          enviado.current = true;
+          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
+        }
+      }, []);
+      return (
+        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
+          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Completaste el juego!</p>
+          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
+        </div>
+      );
+    }
 
     const juegoIcono = (tipo) => {
       if (tipo === "sopa") return "🔤";
