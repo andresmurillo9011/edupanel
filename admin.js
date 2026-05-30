@@ -363,7 +363,6 @@ function editDocente(id) {
   // Buscar en localStorage primero, luego en el cache del grid
   let u = Auth.getAllUsers().find(u => u.id === id);
   if (!u) {
-    // Buscar en el dataset del botón (guardado como data attribute)
     const btn = document.querySelector(`[data-edit-id="${id}"]`);
     if (btn) {
       try { u = JSON.parse(decodeURIComponent(btn.dataset.user)); } catch(_) {}
@@ -384,25 +383,49 @@ function editDocente(id) {
   if (document.getElementById("doc-pass-educlass"))
     document.getElementById("doc-pass-educlass").value = u.passEduclass || "";
 
-  // ── Auto-cargar asignaciones del Excel si el docente no tiene ninguna aún ──
-  const asigExistentes = u.asignaciones || [];
-  if (asigExistentes.length === 0) {
-    const asigExcel = buscarAsignacionesExcel(u.name || u.username || "");
-    if (asigExcel) {
-      asignacionesTemp = asigExcel.map(a => ({ ...a }));
-      showToast(`✨ Asignaciones cargadas del horario 2026 (${asignacionesTemp.length} clases)`);
-    } else {
-      asignacionesTemp = [];
-    }
-  } else {
-    asignacionesTemp = asigExistentes.map(a => ({ ...a }));
-  }
-
+  // Abrir modal primero
+  const modal = document.getElementById("modal-docente");
+  if (modal) modal.style.display = "flex";
+  asignacionesTemp = [];
   renderAsignacionesLista();
   renderAreasGrado();
 
-  const modal = document.getElementById("modal-docente");
-  if (modal) { modal.style.display = "flex"; }
+  // Cargar asignaciones desde el backend EduClass (fuente de verdad)
+  const tok = localStorage.getItem("edutoken") || "";
+  fetch(`${ADMIN_API}/asignaciones-docente/${id}`, {
+    headers: { "Authorization": `Bearer ${tok}` }
+  })
+  .then(r => r.json())
+  .then(d => {
+    const asigs = d.asignaciones || d || [];
+    if (asigs.length > 0) {
+      asignacionesTemp = asigs.map(a => ({ grado: a.grado, area: a.area }));
+      renderAsignacionesLista();
+      renderAreasGrado();
+    } else {
+      // Fallback: asignaciones del objeto local
+      const asigLocal = u.asignaciones || [];
+      if (asigLocal.length > 0) {
+        asignacionesTemp = asigLocal.map(a => ({ ...a }));
+      } else {
+        // Último recurso: buscar en Excel
+        const asigExcel = buscarAsignacionesExcel(u.name || u.username || "");
+        if (asigExcel) {
+          asignacionesTemp = asigExcel.map(a => ({ ...a }));
+          showToast(`✨ Asignaciones cargadas del horario 2026 (${asignacionesTemp.length} clases)`);
+        }
+      }
+      renderAsignacionesLista();
+      renderAreasGrado();
+    }
+  })
+  .catch(() => {
+    // Si falla el backend, usar local
+    const asigLocal = u.asignaciones || [];
+    asignacionesTemp = asigLocal.length > 0 ? asigLocal.map(a=>({...a})) : [];
+    renderAsignacionesLista();
+    renderAreasGrado();
+  });
 }
 
 function deleteDocente(id) {
