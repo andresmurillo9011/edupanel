@@ -336,7 +336,7 @@ async function renderSchedule(day) {
         const avance = cached?.avancePorcentaje ?? null;
         const hasPend = cached?.guiaTerminada === false;
         const avanceColor = avance >= 80 ? "#10b981" : avance >= 40 ? "#f59e0b" : "#ef4444";
-        const esBloqueNum = fila.num ? getHorasDelBloque(dia, grado, fila.num).length > 1 : false;
+        const esBloqueNum = fila.num ? getHorasDelBloque(day, grado, fila.num).length > 1 : false;
         td.innerHTML = `
           <span class="cell-icon">${cfg.icon}</span>
           <span class="cell-materia">${materia}</span>
