@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/edupanel/planeacion/static/css/main.e6c13ad2.css",
-    "main.js": "/edupanel/planeacion/static/js/main.945318be.js",
+    "main.js": "/edupanel/planeacion/static/js/main.d8e8a2d1.js",
     "static/js/453.825386d9.chunk.js": "/edupanel/planeacion/static/js/453.825386d9.chunk.js",
     "index.html": "/edupanel/planeacion/index.html",
     "main.e6c13ad2.css.map": "/edupanel/planeacion/static/css/main.e6c13ad2.css.map",
-    "main.945318be.js.map": "/edupanel/planeacion/static/js/main.945318be.js.map",
+    "main.d8e8a2d1.js.map": "/edupanel/planeacion/static/js/main.d8e8a2d1.js.map",
     "453.825386d9.chunk.js.map": "/edupanel/planeacion/static/js/453.825386d9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.945318be.js"
+    "static/js/main.d8e8a2d1.js"
   ]
 }

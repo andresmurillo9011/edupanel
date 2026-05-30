@@ -181,7 +181,6 @@ return(<div style={S.fondo}><Header/><div style={{...S.cont,maxWidth:860}}>
 <p style={{color:C.textoS,fontSize:11,textAlign:"center",margin:0}}>Los estudiantes verán este juego en su portal al ingresar el código de tarea.</p>
 </div>)}
 </div>
-</div>
 </>
 )}
 </div></div>);
