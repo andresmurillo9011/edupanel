@@ -143,9 +143,24 @@ app.post("/auth/login", async (req, res) => {
     if (!user) return res.status(401).json({ mensaje: "Correo no registrado" });
     if (!await bcrypt.compare(password || "", user.password)) return res.status(401).json({ mensaje: "Contraseña incorrecta" });
     const { password: _, ...pub } = user;
-    const token = jwt.sign({ id: user.id, role: "teacher", institutionId: user.institutionId }, JWT_SECRET, { expiresIn: "30d" });
-    res.json({ usuario: pub, token });
+    const cargoLower = (user.cargo || "").toLowerCase();
+    const esAdmin = cargoLower === "admin" || cargoLower === "superadmin";
+    const token = jwt.sign({ id: user.id, role: esAdmin ? "admin" : "teacher", institutionId: user.institutionId }, JWT_SECRET, { expiresIn: "30d" });
+    const asigs = user.asignaciones ? JSON.parse(user.asignaciones) : [];
+    res.json({ ok: true, usuario: { ...pub, role: esAdmin ? "admin" : "docente", asignaciones: asigs }, token });
   } catch (e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// Endpoint para actualizar cargo de un docente (solo admin)
+app.put("/users/:userId/cargo", authMiddleware, async (req, res) => {
+  try {
+    const { cargo } = req.body;
+    const updated = await prisma.user.update({
+      where: { id: req.params.userId },
+      data: { cargo }
+    });
+    res.json({ ok: true, usuario: updated });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
 });
 
 app.post("/actualizar-perfil", authMiddleware, uploadLogo, async (req, res) => {
@@ -192,6 +207,49 @@ app.post("/auth/login-estudiante", async (req, res) => {
 });
 
 // ── ESTUDIANTES ───────────────────────────────────────
+
+// GET: listar docentes de la institución
+app.get("/users", authMiddleware, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { institutionId: req.user.institutionId },
+      select: { id: true, name: true, email: true, cargo: true, asignaciones: true, createdAt: true },
+      orderBy: { name: "asc" }
+    });
+    const parsed = users.map(u => ({
+      ...u,
+      asignaciones: u.asignaciones ? JSON.parse(u.asignaciones) : []
+    }));
+    res.json({ ok: true, usuarios: parsed });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// PUT: actualizar asignaciones de un docente
+app.put("/users/:userId/asignaciones", authMiddleware, async (req, res) => {
+  try {
+    const { asignaciones, cargo } = req.body;
+    const data = {};
+    if (asignaciones !== undefined) data.asignaciones = JSON.stringify(asignaciones);
+    if (cargo !== undefined) data.cargo = cargo;
+    const updated = await prisma.user.update({
+      where: { id: req.params.userId },
+      data
+    });
+    res.json({ ok: true, usuario: { ...updated, asignaciones: asignaciones || [] } });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// GET: perfil propio con asignaciones
+app.get("/users/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, name: true, email: true, cargo: true, asignaciones: true, institutionId: true }
+    });
+    res.json({ ok: true, usuario: { ...user, asignaciones: user.asignaciones ? JSON.parse(user.asignaciones) : [] } });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
 app.get("/students", authMiddleware, async (req, res) => {
   try {
     const students = await prisma.student.findMany({
@@ -283,7 +341,7 @@ app.delete("/clase/:id", authMiddleware, async (req, res) => {
 // ── TAREAS ────────────────────────────────────────────
 app.post("/tasks", authMiddleware, async (req, res) => {
   try {
-    const { titulo, descripcion, tipo, actividad, area, grado, fechaEntrega, asignarGrado, estudiantesIds } = req.body;
+    const { titulo, descripcion, tipo, actividad, area, grado, fechaEntrega, asignarGrado, estudiantesIds, materialRef } = req.body;
     if (!titulo) return res.status(400).json({ mensaje: "Título requerido" });
 
     let ids = Array.isArray(estudiantesIds) ? [...estudiantesIds] : [];
@@ -297,7 +355,7 @@ app.post("/tasks", authMiddleware, async (req, res) => {
 
     const tarea = await prisma.task.create({
       data: {
-        title: titulo, description: descripcion || "", type: tipo || "taller",
+        title: titulo, description: descripcion || "", materialRef: materialRef || "", type: tipo || "taller",
         area, grade: grado || asignarGrado || "", dueDate: fechaEntrega ? new Date(fechaEntrega) : null,
         activity: actividad ? JSON.stringify(actividad) : null, userId: req.user.id, institutionId: req.user.institutionId,
         assignments: { create: ids.map(studentId => ({ studentId, status: "pending" })) }
@@ -348,12 +406,252 @@ app.get("/tasks/:id/entregas", authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ mensaje: e.message }); }
 });
 
+
+
+// ── HELPER: Auto-asignar nota al libro de notas ────────────────────────
+async function autoAsignarNota(userId, institutionId, tarea, studentId, nota) {
+  try {
+    const key = `periodos_${userId}_notas`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId, key } }
+    }).catch(() => null);
+    if (!existing) return;
+
+    const periodos = JSON.parse(existing.data || "[]");
+    const tituloTarea = (tarea.title || "").toLowerCase().trim();
+    const areaTarea = (tarea.area || "").toLowerCase().trim();
+    const gradoTarea = (tarea.grade || "").toLowerCase().replace("°","").trim();
+
+    // Buscar periodo que coincida con grado y área
+    let periodoIdx = -1, actIdx = -1;
+    for (let i = 0; i < periodos.length; i++) {
+      const p = periodos[i];
+      const pGrado = (p.grado || "").toLowerCase().replace("°","").trim();
+      const pArea = (p.area || "").toLowerCase().trim();
+      if (pGrado !== gradoTarea || pArea !== areaTarea) continue;
+
+      // Buscar actividad con nombre similar al título de la tarea
+      const acts = p.actividades || [];
+      for (let j = 0; j < acts.length; j++) {
+        const actNombre = (acts[j] || "").toLowerCase().trim();
+        if (actNombre === tituloTarea || tituloTarea.includes(actNombre) || actNombre.includes(tituloTarea)) {
+          periodoIdx = i; actIdx = j; break;
+        }
+      }
+      // Si no hay coincidencia exacta, buscar actividad vacía (sin notas asignadas para este estudiante)
+      if (actIdx === -1) {
+        const notasP = p.notas || {};
+        const notasEst = notasP[studentId] || {};
+        for (let j = 0; j < acts.length; j++) {
+          if (!notasEst[j] && notasEst[j] !== 0) { periodoIdx = i; actIdx = j; break; }
+        }
+      }
+      if (periodoIdx !== -1) break;
+    }
+
+    if (periodoIdx === -1 || actIdx === -1) return; // No encontró dónde asignar
+
+    if (!periodos[periodoIdx].notas) periodos[periodoIdx].notas = {};
+    if (!periodos[periodoIdx].notas[studentId]) periodos[periodoIdx].notas[studentId] = {};
+    periodos[periodoIdx].notas[studentId][actIdx] = parseFloat(nota.toFixed(1));
+
+    await prisma.notaClase.update({
+      where: { institutionId_key: { institutionId, key } },
+      data: { data: JSON.stringify(periodos), updatedAt: new Date() }
+    });
+  } catch(e) { console.error("autoAsignarNota error:", e.message); }
+}
+
+// Auto-calificar basado en respuestas correctas de la actividad
+app.post("/tasks/auto-calificar/:entregaId", authMiddleware, async (req, res) => {
+  try {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: req.params.entregaId },
+      include: { task: true }
+    });
+    if (!assignment) return res.status(404).json({ mensaje: "Entrega no encontrada" });
+    
+    const actividad = assignment.task.activity;
+    if (!actividad) return res.status(400).json({ mensaje: "La tarea no tiene actividad con preguntas" });
+    
+    let actObj;
+    try { actObj = typeof actividad === "string" ? JSON.parse(actividad) : actividad; } 
+    catch(e) { return res.status(400).json({ mensaje: "Actividad inválida" }); }
+    
+    const preguntas = actObj.preguntas || [];
+    if (preguntas.length === 0) return res.status(400).json({ mensaje: "No hay preguntas con respuestas correctas" });
+    
+    let respEstudiante;
+    try { respEstudiante = JSON.parse(assignment.responses || "{}"); }
+    catch(e) { respEstudiante = {}; }
+    
+    let correctas = 0;
+    const detalle = preguntas.map((p, i) => {
+      const rawCorrecta = (p.correcta || p.respuesta || "").toString().trim();
+      const respCorrecta = rawCorrecta.toLowerCase().replace(/^([a-d])\..*$/i, "$1");
+      const rawDada = (respEstudiante[i] || respEstudiante[String(i)] || "").toString().trim();
+      const respDada = rawDada.toLowerCase().replace(/^([a-d])\..*$/i, "$1");
+      const normC = respCorrecta === "true" ? "verdadero" : respCorrecta === "false" ? "falso" : respCorrecta;
+      const normD = respDada === "true" ? "verdadero" : respDada === "false" ? "falso" :
+                    rawDada.toLowerCase().startsWith("verdadero") ? "verdadero" :
+                    rawDada.toLowerCase().startsWith("falso") ? "falso" : respDada;
+      const dadaPalabras = rawDada.trim().split(/\s+/).length;
+      const okComp = dadaPalabras <= 5 && (rawDada.toLowerCase().includes(respCorrecta) || respCorrecta.includes(respDada));
+      const ok = respDada === respCorrecta || normD === normC || rawDada.toLowerCase() === rawCorrecta.toLowerCase() || okComp;
+      if (ok) correctas++;
+      return { pregunta: p.pregunta || p.enunciado || p.afirmacion || "", correcta: respCorrecta, dada: respDada, ok };
+    });
+    
+    const porcentaje = Math.round((correctas / preguntas.length) * 100);
+    const nota = Math.round((correctas / preguntas.length) * 50) / 10; // escala 0-5
+    
+    await prisma.assignment.update({
+      where: { id: req.params.entregaId },
+      data: { grade: nota, status: "graded", gradedAt: new Date(), autoGraded: true,
+              comment: `Auto-calificado: ${correctas}/${preguntas.length} correctas (${porcentaje}%)` }
+    });
+    
+    // Para preguntas sin respuesta_correcta clara, usar IA
+    const preguntasAbiertas = preguntas.filter(p => !p.correcta && !p.respuesta);
+    if (preguntasAbiertas.length > 0 && process.env.ANTHROPIC_API_KEY) {
+      // Solo notificar que hay preguntas abiertas sin calificar
+      return res.json({ ok: true, nota, correctas, total: preguntas.length, porcentaje, detalle, tieneAbiertas: true });
+    }
+    // Auto-asignar al libro de notas
+    await autoAsignarNota(assignment.task.userId, assignment.task.institutionId, assignment.task, assignment.studentId, nota);
+    res.json({ ok: true, nota, correctas, total: preguntas.length, porcentaje, detalle });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// Calificar respuesta abierta con IA (usa Groq)
+app.post("/tasks/calificar-ia/:entregaId", authMiddleware, async (req, res) => {
+  try {
+    if (!process.env.GROQ_KEY) {
+      return res.status(400).json({ ok: false, mensaje: "GROQ_KEY no configurada en el servidor" });
+    }
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: req.params.entregaId },
+      include: { task: true }
+    });
+    if (!assignment) return res.status(404).json({ mensaje: "Entrega no encontrada" });
+
+    let respuesta = assignment.response || "";
+    // Si no hay respuesta libre, construir el texto desde respuestasActividad
+    if (!respuesta.trim()) {
+      try {
+        const resps = JSON.parse(assignment.responses || "{}");
+        const actObj = typeof assignment.task.activity === "string"
+          ? JSON.parse(assignment.task.activity || "{}")
+          : (assignment.task.activity || {});
+        const pregs = actObj.preguntas || actObj.pares || [];
+        if (pregs.length > 0 && Object.keys(resps).length > 0) {
+          respuesta = pregs.map((p, i) => {
+            const preg = p.pregunta || p.enunciado || p.afirmacion || `Pregunta ${i+1}`;
+            const resp = resps[i] || resps[String(i)] || "(sin respuesta)";
+            return `${preg}: ${resp}`;
+          }).join("\n");
+        }
+      } catch(_) {}
+    }
+    if (!respuesta.trim()) return res.status(400).json({ ok: false, mensaje: "El estudiante no ha enviado respuesta" });
+
+    const materialRef = assignment.task.materialRef || "";
+    const instrucciones = assignment.task.description || "";
+
+    // Reconstruir preguntas con respuestas para evaluación detallada
+    let preguntasTexto = "";
+    try {
+      const respsObj = JSON.parse(assignment.responses || "{}");
+      const actObj2 = typeof assignment.task.activity === "string"
+        ? JSON.parse(assignment.task.activity || "{}") : (assignment.task.activity || {});
+      const pregs2 = actObj2.preguntas || [];
+      if (pregs2.length > 0) {
+        preguntasTexto = pregs2.map((p, i) => {
+          const preg = p.pregunta || p.enunciado || p.afirmacion || `Pregunta ${i+1}`;
+          const correcta = p.correcta || p.respuesta || "";
+          const dada = respsObj[i] || respsObj[String(i)] || "(sin respuesta)";
+          return `P${i+1}: ${preg}\nRespuesta estudiante: ${dada}${correcta ? "\nRespuesta esperada: " + correcta : ""}`;
+        }).join("\n\n");
+      }
+    } catch(_) {}
+
+    const prompt = `Eres un docente colombiano evaluando a un estudiante de grado ${assignment.task.grade}° en ${assignment.task.area}.
+Tarea: "${assignment.task.title}"
+${instrucciones ? "Instrucciones: " + instrucciones : ""}
+${materialRef ? "Material referencia: " + materialRef.substring(0, 400) : ""}
+
+${preguntasTexto ? "PREGUNTAS Y RESPUESTAS:\n" + preguntasTexto : "Respuesta del estudiante: " + respuesta.substring(0, 800)}
+
+INSTRUCCIONES DE EVALUACIÓN:
+- Evalúa CADA respuesta individualmente considerando si el concepto es correcto aunque no sea exacto
+- Para preguntas abiertas: acepta respuestas que demuestren comprensión del concepto
+- Para V/F: "Verdadero"="true", "Falso"="false" son equivalentes
+- Calcula el promedio real de respuestas correctas
+- Escala colombiana 0.0 a 5.0 (aprobado desde 3.0)
+- Responde ÚNICAMENTE con JSON sin texto adicional:
+{"nota": 4.0, "comentario": "Retroalimentación específica de 2-3 oraciones mencionando qué estuvo bien y qué mejorar"}`;
+
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_KEY}` },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        max_tokens: 150,
+        temperature: 0.3,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await r.json();
+    const text = data.choices?.[0]?.message?.content || "{}";
+    let resultado;
+    try {
+      const clean = text.replace(/```json|```/g, "").trim();
+      resultado = JSON.parse(clean);
+      if (resultado.nota == null || isNaN(resultado.nota)) resultado.nota = 2.5;
+      resultado.nota = Math.min(5, Math.max(0, parseFloat(resultado.nota.toFixed(1))));
+      if (!resultado.comentario) resultado.comentario = "Evaluado con IA";
+    } catch(e) {
+      resultado = { nota: 2.5, comentario: "Evaluación automática completada" };
+    }
+
+    await prisma.assignment.update({
+      where: { id: req.params.entregaId },
+      data: { grade: resultado.nota, status: "graded", gradedAt: new Date(), autoGraded: true, comment: resultado.comentario }
+    });
+
+    // Auto-asignar al libro de notas
+    await autoAsignarNota(req.user.id, req.user.institutionId, assignment.task, assignment.studentId, resultado.nota);
+    res.json({ ok: true, nota: resultado.nota, comentario: resultado.comentario });
+  } catch(e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
 app.post("/tasks/calificar", authMiddleware, async (req, res) => {
   try {
     const { entregaId, calificacion, comentario } = req.body;
     const a = await prisma.assignment.update({ where: { id: entregaId }, data: { grade: parseFloat(calificacion), comment: comentario || "", status: "graded", gradedAt: new Date() } });
+    // Auto-asignar al libro de notas
+    const asg = await prisma.assignment.findUnique({ where: { id: entregaId }, include: { task: true } }).catch(() => null);
+    if (asg) await autoAsignarNota(asg.task.userId, asg.task.institutionId, asg.task, asg.studentId, parseFloat(calificacion));
     res.json({ ok: true, entrega: a });
   } catch (e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// PUT: editar tarea
+app.put("/tasks/:id", authMiddleware, async (req, res) => {
+  try {
+    const { titulo, descripcion, fechaEntrega, materialRef } = req.body;
+    const data = {};
+    if (titulo !== undefined) data.title = titulo;
+    if (descripcion !== undefined) data.description = descripcion;
+    if (materialRef !== undefined) data.materialRef = materialRef;
+    if (fechaEntrega !== undefined) data.dueDate = fechaEntrega ? new Date(fechaEntrega) : null;
+    const updated = await prisma.task.update({
+      where: { id: req.params.id },
+      data
+    });
+    res.json({ ok: true, tarea: updated });
+  } catch(e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 
 app.delete("/tasks/:id", authMiddleware, async (req, res) => {
@@ -401,6 +699,7 @@ app.get("/tasks/mis-tareas-estudiante", authEst, async (req, res) => {
       .map(t => {
         return {
           id: t.id, titulo: t.title, descripcion: t.description,
+          materialRef: t.materialRef || "",
           tipo: t.type, area: t.area, grado: t.grade,
           fechaEntrega: t.dueDate, actividad: t.activity,
           entregada: false,
@@ -429,10 +728,20 @@ app.post("/tasks/entregar", authEst, uploadEnt.single("archivo"), async (req, re
     if (["quiz", "completar", "verdadero_falso"].includes(assignment.task.type) && assignment.task.activity?.preguntas) {
       let correctas = 0, total = 0; const detalles = [];
       assignment.task.activity.preguntas.forEach((p, i) => {
-        const ref = (p.correcta || p.respuesta || "").toString().trim().toLowerCase();
+        const rawRef = (p.correcta || p.respuesta || "").toString().trim();
+        const ref = rawRef.toLowerCase().replace(/^([a-d])\..*$/i, "$1");
         if (!ref) return; total++;
-        const est = (respAct[i] || "").toString().trim().toLowerCase();
-        const ok = est === ref || (assignment.task.type === "completar" && est.includes(ref));
+        const rawEst = (respAct[i] || respAct[String(i)] || "").toString().trim();
+        const est = rawEst.toLowerCase().replace(/^([a-d])\..*$/i, "$1");
+        // Normalizar Verdadero/Falso vs true/false
+        const normRef = ref === "true" ? "verdadero" : ref === "false" ? "falso" : ref;
+        const normEst = est === "true" ? "verdadero" : est === "false" ? "falso" : 
+                        rawEst.toLowerCase().startsWith("verdadero") ? "verdadero" :
+                        rawEst.toLowerCase().startsWith("falso") ? "falso" : est;
+        // Para completar: solo aceptar si la respuesta del estudiante es corta (<=5 palabras) y contiene la clave
+        const estPalabras = rawEst.trim().split(/\s+/).length;
+        const okCompletar = assignment.task.type === "completar" && estPalabras <= 5 && (rawEst.toLowerCase().includes(ref) || ref.includes(est));
+        const ok = est === ref || normEst === normRef || rawEst.toLowerCase() === rawRef.toLowerCase() || okCompletar;
         if (ok) correctas++;
         detalles.push({ pregunta: p.pregunta || p.enunciado || p.afirmacion, respEst: respAct[i] || "", respCorrecta: p.correcta || p.respuesta, esCorrecta: ok });
       });
@@ -511,8 +820,8 @@ app.post("/generar-actividad", authMiddleware, async (req, res) => {
     const n = cantidad || 5;
     const prompts = {
       quiz: `Genera ${n} preguntas selección múltiple sobre "${tema}" ${area} grado ${grado}° Colombia. JSON SOLO: {"preguntas":[{"pregunta":"","opciones":["A.","B.","C.","D."],"correcta":"A"}]}`,
-      completar: `Genera ${n} oraciones completar sobre "${tema}" ${area} grado ${grado}°. JSON SOLO: {"preguntas":[{"enunciado":"___","respuesta":""}]}`,
-      verdadero_falso: `Genera ${n} afirmaciones V/F sobre "${tema}" ${area} grado ${grado}°. JSON SOLO: {"preguntas":[{"afirmacion":"","respuesta":"Verdadero"}]}`,
+      completar: `Genera ${n} oraciones para completar sobre "${tema}" ${area} grado ${grado}°. SOLO JSON sin texto extra: {"preguntas":[{"enunciado":"La ___ es clave","respuesta":"palabra"}]}. La respuesta debe ser maxima 3 palabras clave.`,
+      verdadero_falso: `Genera ${n} afirmaciones sobre "${tema}" ${area} grado ${grado}°. Responde SOLO JSON sin texto extra: {"preguntas":[{"afirmacion":"","respuesta":"Verdadero"}]}. Usa SOLO "Verdadero" o "Falso" como valor de respuesta.`,
       relacionar: `Genera ${n} pares sobre "${tema}" ${area} grado ${grado}°. JSON SOLO: {"pares":[{"columnaA":"","columnaB":""}]}`,
       taller: `Genera ${n} preguntas abiertas sobre "${tema}" ${area} grado ${grado}°. JSON SOLO: {"preguntas":[{"pregunta":"","tipo":"abierta"}]}`,
       evaluacion: `Genera evaluación mixta sobre "${tema}" ${area} grado ${grado}°. JSON SOLO: {"preguntas":[{"tipo":"seleccion","pregunta":"","opciones":["A.","B.","C.","D."],"correcta":"A"}]}`,
@@ -780,11 +1089,40 @@ app.get("/notas/estudiante/:studentId", authEst, async (req, res) => {
     const todasNotas = await prisma.notaClase.findMany({
       where: { institutionId: req.student.institutionId, key: { contains: "_notas" } }
     });
+    
+    // Cargar lista de estudiantes para mapear IDs locales a nombres
+    const gradoNorm = (g) => (g||"").toLowerCase().replace(/[°o]/g,"").trim();
+    const estGrado = gradoNorm(req.student.grade);
+    const estNombre = req.student.name.toLowerCase().trim();
+    
     const misNotas = [];
     todasNotas.forEach(n => {
       const periodos = JSON.parse(n.data || "[]");
       periodos.forEach(p => {
-        const notasEst = p.notas?.[req.student.id];
+        // 1. Buscar por ID exacto del backend
+        let notasEst = p.notas?.[req.student.id];
+        
+        // 2. Si no encuentra, buscar estudiantes del período con mismo grado
+        if (!notasEst || Object.keys(notasEst).length === 0) {
+          if (p.grado && gradoNorm(p.grado) === estGrado) {
+            // Buscar en estudiantes guardados en el período
+            const estsPeriodo = p.estudiantes || [];
+            const estLocal = estsPeriodo.find(e => 
+              (e.nombre||e.name||"").toLowerCase().trim() === estNombre
+            );
+            if (estLocal && estLocal.id) {
+              notasEst = p.notas?.[estLocal.id];
+            }
+            
+            // 3. Último recurso: buscar en NotaClase de estudiantes por grado
+            if (!notasEst) {
+              const claveEst = `ep_est_${p.grado}`;
+              // No podemos acceder a localStorage desde el backend
+              // Buscar en la misma institutionId todos los est del grado
+            }
+          }
+        }
+        
         if (notasEst && Object.keys(notasEst).length > 0) {
           misNotas.push({
             periodoId: p.id,
@@ -830,6 +1168,416 @@ app.get("/mallas/:institutionId", async (req, res) => {
   try {
     const mallas = await prisma.malla.findMany({ where: { institutionId: req.params.institutionId } });
     res.json({ ok: true, mallas });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// ══════════════════════════════════════════════════════
+//  PIZARRA ESCOLAR
+// ══════════════════════════════════════════════════════
+
+// GET: obtener mensajes de la pizarra por grado
+app.get("/pizarra/:grado", authMiddleware, async (req, res) => {
+  try {
+    const grado = decodeURIComponent(req.params.grado);
+    const key = `pizarra_${req.user.institutionId}_${grado}`;
+    const nota = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    const mensajes = nota ? JSON.parse(nota.data || "[]") : [];
+    res.json({ ok: true, mensajes });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// GET: pizarra para estudiantes (sin auth de docente)
+app.get("/pizarra-est/:institutionId/:grado", authEst, async (req, res) => {
+  try {
+    const grado = decodeURIComponent(req.params.grado);
+    const instId = req.params.institutionId;
+    const key = `pizarra_${instId}_${grado}`;
+    const nota = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: instId, key } }
+    }).catch(() => null);
+    const mensajes = nota ? JSON.parse(nota.data || "[]") : [];
+    res.json({ ok: true, mensajes });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// POST: docente publica mensaje en pizarra
+app.post("/pizarra", authMiddleware, async (req, res) => {
+  try {
+    const { grado, texto, tipo } = req.body;
+    if (!grado || !texto) return res.status(400).json({ mensaje: "Grado y texto requeridos" });
+    const key = `pizarra_${req.user.institutionId}_${grado}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    const mensajes = existing ? JSON.parse(existing.data || "[]") : [];
+    const nuevo = {
+      id: Date.now().toString(),
+      texto,
+      tipo: tipo || "anuncio",
+      autor: req.user.name,
+      autorId: req.user.id,
+      grado,
+      fecha: new Date().toISOString(),
+      postits: []
+    };
+    mensajes.unshift(nuevo);
+    await prisma.notaClase.upsert({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } },
+      update: { data: JSON.stringify(mensajes), updatedAt: new Date() },
+      create: { institutionId: req.user.institutionId, key, data: JSON.stringify(mensajes) }
+    });
+    res.json({ ok: true, mensaje: nuevo });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// DELETE: docente elimina mensaje
+app.delete("/pizarra/:grado/:mensajeId", authMiddleware, async (req, res) => {
+  try {
+    const grado = decodeURIComponent(req.params.grado);
+    const key = `pizarra_${req.user.institutionId}_${grado}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    if (!existing) return res.json({ ok: true });
+    const mensajes = JSON.parse(existing.data || "[]").filter(m => m.id !== req.params.mensajeId);
+    await prisma.notaClase.update({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } },
+      data: { data: JSON.stringify(mensajes), updatedAt: new Date() }
+    });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// POST: estudiante agrega post-it a un mensaje
+app.post("/pizarra-postit/:institutionId/:grado/:mensajeId", authEst, async (req, res) => {
+  try {
+    const grado = decodeURIComponent(req.params.grado);
+    const instId = req.params.institutionId;
+    const key = `pizarra_${instId}_${grado}`;
+    const { texto, color } = req.body;
+    if (!texto) return res.status(400).json({ mensaje: "Texto requerido" });
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: instId, key } }
+    }).catch(() => null);
+    if (!existing) return res.status(404).json({ mensaje: "Pizarra no encontrada" });
+    const mensajes = JSON.parse(existing.data || "[]");
+    const msg = mensajes.find(m => m.id === req.params.mensajeId);
+    if (!msg) return res.status(404).json({ mensaje: "Mensaje no encontrado" });
+    const postit = {
+      id: Date.now().toString(),
+      texto,
+      color: color || "#fef08a",
+      autor: req.student.name,
+      autorId: req.student.id,
+      fecha: new Date().toISOString()
+    };
+    if (!msg.postits) msg.postits = [];
+    msg.postits.push(postit);
+    await prisma.notaClase.update({
+      where: { institutionId_key: { institutionId: instId, key } },
+      data: { data: JSON.stringify(mensajes), updatedAt: new Date() }
+    });
+    res.json({ ok: true, postit });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// DELETE: estudiante elimina su propio post-it
+app.delete("/pizarra-postit/:institutionId/:grado/:mensajeId/:postitId", authEst, async (req, res) => {
+  try {
+    const grado = decodeURIComponent(req.params.grado);
+    const instId = req.params.institutionId;
+    const key = `pizarra_${instId}_${grado}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: instId, key } }
+    }).catch(() => null);
+    if (!existing) return res.json({ ok: true });
+    const mensajes = JSON.parse(existing.data || "[]");
+    const msg = mensajes.find(m => m.id === req.params.mensajeId);
+    if (msg) {
+      msg.postits = (msg.postits || []).filter(p => 
+        !(p.id === req.params.postitId && p.autorId === req.student.id)
+      );
+    }
+    await prisma.notaClase.update({
+      where: { institutionId_key: { institutionId: instId, key } },
+      data: { data: JSON.stringify(mensajes), updatedAt: new Date() }
+    });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// ══════════════════════════════════════════════════════
+//  REPOSITORIO DE MATERIALES (BLOG DOCENTE)
+// ══════════════════════════════════════════════════════
+
+// GET: listar materiales del docente
+app.get("/materiales", authMiddleware, async (req, res) => {
+  try {
+    const key = `materiales_${req.user.id}`;
+    const nota = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    const materiales = nota ? JSON.parse(nota.data || "[]") : [];
+    res.json({ ok: true, materiales });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// POST: crear material
+app.post("/materiales", authMiddleware, uploadEnt.single("archivo"), async (req, res) => {
+  try {
+    const { titulo, descripcion, categoria, contenido } = req.body;
+    if (!titulo) return res.status(400).json({ mensaje: "Título requerido" });
+    const key = `materiales_${req.user.id}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    const materiales = existing ? JSON.parse(existing.data || "[]") : [];
+    const nuevo = {
+      id: Date.now().toString(),
+      titulo,
+      descripcion: descripcion || "",
+      categoria: categoria || "general",
+      contenido: contenido || "",
+      archivo: req.file ? { nombre: req.file.originalname, path: `uploads/entregas/${req.file.filename}`, size: req.file.size } : null,
+      creadoEn: new Date().toISOString(),
+      actualizadoEn: new Date().toISOString()
+    };
+    materiales.unshift(nuevo);
+    await prisma.notaClase.upsert({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } },
+      update: { data: JSON.stringify(materiales), updatedAt: new Date() },
+      create: { institutionId: req.user.institutionId, key, data: JSON.stringify(materiales) }
+    });
+    res.json({ ok: true, material: nuevo });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// PUT: editar material
+app.put("/materiales/:id", authMiddleware, async (req, res) => {
+  try {
+    const { titulo, descripcion, categoria, contenido } = req.body;
+    const key = `materiales_${req.user.id}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    if (!existing) return res.status(404).json({ mensaje: "No encontrado" });
+    const materiales = JSON.parse(existing.data || "[]");
+    const idx = materiales.findIndex(m => m.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ mensaje: "Material no encontrado" });
+    materiales[idx] = { ...materiales[idx], titulo, descripcion, categoria, contenido, actualizadoEn: new Date().toISOString() };
+    await prisma.notaClase.update({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } },
+      data: { data: JSON.stringify(materiales), updatedAt: new Date() }
+    });
+    res.json({ ok: true, material: materiales[idx] });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// DELETE: eliminar material
+app.delete("/materiales/:id", authMiddleware, async (req, res) => {
+  try {
+    const key = `materiales_${req.user.id}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    if (!existing) return res.json({ ok: true });
+    const materiales = JSON.parse(existing.data || "[]").filter(m => m.id !== req.params.id);
+    await prisma.notaClase.update({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } },
+      data: { data: JSON.stringify(materiales), updatedAt: new Date() }
+    });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// Notas de tareas calificadas del estudiante (alternativo al libro de notas)
+app.get("/notas/mis-calificaciones", authEst, async (req, res) => {
+  try {
+    const assignments = await prisma.assignment.findMany({
+      where: { studentId: req.student.id, status: "graded", grade: { not: null } },
+      include: { task: true },
+      orderBy: { gradedAt: "desc" }
+    });
+    const notas = assignments.map(a => ({
+      tareaId: a.task.id,
+      titulo: a.task.title,
+      area: a.task.area,
+      grado: a.task.grade,
+      nota: a.grade,
+      comentario: a.comment || "",
+      fecha: a.gradedAt || a.updatedAt,
+      autoCalificada: a.autoGraded || false
+    }));
+    res.json({ ok: true, notas });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// ══════════════════════════════════════════════════════
+//  JUEGOS MENTALES
+// ══════════════════════════════════════════════════════
+
+app.post("/generar-juego", authMiddleware, async (req, res) => {
+  try {
+    const { tipo, tema, area, grado } = req.body;
+    if (!tipo || !tema) return res.status(400).json({ mensaje: "Tipo y tema requeridos" });
+
+    const prompts = {
+      sopa: `Genera una sopa de letras educativa sobre "${tema}" para ${area} grado ${grado}° Colombia.
+Responde SOLO con JSON válido:
+{
+  "palabras": ["PALABRA1","PALABRA2","PALABRA3","PALABRA4","PALABRA5","PALABRA6","PALABRA7","PALABRA8"],
+  "pistas": ["Definición o pista de PALABRA1","pista de PALABRA2","pista de PALABRA3","pista de PALABRA4","pista de PALABRA5","pista de PALABRA6","pista de PALABRA7","pista de PALABRA8"]
+}
+Las palabras deben ser en MAYÚSCULAS, sin tildes, sin espacios, entre 4 y 10 letras. Exactamente 8 palabras.`,
+
+      unir: `Genera un juego de unir definiciones sobre "${tema}" para ${area} grado ${grado}° Colombia.
+Responde SOLO con JSON válido:
+{"pares": [{"termino":"TÉRMINO1","definicion":"Definición clara 1"},{"termino":"TÉRMINO2","definicion":"Definición clara 2"},{"termino":"TÉRMINO3","definicion":"Definición clara 3"},{"termino":"TÉRMINO4","definicion":"Definición clara 4"},{"termino":"TÉRMINO5","definicion":"Definición clara 5"},{"termino":"TÉRMINO6","definicion":"Definición clara 6"}]}
+Exactamente 6 pares. Los términos cortos (1-3 palabras), las definiciones claras.`,
+
+      completar: `Genera 6 oraciones para completar sobre "${tema}" para ${area} grado ${grado}° Colombia.
+Responde SOLO con JSON válido:
+{"oraciones": [{"texto":"La ___ es fundamental en...","respuesta":"palabra","pista":"Pista opcional"},{"texto":"El proceso de ___ permite...","respuesta":"termino","pista":"pista"}]}
+La respuesta debe ser UNA palabra clave. Exactamente 6 oraciones.`,
+
+      impostor: `Genera un juego "El Impostor" sobre "${tema}" para ${area} grado ${grado}° Colombia.
+Hay grupos de palabras donde una NO pertenece. Responde SOLO con JSON válido:
+{"grupos": [{"palabras":["TÉRMINO1","TÉRMINO2","TÉRMINO3","IMPOSTOR"],"impostor":"IMPOSTOR","explicacion":"Explicación de por qué IMPOSTOR no pertenece"},{"palabras":["A","B","C","D"],"impostor":"D","explicacion":"..."},{"palabras":["X","Y","Z","W"],"impostor":"W","explicacion":"..."}]}
+Exactamente 3 grupos de 4 palabras cada uno.`,
+
+      crucigrama: `Genera un crucigrama educativo sobre "${tema}" para ${area} grado ${grado}° Colombia.
+Responde SOLO con JSON válido:
+{
+  "palabras": [
+    {"palabra":"TERMINO1","pista":"Definición clara de TERMINO1","direccion":"horizontal","fila":0,"col":0},
+    {"palabra":"TERMINO2","pista":"Definición clara de TERMINO2","direccion":"vertical","fila":0,"col":0},
+    {"palabra":"TERMINO3","pista":"Definición clara de TERMINO3","direccion":"horizontal","fila":2,"col":1},
+    {"palabra":"TERMINO4","pista":"Definición clara de TERMINO4","direccion":"vertical","fila":1,"col":3},
+    {"palabra":"TERMINO5","pista":"Definición clara de TERMINO5","direccion":"horizontal","fila":4,"col":0}
+  ]
+}
+Las palabras en MAYÚSCULAS sin tildes ni espacios, entre 4-8 letras. Exactamente 5 palabras que se crucen entre sí.`
+    };
+
+    const prompt = prompts[tipo];
+    if (!prompt) return res.status(400).json({ mensaje: "Tipo inválido" });
+
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_KEY}` },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        max_tokens: 800,
+        temperature: 0.7,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await r.json();
+    const text = data.choices?.[0]?.message?.content || "{}";
+    let juego;
+    try {
+      const clean = text.replace(/```json|```/g, "").trim();
+      juego = JSON.parse(clean);
+    } catch(e) {
+      return res.status(500).json({ mensaje: "Error generando el juego, intenta de nuevo" });
+    }
+
+    res.json({ ok: true, juego: { tipo, tema, area, grado, ...juego } });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// Guardar juego asignado por grado
+app.post("/juegos", authMiddleware, async (req, res) => {
+  try {
+    const { juego, grado } = req.body;
+    if (!juego || !grado) return res.status(400).json({ mensaje: "Juego y grado requeridos" });
+    const key = `juegos_${req.user.institutionId}_${grado}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    const juegos = existing ? JSON.parse(existing.data || "[]") : [];
+    const nuevo = { id: Date.now().toString(), ...juego, grado, creadoEn: new Date().toISOString(), docente: req.user.name };
+    juegos.unshift(nuevo);
+    // Guardar máximo 10 juegos por grado
+    const limitados = juegos.slice(0, 10);
+    await prisma.notaClase.upsert({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } },
+      update: { data: JSON.stringify(limitados), updatedAt: new Date() },
+      create: { institutionId: req.user.institutionId, key, data: JSON.stringify(limitados) }
+    });
+    res.json({ ok: true, juego: nuevo });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// Obtener juegos por grado (para estudiantes)
+app.get("/juegos/:institutionId/:grado", authEst, async (req, res) => {
+  try {
+    const key = `juegos_${req.params.institutionId}_${decodeURIComponent(req.params.grado)}`;
+    const nota = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.params.institutionId, key } }
+    }).catch(() => null);
+    const juegos = nota ? JSON.parse(nota.data || "[]") : [];
+    res.json({ ok: true, juegos });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+
+// Guardar resultado de juego del estudiante
+app.post("/juegos/resultado", authEst, async (req, res) => {
+  try {
+    const { juegoId, grado, tipo, tema, correctas, total, tiempo } = req.body;
+    const instId = req.student.institutionId;
+    const key = `juegos_resultados_${instId}_${grado}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: instId, key } }
+    }).catch(() => null);
+    const resultados = existing ? JSON.parse(existing.data || "[]") : [];
+    
+    const nota = total > 0 ? parseFloat((correctas / total * 5).toFixed(1)) : 0;
+    const nuevo = {
+      id: Date.now().toString(),
+      juegoId, tipo, tema, grado,
+      estudianteId: req.student.id,
+      nombreEstudiante: req.student.name,
+      correctas, total,
+      nota,
+      porcentaje: total > 0 ? Math.round(correctas / total * 100) : 0,
+      tiempo: tiempo || 0,
+      fecha: new Date().toISOString()
+    };
+    
+    // Evitar duplicados del mismo estudiante en el mismo juego
+    const sinDup = resultados.filter(r => !(r.estudianteId === req.student.id && r.juegoId === juegoId));
+    sinDup.unshift(nuevo);
+    
+    await prisma.notaClase.upsert({
+      where: { institutionId_key: { institutionId: instId, key } },
+      update: { data: JSON.stringify(sinDup), updatedAt: new Date() },
+      create: { institutionId: instId, key, data: JSON.stringify(sinDup) }
+    });
+    
+    res.json({ ok: true, resultado: nuevo });
+  } catch(e) { res.status(500).json({ mensaje: e.message }); }
+});
+
+// GET resultados de juegos por grado (para docente)
+app.get("/juegos/resultados/:grado", authMiddleware, async (req, res) => {
+  try {
+    const grado = decodeURIComponent(req.params.grado);
+    const key = `juegos_resultados_${req.user.institutionId}_${grado}`;
+    const existing = await prisma.notaClase.findUnique({
+      where: { institutionId_key: { institutionId: req.user.institutionId, key } }
+    }).catch(() => null);
+    const resultados = existing ? JSON.parse(existing.data || "[]") : [];
+    res.json({ ok: true, resultados });
   } catch(e) { res.status(500).json({ mensaje: e.message }); }
 });
 

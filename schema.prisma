@@ -1,0 +1,134 @@
+// schema.prisma — VERSIÓN LOCAL con SQLite
+// Copia este archivo a: educlass-backend/prisma/schema.prisma
+// (reemplaza el original que usa postgresql)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// CAMBIADO: sqlite en vez de postgresql
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Institution {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  city      String?
+  createdAt DateTime  @default(now())
+  users     User[]
+  students  Student[]
+  tasks     Task[]
+  diarios   Diario[]
+  notas     NotaClase[]
+  @@map("institutions")
+}
+
+model User {
+  id            String      @id @default(uuid())
+  name          String
+  email         String      @unique
+  password      String
+  cargo         String      @default("Docente")
+  asignaciones  String?     // JSON: [{grado, area}]
+  logoPath      String?
+  banderaPath   String?
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  classes       Class[]
+  tasks         Task[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  @@map("users")
+}
+
+model Student {
+  id            String      @id @default(uuid())
+  name          String
+  username      String      @unique
+  password      String
+  grade         String
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  assignments   Assignment[]
+  createdAt     DateTime    @default(now())
+  @@map("students")
+}
+
+model Class {
+  id        String   @id @default(uuid())
+  content   String
+  data      String   // SQLite no tiene Json nativo, usamos String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@map("classes")
+}
+
+model Task {
+  id            String      @id @default(uuid())
+  title         String
+  description   String?
+  type          String      @default("taller")
+  area          String?
+  grade         String?
+  dueDate       DateTime?
+  activity      String?     // SQLite: String en vez de Json
+  materialRef   String?     // Texto o link de referencia para el estudiante
+  code          String      @unique @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  assignments   Assignment[]
+  createdAt     DateTime    @default(now())
+  @@map("tasks")
+}
+
+model Assignment {
+  id          String    @id @default(uuid())
+  status      String    @default("pending")
+  grade       Float?
+  comment     String?
+  response    String?
+  responses   String?   // SQLite: String en vez de Json
+  fileName    String?
+  autoGraded  Boolean   @default(false)
+  detail      String?   // SQLite: String en vez de Json
+  submittedAt DateTime?
+  gradedAt    DateTime?
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  @@unique([taskId, studentId])
+  @@map("assignments")
+}
+
+model Diario {
+  id            String      @id @default(uuid())
+  key           String
+  data          String      @default("{}")
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  userId        String?
+  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime    @default(now())
+  @@unique([institutionId, key])
+  @@map("diarios")
+}
+
+model NotaClase {
+  id            String      @id @default(uuid())
+  key           String
+  data          String      @default("{}")
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime    @default(now())
+  @@unique([institutionId, key])
+  @@map("notas_clase")
+}
