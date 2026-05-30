@@ -5,7 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Horario — I.E.R. Santiago de la Selva</title>
   <link rel="stylesheet" href="styles.css">
-</head>
+  <style>
+    .avance-bar-wrap{height:5px;background:rgba(255,255,255,0.12);border-radius:99px;margin-top:4px;overflow:hidden;width:100%}
+    .avance-bar-fill{height:100%;border-radius:99px;transition:width 0.4s}
+    .pend-badge{display:inline-block;font-size:9px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.4);border-radius:4px;padding:1px 5px;margin-top:3px;letter-spacing:0.3px}
+    .record-wrap{background:#0f1e35;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-top:10px}
+    .record-tipo-btn{padding:6px 14px;border-radius:6px;border:1px solid #1e3a5f;background:transparent;color:#94a3b8;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s}
+    .record-tipo-btn.active{background:#1d4ed8;border-color:#3b82f6;color:#fff;font-weight:600}
+    .record-set{color:#10b981;font-size:11px;margin:6px 0 0;font-weight:600}
+  </style>
 <body>
 
 <!-- HEADER -->
@@ -201,6 +209,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initDayNav();
   await renderSchedule(selectedDay);
   renderLegend();
+  setTimeout(checkRecordatorios, 1500); // Verificar recordatorios al cargar
 });
 
 // ============================================================
@@ -324,10 +333,18 @@ async function renderSchedule(day) {
         td.setAttribute("data-grado", grado);
         const cached = cache[`${grado}::${fila.hora}::${materia}`];
         const hasDot = cached && cached.temaVisto;
+        const avance = cached?.avancePorcentaje ?? null;
+        const hasPend = cached?.guiaTerminada === false;
+        const avanceColor = avance >= 80 ? "#10b981" : avance >= 40 ? "#f59e0b" : "#ef4444";
         td.innerHTML = `
           <span class="cell-icon">${cfg.icon}</span>
           <span class="cell-materia">${materia}</span>
-          ${hasDot ? `<span class="saved-dot" title="Clase registrada">●</span>` : ""}
+          ${hasDot && avance !== null ? `
+            <div class="avance-bar-wrap" title="Avance: ${avance}%">
+              <div class="avance-bar-fill" style="width:${avance}%;background:${avanceColor}"></div>
+            </div>
+            ${hasPend ? `<span class="pend-badge" title="Pendiente">⚠ Pendiente</span>` : ""}
+          ` : ""}
         `;
         td.addEventListener("click", () => onCellClick(td, day, fila.hora, grado, materia));
       } else {
@@ -413,6 +430,7 @@ async function loadTab(tab, dia, hora, grado, materia) {
 async function renderDiario(dia, hora, grado, materia) {
   const d = await DB.getDiario(dia, grado, hora, materia);
   guiaTerminadaVal = d.guiaTerminada;
+  recTipoVal = d.recordatorio?.tipo || "auto";
   return `
     <div class="tab-panel">
       <div class="info-badges">
@@ -445,6 +463,18 @@ async function renderDiario(dia, hora, grado, materia) {
           <label class="form-label">¿Qué quedó pendiente? / ¿Hasta dónde llegamos?</label>
           <input class="form-input" id="guia-pendiente" type="text" placeholder="Ej: Ejercicios 3-6, página 45" value="${d.guiaPendiente||''}">
         </div>
+        <div class="record-wrap">
+          <label class="form-label" style="margin-bottom:8px;display:block">🔔 Recordatorio del pendiente</label>
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="record-tipo-btn ${(!d.recordatorio||d.recordatorio.tipo==='auto')?'active':''}" id="rec-auto" onclick="setRecTipo('auto')">⚡ Auto (2 días antes)</button>
+            <button class="record-tipo-btn ${d.recordatorio?.tipo==='manual'?'active':''}" id="rec-manual" onclick="setRecTipo('manual')">📅 Fecha manual</button>
+            <button class="record-tipo-btn ${d.recordatorio?.tipo==='ninguno'?'active':''}" id="rec-ninguno" onclick="setRecTipo('ninguno')">✗ Sin recordatorio</button>
+          </div>
+          <div id="rec-fecha-wrap" style="display:${d.recordatorio?.tipo==='manual'?'block':'none'}">
+            <input class="form-input" type="date" id="rec-fecha" value="${d.recordatorio?.fecha||''}" style="max-width:200px">
+          </div>
+          ${d.recordatorio?.tipo&&d.recordatorio.tipo!=='ninguno'?`<p class="record-set">✅ Recordatorio guardado${d.recordatorio.fecha?' para '+d.recordatorio.fecha:' (automático)'}</p>`:''}
+        </div>
       </div>
       <div class="avance-group">
         <label class="form-label">Avance del tema: <strong id="avance-val">${d.avancePorcentaje||50}%</strong></label>
@@ -462,10 +492,46 @@ function setGuia(v) {
   document.getElementById("pendiente-wrap").style.display = v === false ? "block" : "none";
 }
 
+let recTipoVal = "auto";
+function setRecTipo(tipo) {
+  recTipoVal = tipo;
+  ["auto","manual","ninguno"].forEach(t => {
+    const btn = document.getElementById(`rec-${t}`);
+    if(btn) btn.classList.toggle("active", t===tipo);
+  });
+  const fw = document.getElementById("rec-fecha-wrap");
+  if(fw) fw.style.display = tipo==="manual" ? "block" : "none";
+}
+
 async function saveDiario() {
   if (!activeCell) return;
   const { dia, hora, grado, materia } = activeCell;
   const existing = await DB.getDiario(dia, grado, hora, materia);
+
+  // Calcular fecha del recordatorio automático (fecha de la clase + 2 días)
+  const DIAS_SEM = ["Lunes","Martes","Miércoles","Jueves","Viernes"];
+  const diaIdx = DIAS_SEM.indexOf(dia);
+  let recordatorio = existing.recordatorio || null;
+  if (guiaTerminadaVal === false) {
+    const tipo = recTipoVal || existing.recordatorio?.tipo || "auto";
+    if (tipo === "auto") {
+      // Calcular próxima fecha real de ese día de la semana
+      const hoy = new Date();
+      const difDias = ((diaIdx - hoy.getDay() + 5) % 7) || 7;
+      const fechaClase = new Date(hoy); fechaClase.setDate(hoy.getDate() + difDias);
+      const fechaRec = new Date(fechaClase); fechaRec.setDate(fechaClase.getDate() - 2);
+      const iso = fechaRec.toISOString().split("T")[0];
+      recordatorio = { tipo:"auto", fecha: iso, texto: `Pendiente en ${materia} ${grado}: ${document.getElementById("guia-pendiente")?.value||""}` };
+    } else if (tipo === "manual") {
+      const f = document.getElementById("rec-fecha")?.value || "";
+      recordatorio = { tipo:"manual", fecha: f, texto: `Pendiente en ${materia} ${grado}: ${document.getElementById("guia-pendiente")?.value||""}` };
+    } else {
+      recordatorio = { tipo:"ninguno" };
+    }
+  } else {
+    recordatorio = null; // Si terminó, quitar recordatorio
+  }
+
   await DB.saveDiario(dia, grado, hora, materia, {
     ...existing,
     temaVisto:         document.getElementById("tema-visto")?.value    || "",
@@ -474,8 +540,10 @@ async function saveDiario() {
     guiaTerminada:     guiaTerminadaVal,
     guiaPendiente:     document.getElementById("guia-pendiente")?.value || "",
     avancePorcentaje:  parseInt(document.getElementById("avance-range")?.value || 50),
+    recordatorio,
   }, currentUser.id);
   showToast("✓ Diario guardado");
+  checkRecordatorios();
   await renderSchedule(dia);
   setTimeout(() => {
     document.querySelectorAll(".class-cell").forEach(td => {
@@ -483,6 +551,55 @@ async function saveDiario() {
         td.classList.add("selected");
     });
   }, 60);
+}
+
+// ── Verificar recordatorios pendientes al cargar ──
+async function checkRecordatorios() {
+  try {
+    const hoy = new Date().toISOString().split("T")[0];
+    const dias = ["Lunes","Martes","Miércoles","Jueves","Viernes"];
+    const alertas = [];
+    for (const dia of dias) {
+      const filas = HORARIO[dia] || [];
+      for (const fila of filas) {
+        for (const grado of GRADOS) {
+          const mat = fila[grado];
+          if (!mat || !MATERIAS_CONFIG[mat] || ["DESCANSO","ALMUERZO"].includes(mat)) continue;
+          try {
+            const d = await DB.getDiario(dia, grado, fila.hora, mat);
+            if (d?.recordatorio?.fecha && d.recordatorio.tipo !== "ninguno") {
+              if (d.recordatorio.fecha <= hoy) {
+                alertas.push({ dia, grado, mat, hora: fila.hora, rec: d.recordatorio });
+              }
+            }
+          } catch(_) {}
+        }
+      }
+    }
+    if (alertas.length > 0) mostrarAlertasRecordatorio(alertas);
+  } catch(_) {}
+}
+
+function mostrarAlertasRecordatorio(alertas) {
+  const existing = document.getElementById("rec-toast-panel");
+  if (existing) existing.remove();
+  const panel = document.createElement("div");
+  panel.id = "rec-toast-panel";
+  panel.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:9999;max-width:320px;display:flex;flex-direction:column;gap:8px";
+  alertas.forEach(a => {
+    const el = document.createElement("div");
+    el.style.cssText = "background:#1e1b4b;border:1px solid #fbbf24;border-radius:10px;padding:12px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.4);animation:fadeIn .3s ease";
+    el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div>
+        <p style="color:#fbbf24;font-weight:700;font-size:13px;margin:0 0 4px">🔔 Recordatorio de pendiente</p>
+        <p style="color:#e2e8f0;font-size:12px;margin:0 0 2px">${a.rec.texto||'Pendiente sin descripción'}</p>
+        <p style="color:#94a3b8;font-size:10px;margin:0">📅 ${a.rec.fecha} · ${a.dia} ${a.grado} ${a.hora}</p>
+      </div>
+      <button onclick="this.closest('div').parentElement.remove()" style="background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:0;line-height:1">✕</button>
+    </div>`;
+    panel.appendChild(el);
+  });
+  document.body.appendChild(panel);
 }
 
 // ============================================================
