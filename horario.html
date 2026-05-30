@@ -327,7 +327,18 @@ async function renderSchedule(day) {
           return fromNum[n] || n.replace(/[a-z]/g, c => ({s:"6",e:"7",o:"8",n:"9",d:"10"}[c]||c)) || n;
         };
         const esMiMateria = !tieneAsignaciones || !esMiHorario ||
-          currentUser.asignaciones.some(a => normGrado(a.grado) === gradoNum && normalizar(a.area) === normalizar(materia));
+          currentUser.asignaciones.some(a => {
+            const gradoOk = normGrado(a.grado) === gradoNum;
+            const areaN = normalizar(a.area);
+            const materiaFull = normalizar(materia);
+            // Comparación exacta o por inicio (ej: "tecnologia" == "tecnologiaeinformatica"[:10])
+            const areaOk = areaN === materiaFull ||
+              areaN.startsWith(materiaFull) ||
+              materiaFull.startsWith(areaN) ||
+              areaN.replace(/einformatica|einfo/g,"") === materiaFull ||
+              materiaFull.replace(/einformatica|einfo/g,"") === areaN;
+            return gradoOk && areaOk;
+          });
 
         if (!esMiMateria) {
           td.className = "empty-cell locked-cell"; td.innerHTML = "—";
@@ -340,9 +351,21 @@ async function renderSchedule(day) {
         td.setAttribute("data-hora",  fila.hora);
         td.setAttribute("data-grado", grado);
         const cached = cache[`${grado}::${fila.hora}::${materia}`];
-        const hasDot = cached && cached.temaVisto;
-        const avance = cached?.avancePorcentaje ?? null;
-        const hasPend = cached?.guiaTerminada === false;
+        // Si es parte de un bloque, usar datos de cualquier hora del bloque que tenga info
+        let cachedEfectivo = cached;
+        if (!cachedEfectivo?.temaVisto && fila.num) {
+          const horasB = getHorasDelBloque(day, grado, fila.num);
+          for (const numH of horasB) {
+            const filaH = filas.find(f => f.num === numH);
+            if (filaH) {
+              const c2 = cache[`${grado}::${filaH.hora}::${materia}`];
+              if (c2?.temaVisto) { cachedEfectivo = c2; break; }
+            }
+          }
+        }
+        const hasDot = cachedEfectivo && cachedEfectivo.temaVisto;
+        const avance = cachedEfectivo?.avancePorcentaje ?? null;
+        const hasPend = cachedEfectivo?.guiaTerminada === false;
         const avanceColor = avance >= 80 ? "#10b981" : avance >= 40 ? "#f59e0b" : "#ef4444";
         const esBloqueNum = fila.num ? getHorasDelBloque(day, grado, fila.num).length > 1 : false;
         td.innerHTML = `
