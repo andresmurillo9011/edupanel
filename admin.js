@@ -428,9 +428,27 @@ function editDocente(id) {
   });
 }
 
-function deleteDocente(id) {
-  if (!confirm("¿Eliminar este docente?")) return;
-  Auth.deleteUser(id); renderDocentesGrid(); showToast("✓ Docente eliminado");
+async function deleteDocente(id) {
+  if (!confirm("¿Eliminar este docente? Esta acción no se puede deshacer.")) return;
+  // Eliminar del backend
+  try {
+    const tok = localStorage.getItem("edutoken") || "";
+    const r = await fetch(`${ADMIN_API}/docentes/${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${tok}` }
+    });
+    if (!r.ok) {
+      // Intentar con alias /users
+      await fetch(`${ADMIN_API}/users/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${tok}` }
+      });
+    }
+  } catch(_) {}
+  // Eliminar del localStorage
+  Auth.deleteUser(id);
+  renderDocentesGrid();
+  showToast("✓ Docente eliminado");
 }
 
 // ============================================================
