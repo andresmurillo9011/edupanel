@@ -314,12 +314,20 @@ async function renderSchedule(day) {
       const td  = document.createElement("td");
       const cfg = MATERIAS_CONFIG[materia];
       if (materia && cfg && !["DESCANSO","ALMUERZO"].includes(materia)) {
-        // En "Mi Horario": mostrar solo celdas asignadas al docente
         const tieneAsignaciones = currentUser.asignaciones && currentUser.asignaciones.length > 0;
         const esMiHorario = vistaMode === "mio";
         const normalizar = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[°\s]/g,"");
+        // Mapa para convertir claves internas a número de grado
+        const GRADO_NUM = {sexto:"6",septimo:"7",octavo:"8",noveno:"9",decimo:"10",once:"11"};
+        const gradoNum = GRADO_NUM[grado] || normalizar(grado);
+        const normGrado = a => {
+          const n = normalizar(a);
+          // convierte "11°" → "11", "once" → "11", "decimo" → "10", etc.
+          const fromNum = {sexto:"6",septimo:"7",octavo:"8",noveno:"9",decimo:"10",once:"11"};
+          return fromNum[n] || n.replace(/[a-z]/g, c => ({s:"6",e:"7",o:"8",n:"9",d:"10"}[c]||c)) || n;
+        };
         const esMiMateria = !tieneAsignaciones || !esMiHorario ||
-          currentUser.asignaciones.some(a => normalizar(a.grado) === normalizar(grado) && normalizar(a.area) === normalizar(materia));
+          currentUser.asignaciones.some(a => normGrado(a.grado) === gradoNum && normalizar(a.area) === normalizar(materia));
 
         if (!esMiMateria) {
           td.className = "empty-cell locked-cell"; td.innerHTML = "—";
