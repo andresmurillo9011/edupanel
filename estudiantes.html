@@ -4,101 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Estudiante · EduPanel IESS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #060a0f; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #0a0f1a; }
-    ::-webkit-scrollbar-thumb { background: #00f5ff; border-radius: 2px; }
-    @keyframes glow { 0%,100%{box-shadow:0 0 10px #00f5ff44} 50%{box-shadow:0 0 25px #00f5ff88,0 0 50px #00f5ff33} }
-    @keyframes pulse-border { 0%,100%{border-color:#00f5ff44} 50%{border-color:#00f5ff} }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes scanline { 0%{background-position:0 0} 100%{background-position:0 100%} }
-    .neon-text { color:#00f5ff; text-shadow:0 0 10px #00f5ff88,0 0 20px #00f5ff44; }
-    .neon-green { color:#00ff88; text-shadow:0 0 10px #00ff8888,0 0 20px #00ff8844; }
-    .card-gaming { 
-      background:linear-gradient(135deg,#0d1422 0%,#0a1028 100%);
-      border:1px solid #1a2840;
-      transition:all 0.3s;
-      animation:fadeIn 0.4s ease;
-    }
-    .card-gaming:hover { 
-      border-color:#00f5ff66;
-      box-shadow:0 0 20px #00f5ff22,0 0 40px #00f5ff11;
-      transform:translateY(-3px);
-    }
-    .btn-gaming {
-      background:linear-gradient(135deg,#00f5ff22,#00ff8822);
-      border:1px solid #00f5ff66;
-      color:#00f5ff;
-      padding:8px 18px;
-      border-radius:8px;
-      cursor:pointer;
-      font-family:inherit;
-      font-weight:600;
-      transition:all 0.2s;
-      letter-spacing:0.5px;
-    }
-    .btn-gaming:hover {
-      background:linear-gradient(135deg,#00f5ff33,#00ff8833);
-      box-shadow:0 0 15px #00f5ff44;
-    }
-    .btn-active {
-      background:linear-gradient(135deg,#00f5ff,#00ff88) !important;
-      color:#060a0f !important;
-      border-color:transparent !important;
-      box-shadow:0 0 20px #00f5ff66 !important;
-    }
-    .header-gaming {
-      background:linear-gradient(90deg,#060a0f,#0a0f1a,#060a0f);
-      border-bottom:1px solid #00f5ff33;
-      box-shadow:0 2px 20px #00f5ff11;
-      padding:12px 24px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      position:sticky;top:0;z-index:100;
-    }
-    .tab-gaming {
-      padding:8px 16px;
-      border-radius:8px;
-      cursor:pointer;
-      border:1px solid transparent;
-      background:transparent;
-      color:#4a7a8a;
-      font-family:inherit;
-      font-size:13px;
-      font-weight:600;
-      transition:all 0.2s;
-      letter-spacing:0.5px;
-    }
-    .tab-gaming:hover { color:#00f5ff; border-color:#00f5ff33; }
-    .tab-active { 
-      color:#00f5ff !important;
-      border-color:#00f5ff !important;
-      background:linear-gradient(135deg,#00f5ff11,#00ff8811) !important;
-      box-shadow:0 0 12px #00f5ff33;
-    }
-    .input-gaming {
-      background:#060a0f;
-      border:1px solid #1a2840;
-      color:#e8f4f8;
-      border-radius:8px;
-      padding:10px 14px;
-      font-family:inherit;
-      transition:all 0.2s;
-    }
-    .input-gaming:focus {
-      outline:none;
-      border-color:#00f5ff66;
-      box-shadow:0 0 10px #00f5ff22;
-    }
-    .grid-bg {
-      background-image:linear-gradient(#00f5ff08 1px,transparent 1px),linear-gradient(90deg,#00f5ff08 1px,transparent 1px);
-      background-size:40px 40px;
-    }
-  </style>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
@@ -114,25 +19,24 @@
   <script type="text/babel" data-presets="react">
     const {useState, useEffect, useRef} = React;
     const API = "https://educlass-backend-4kk0.onrender.com";
-    const FC = "'Exo 2', 'Rajdhani', 'Segoe UI', sans-serif";
+    const FC = "'Segoe UI',Arial,sans-serif";
     const FT = "Georgia,'Times New Roman',serif";
     const C = {
-      fondo:"#060a0f", panel:"#0a0f1a", tarjeta:"#0d1422",
-      borde:"#1a2840", azul:"#00d4ff", azulC:"#00f5ff",
-      verde:"#00ff88", verdeC:"#00ffaa", texto:"#e8f4f8",
-      textoS:"#4a7a8a", err:"#ff4466", ok:"#00ff88",
-      naranja:"#ff9500", rojo:"#ff2244", morado:"#bf00ff",
-      neon1:"#00f5ff", neon2:"#00ff88", neon3:"#bf00ff"
+      fondo:"#0e1420", panel:"#0a1128", tarjeta:"#111827",
+      borde:"#1e2d45", azul:"#2563EB", azulC:"#60A5FA",
+      verde:"#059669", verdeC:"#34D399", texto:"#F1F5F9",
+      textoS:"#64748B", err:"#F87171", ok:"#4ADE80",
+      naranja:"#F59E0B", rojo:"#DC2626", morado:"#7C3AED"
     };
     const S = {
-      fondo:{minHeight:"100vh",background:"#060a0f",fontFamily:FC,color:"#e8f4f8",minHeight:"100vh"},
+      fondo:{minHeight:"100vh",background:C.fondo,fontFamily:FC,color:C.texto},
       pantalla:{
-        minHeight:"100vh",background:"#060a0f",backgroundImage:"radial-gradient(ellipse at 20% 50%,#00f5ff08,transparent 50%),radial-gradient(ellipse at 80% 20%,#00ff8808,transparent 50%)",
+        minHeight:"100vh",background:C.fondo,
         display:"flex",justifyContent:"center",alignItems:"center",
         fontFamily:FC,padding:16
       },
       card:{
-        background:"linear-gradient(135deg,#0d1422,#060a0f)",padding:"32px 28px",borderRadius:16,border:"1px solid #00f5ff33",boxShadow:"0 0 40px #00f5ff11",
+        background:C.tarjeta,padding:"32px 28px",borderRadius:16,
         width:"100%",maxWidth:440,display:"flex",flexDirection:"column",
         gap:14,boxShadow:"0 12px 40px rgba(0,0,0,0.6)",
         border:"1px solid "+C.borde
@@ -219,6 +123,36 @@
       "Authorization":"Bearer "+(localStorage.getItem("edutokenest")||"")
     });
 
+      const cargarPizarraEst = async () => {
+        if (!sesion) return;
+        setPizCargando(true);
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
+          const d = await r.json();
+          setPizMensajes(d.mensajes || []);
+        } catch(_) {}
+        setPizCargando(false);
+      };
+      const enviarPostit = async (mensajeId) => {
+        const texto = (postitTexto[mensajeId]||"").trim();
+        if (!texto) return;
+        const color = postitColor[mensajeId] || "#fef08a";
+        const instId = sesion.institutionId || sesion.institution?.id;
+        try {
+          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
+            method: "POST",
+            headers: { ...authHEst(), "Content-Type": "application/json" },
+            body: JSON.stringify({ texto, color })
+          });
+          const d = await r.json();
+          if (d.ok) {
+            setPostitTexto(p => ({ ...p, [mensajeId]: "" }));
+            setPostitModal(null);
+            cargarPizarraEst();
+          }
+        } catch(_) {}
+      };
     const TODOS_GRADOS = [
       "Transicion","1°","2°","3°","4°","5°",
       "6°","7°","8°","9°","10°","11°"
@@ -396,16 +330,6 @@
                   </p>
                 </div>
               )}
-              {tarea.materialRef&&(
-                <div style={{background:"#1a1040",borderRadius:7,padding:"10px 12px",border:"1px solid #6366f1",marginBottom:14}}>
-                  <p style={{color:"#a5b4fc",fontWeight:"bold",margin:"0 0 3px",fontSize:11}}>📎 Material de referencia:</p>
-                  {tarea.materialRef.startsWith("http")?(
-                    <a href={tarea.materialRef} target="_blank" rel="noreferrer" style={{color:"#818cf8",fontSize:12,wordBreak:"break-all"}}>{tarea.materialRef}</a>
-                  ):(
-                    <p style={{color:"#c7d2fe",fontSize:12,margin:0,lineHeight:1.5}}>{tarea.materialRef}</p>
-                  )}
-                </div>
-              )}
               {entregada ? (
                 <div style={{
                   background:"#052e16",
@@ -491,17 +415,12 @@
       const [notas, setNotas] = useState([]);
       const [cargando, setCargando] = useState(true);
 
-      const [notasTareas, setNotasTareas] = React.useState([]);
       useEffect(()=>{
         if (!studentId) return;
         fetch(API+"/notas/estudiante/"+studentId, {headers:authHEst()})
           .then(r=>r.json())
           .then(d=>{ setNotas(d.notas||[]); setCargando(false); })
           .catch(()=>setCargando(false));
-        fetch(API+"/notas/mis-calificaciones", {headers:authHEst()})
-          .then(r=>r.json())
-          .then(d=>setNotasTareas(d.notas||[]))
-          .catch(()=>{});
       }, [studentId]);
 
       if (cargando) return (
@@ -509,7 +428,7 @@
           Cargando notas...
         </p>
       );
-      if (!notas.length && !notasTareas.length) return (
+      if (!notas.length) return (
         <div style={{
           background:C.tarjeta,border:"1px solid "+C.borde,
           borderRadius:8,padding:20,textAlign:"center"
@@ -598,390 +517,9 @@
               </div>
             );
           })}
-        {notasTareas.length > 0 && (
-          <div style={{marginTop:20}}>
-            <h4 style={{color:"#6366f1",fontSize:13,margin:"0 0 10px",fontWeight:"bold"}}>📝 Actividades calificadas</h4>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-              <thead><tr style={{background:"#0a1128"}}>
-                {["Actividad","Área","Nota","Retroalimentación"].map(h=>(
-                  <th key={h} style={{padding:"8px 10px",textAlign:"left",color:"#6366f1",borderBottom:"1px solid "+C.borde}}>{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {notasTareas.map((n,i)=>(
-                  <tr key={n.tareaId} style={{background:i%2===0?"#0a1128":"#0d1528",borderBottom:"1px solid "+C.borde}}>
-                    <td style={{padding:"8px 10px",color:C.texto,maxWidth:150,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n.titulo}</td>
-                    <td style={{padding:"8px 10px",color:C.textoS}}>{n.area}</td>
-                    <td style={{padding:"8px 10px",textAlign:"center"}}><span style={{color:n.nota>=3?"#10b981":"#ef4444",fontWeight:"bold",fontSize:15}}>{n.nota}/5</span></td>
-                    <td style={{padding:"8px 10px",color:C.textoS,fontSize:11}}>{n.comentario||"—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
         </div>
       );
     }
-
-
-    function SopaLetrasEst({juego}) {
-      const size = 15;
-      const [grid, setGrid] = React.useState(null);
-      const [placed, setPlaced] = React.useState([]);
-      const [encontradas, setEncontradas] = React.useState([]);
-      const [inicio, setInicio] = React.useState(null);
-      const [hover, setHover] = React.useState(null);
-
-      React.useEffect(()=>{
-        if(!juego?.palabras) return;
-        const dirs=[[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];
-        const g=Array.from({length:size},()=>Array(size).fill(""));
-        const p=[];
-        for(const pal of juego.palabras){
-          let ok=false;
-          for(let t=0;t<300&&!ok;t++){
-            const [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
-            const sr=Math.floor(Math.random()*size),sc=Math.floor(Math.random()*size);
-            let fits=true;
-            for(let i=0;i<pal.length;i++){const r=sr+dr*i,c=sc+dc*i;if(r<0||r>=size||c<0||c>=size||(g[r][c]&&g[r][c]!==pal[i])){fits=false;break;}}
-            if(fits){for(let i=0;i<pal.length;i++)g[sr+dr*i][sc+dc*i]=pal[i];p.push({palabra:pal,sr,sc,dr,dc});ok=true;}
-          }
-        }
-        const letras="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        for(let r=0;r<size;r++)for(let c=0;c<size;c++)if(!g[r][c])g[r][c]=letras[Math.floor(Math.random()*26)];
-        setGrid(g);setPlaced(p);
-      },[juego]);
-
-      const getCeldas=(a,b)=>{
-        if(!a||!b) return [];
-        const dr=Math.sign(b[0]-a[0]),dc=Math.sign(b[1]-a[1]);
-        const len=Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))+1;
-        return Array.from({length:len},(_,i)=>[a[0]+dr*i,a[1]+dc*i]);
-      };
-
-      const estaEncontrada=(r,c)=>encontradas.some(ep=>{
-        const pl=placed.find(x=>x.palabra===ep);
-        return pl&&[...Array(pl.palabra.length)].some((_,i)=>pl.sr+pl.dr*i===r&&pl.sc+pl.dc*i===c);
-      });
-
-      const selCeldas=getCeldas(inicio,hover);
-      const enSeleccion=(r,c)=>selCeldas.some(([sr,sc])=>sr===r&&sc===c);
-
-      const handleClick=(r,c)=>{
-        if(!inicio){setInicio([r,c]);setHover([r,c]);return;}
-        const celdas=getCeldas(inicio,[r,c]);
-        const palabra=celdas.map(([sr,sc])=>grid[sr][sc]).join("");
-        const rev=palabra.split("").reverse().join("");
-        const enc=placed.find(p=>p.palabra===palabra||p.palabra===rev);
-        if(enc&&!encontradas.includes(enc.palabra)){
-          setEncontradas(prev=>[...prev,enc.palabra]);
-        }
-        setInicio(null);setHover(null);
-      };
-
-      const onEnviar = React.useRef(false);
-      React.useEffect(()=>{
-        if(encontradas.length>0 && juego.palabras && encontradas.length===juego.palabras.length && !onEnviar.current){
-          onEnviar.current=true;
-          if(window._enviarResultadoJuego) window._enviarResultadoJuego(juego, encontradas.length, juego.palabras.length);
-        }
-      },[encontradas]);
-      if(!grid) return <p style={{color:C.textoS}}>Generando sopa...</p>;
-      return(
-        <div>
-          <p style={{color:C.textoS,fontSize:11,marginBottom:8}}>💡 Clic en la primera letra → clic en la última letra de la palabra</p>
-          <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-            <div style={{overflowX:"auto"}}>
-              {grid.map((row,ri)=>(
-                <div key={ri} style={{display:"flex"}}>
-                  {row.map((cell,ci)=>{
-                    const enc=estaEncontrada(ri,ci);
-                    const sel=enSeleccion(ri,ci);
-                    const esInicio=inicio&&inicio[0]===ri&&inicio[1]===ci;
-                    return(<div key={ci}
-                      onClick={()=>handleClick(ri,ci)}
-                      onMouseEnter={()=>inicio&&setHover([ri,ci])}
-                      style={{width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:"bold",cursor:"pointer",userSelect:"none",
-                        background:enc?"#10b981":esInicio?"#f59e0b":sel?"#6366f1":"transparent",
-                        color:enc||sel||esInicio?"#fff":C.texto,
-                        borderRadius:3,border:esInicio?"2px solid #f59e0b":"1px solid transparent",
-                        transition:"background 0.1s"}}>
-                      {cell}
-                    </div>);
-                  })}
-                </div>
-              ))}
-            </div>
-            <div style={{flex:1,minWidth:160}}>
-              <p style={{color:C.azulC,fontWeight:"bold",marginBottom:8,fontSize:12}}>Palabras ({encontradas.length}/{juego.palabras.length}):</p>
-              {juego.palabras.map((p,i)=>(
-                <div key={i} style={{padding:"4px 8px",marginBottom:4,borderRadius:6,background:encontradas.includes(p)?"#10b98122":"#0a1128",border:"1px solid "+(encontradas.includes(p)?"#10b981":C.borde)}}>
-                  <p style={{margin:0,fontSize:12,color:encontradas.includes(p)?"#10b981":C.texto,textDecoration:encontradas.includes(p)?"line-through":"none"}}>{p}</p>
-                  <p style={{margin:0,fontSize:10,color:C.textoS}}>{juego.pistas?.[i]}</p>
-                </div>
-              ))}
-              {inicio&&<p style={{color:"#f59e0b",fontSize:11,marginTop:8}}>⚡ Seleccionando desde ({inicio[0]+1},{inicio[1]+1})... clic en la última letra</p>}
-              {encontradas.length===juego.palabras.length&&(<div style={{background:"#10b98133",borderRadius:10,padding:12,marginTop:12,textAlign:"center"}}>
-              <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 8px"}}>🎉 ¡Completaste la sopa!</p>
-              <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente automáticamente</p>
-            </div>)}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    function CrucigramaEst({juego}) {
-      const pals = juego.palabras || [];
-      const size = 12;
-      const [respuestas, setRespuestas] = React.useState({});
-      const grid = Array.from({length:size},()=>Array(size).fill(null));
-      pals.forEach((p,idx)=>{
-        const r=p.fila||idx*2,c=p.col||0;
-        for(let i=0;i<p.palabra.length;i++){
-          const ri=p.direccion==="horizontal"?r:r+i,ci=p.direccion==="horizontal"?c+i:c;
-          if(ri<size&&ci<size)grid[ri][ci]={idx,i,letra:p.palabra[i],num:i===0?idx+1:null};
-        }
-      });
-      const correctas=pals.filter((p,i)=>(respuestas[i]||"").toUpperCase()===p.palabra).length;
-      return(
-        <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-          <div>
-            {grid.map((row,ri)=>(
-              <div key={ri} style={{display:"flex"}}>
-                {row.map((cell,ci)=>(
-                  <div key={ci} style={{width:28,height:28,border:cell?"1px solid "+C.borde:"none",background:cell?"#0f1f3d":"transparent",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",fontSize:11,color:C.txt,fontFamily:"monospace"}}>
-                    {cell&&cell.num&&<span style={{position:"absolute",top:1,left:1,fontSize:7,color:C.azulC}}>{cell.num}</span>}
-                    {cell&&(respuestas[cell.idx]?.[cell.i]||"_")}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div style={{flex:1,minWidth:200}}>
-            <p style={{color:C.azulC,fontWeight:"bold",marginBottom:8,fontSize:12}}>Pistas ({correctas}/{pals.length}):</p>
-            {pals.map((p,i)=>(
-              <div key={i} style={{marginBottom:8}}>
-                <p style={{color:C.textoS,fontSize:11,margin:"0 0 3px"}}>{i+1}. {p.direccion==="horizontal"?"→":"↓"} {p.pista}</p>
-                <input value={respuestas[i]||""} onChange={e=>setRespuestas(prev=>({...prev,[i]:e.target.value.toUpperCase()}))}
-                  style={{...S.inp,width:"100%",boxSizing:"border-box",fontSize:12,fontFamily:"monospace",letterSpacing:3,background:(respuestas[i]||"").toUpperCase()===p.palabra?"#10b98122":undefined,borderColor:(respuestas[i]||"").toUpperCase()===p.palabra?"#10b981":undefined}}
-                  placeholder={`${p.palabra.length} letras`} maxLength={p.palabra.length}/>
-              </div>
-            ))}
-            {correctas===pals.length&&<CrucigramaWin juego={juego} correctas={correctas} total={pals.length}/>}
-          </div>
-        </div>
-      );
-    }
-
-
-    function UnirDefiniciones({juego}) {
-      const pares = juego.pares || [];
-      const [selTermino, setSelTermino] = React.useState(null);
-      const [unidos, setUnidos] = React.useState({});
-      const [defs] = React.useState(()=>[...pares].sort(()=>Math.random()-0.5));
-      
-      const handleTermino=(i)=>{
-        if(unidos[i]!==undefined) return;
-        setSelTermino(i===selTermino?null:i);
-      };
-      const handleDef=(di)=>{
-        if(selTermino===null) return;
-        const defCorrecta=pares[selTermino].definicion;
-        const defElegida=defs[di].definicion;
-        if(defCorrecta===defElegida){
-          setUnidos(prev=>({...prev,[selTermino]:di}));
-        } else {
-          setUnidos(prev=>({...prev,[selTermino]:"error"}));
-          setTimeout(()=>setUnidos(prev=>{const n={...prev};delete n[selTermino];return n;}),800);
-        }
-        setSelTermino(null);
-      };
-      const correctas=Object.values(unidos).filter(v=>v!=="error").length;
-      return(
-        <div>
-          <p style={{color:C.textoS,fontSize:11,marginBottom:12}}>💡 Selecciona un término → luego su definición correcta</p>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div>
-              <p style={{color:C.azulC,fontWeight:"bold",fontSize:12,marginBottom:8}}>Términos:</p>
-              {pares.map((p,i)=>(
-                <div key={i} onClick={()=>handleTermino(i)} style={{padding:"8px 12px",marginBottom:6,borderRadius:8,cursor:unidos[i]!==undefined&&unidos[i]!=="error"?"default":"pointer",
-                  background:unidos[i]!==undefined&&unidos[i]!=="error"?"#10b98122":unidos[i]==="error"?"#ef444422":selTermino===i?"#6366f122":"#0a1128",
-                  border:`1px solid ${unidos[i]!==undefined&&unidos[i]!=="error"?"#10b981":unidos[i]==="error"?"#ef4444":selTermino===i?"#6366f1":C.borde}`}}>
-                  <p style={{margin:0,fontWeight:"bold",fontSize:13,color:C.texto}}>{p.termino}</p>
-                </div>
-              ))}
-            </div>
-            <div>
-              <p style={{color:C.azulC,fontWeight:"bold",fontSize:12,marginBottom:8}}>Definiciones:</p>
-              {defs.map((d,di)=>{
-                const yaUnida=Object.entries(unidos).find(([ti,dii])=>dii===di&&dii!=="error");
-                return(<div key={di} onClick={()=>!yaUnida&&handleDef(di)} style={{padding:"8px 12px",marginBottom:6,borderRadius:8,cursor:yaUnida?"default":"pointer",
-                  background:yaUnida?"#10b98122":"#0a1128",border:`1px solid ${yaUnida?"#10b981":C.borde}`}}>
-                  <p style={{margin:0,fontSize:12,color:C.textoS}}>{d.definicion}</p>
-                </div>);
-              })}
-            </div>
-          </div>
-          <p style={{color:"#10b981",marginTop:12,fontWeight:"bold"}}>{correctas}/{pares.length} correctas</p>
-          {correctas===pares.length&&<UnirWin juego={juego} correctas={correctas} total={pares.length}/>}
-        </div>
-      );
-    }
-
-    function CompletarOraciones({juego}) {
-      const oraciones = juego.oraciones || [];
-      const [respuestas, setRespuestas] = React.useState({});
-      const correctas = oraciones.filter((o,i)=>(respuestas[i]||"").toLowerCase().trim()===o.respuesta.toLowerCase()).length;
-      return(
-        <div>
-          <p style={{color:C.textoS,fontSize:11,marginBottom:12}}>✏️ Completa cada oración con la palabra correcta</p>
-          {oraciones.map((o,i)=>{
-            const resp=(respuestas[i]||"").toLowerCase().trim();
-            const ok=resp===o.respuesta.toLowerCase();
-            const partes=o.texto.split("___");
-            return(<div key={i} style={{marginBottom:16,padding:"12px 14px",borderRadius:10,border:`1px solid ${resp?ok?"#10b981":"#ef4444":C.borde}`,background:resp?ok?"#10b98111":"#ef444411":"#0a1128"}}>
-              <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:4,fontSize:14,color:C.texto}}>
-                <span>{partes[0]}</span>
-                <input value={respuestas[i]||""} onChange={e=>setRespuestas(prev=>({...prev,[i]:e.target.value}))}
-                  disabled={ok}
-                  style={{...S.inp,width:120,display:"inline-block",textAlign:"center",padding:"4px 8px",fontWeight:"bold",borderColor:resp?ok?"#10b981":"#ef4444":C.borde}}
-                  placeholder="___"/>
-                <span>{partes[1]||""}</span>
-                {ok&&<span style={{color:"#10b981",fontSize:18}}>✅</span>}
-              </div>
-              {o.pista&&!ok&&<p style={{color:C.textoS,fontSize:11,margin:"6px 0 0"}}>💡 {o.pista}</p>}
-              {resp&&!ok&&<p style={{color:"#ef4444",fontSize:11,margin:"4px 0 0"}}>Intenta de nuevo</p>}
-            </div>);
-          })}
-          <p style={{color:"#10b981",fontWeight:"bold"}}>{correctas}/{oraciones.length} correctas</p>
-          {correctas===oraciones.length&&<CompletarWin juego={juego} correctas={correctas} total={oraciones.length}/>}
-        </div>
-      );
-    }
-
-    function ElImpostor({juego}) {
-      const grupos = juego.grupos || [];
-      const [selecciones, setSelecciones] = React.useState({});
-      const [verificados, setVerificados] = React.useState({});
-      const correctas = grupos.filter((g,i)=>selecciones[i]===g.impostor).length;
-      return(
-        <div>
-          <p style={{color:C.textoS,fontSize:11,marginBottom:12}}>🕵️ Encuentra la palabra que NO pertenece al grupo</p>
-          {grupos.map((g,i)=>(
-            <div key={i} style={{marginBottom:20,padding:"14px",borderRadius:12,border:`1px solid ${verificados[i]?selecciones[i]===g.impostor?"#10b981":"#ef4444":C.borde}`,background:"#0a1128"}}>
-              <p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 10px",fontSize:13}}>Grupo {i+1}:</p>
-              <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:10}}>
-                {[...g.palabras].sort(()=>Math.random()-0.5).map((p,pi)=>(
-                  <button key={pi} onClick={()=>!verificados[i]&&setSelecciones(prev=>({...prev,[i]:p}))}
-                    style={{...S.btnSm,background:selecciones[i]===p?verificados[i]?selecciones[i]===g.impostor?"#10b981":"#ef4444":"#6366f1":"transparent",
-                    color:selecciones[i]===p?"#fff":C.textoS,borderColor:selecciones[i]===p?"#6366f1":C.borde,fontSize:13,fontWeight:"bold"}}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-              {selecciones[i]&&!verificados[i]&&(
-                <button onClick={()=>setVerificados(prev=>({...prev,[i]:true}))} style={{...S.btn,background:"#6366f1",fontSize:12,padding:"6px 14px"}}>Verificar</button>
-              )}
-              {verificados[i]&&(
-                <div style={{marginTop:8,padding:"8px 12px",borderRadius:8,background:selecciones[i]===g.impostor?"#10b98122":"#ef444422"}}>
-                  <p style={{margin:0,color:selecciones[i]===g.impostor?"#10b981":"#ef4444",fontSize:12,fontWeight:"bold"}}>
-                    {selecciones[i]===g.impostor?"✅ ¡Correcto!":"❌ Era: "+g.impostor}
-                  </p>
-                  <p style={{margin:"4px 0 0",color:C.textoS,fontSize:11}}>{g.explicacion}</p>
-                </div>
-              )}
-            </div>
-          ))}
-          <p style={{color:"#10b981",fontWeight:"bold"}}>{correctas}/{grupos.length} correctos</p>
-          {correctas===grupos.length&&(<ImpostorWin juego={juego} correctas={correctas} total={grupos.length}/>)}
-        </div>
-      );
-    }
-
-
-
-    function ImpostorWin({juego, correctas, total}) {
-      const enviado = React.useRef(false);
-      React.useEffect(()=>{
-        if (!enviado.current) {
-          enviado.current = true;
-          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
-        }
-      }, []);
-      return (
-        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
-          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Eres un gran detective!</p>
-          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
-        </div>
-      );
-    }
-
-    function CompletarWin({juego, correctas, total}) {
-      const enviado = React.useRef(false);
-      React.useEffect(()=>{
-        if (!enviado.current) {
-          enviado.current = true;
-          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
-        }
-      }, []);
-      return (
-        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
-          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Todas correctas!</p>
-          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
-        </div>
-      );
-    }
-
-    function CrucigramaWin({juego, correctas, total}) {
-      const enviado = React.useRef(false);
-      React.useEffect(()=>{
-        if (!enviado.current) {
-          enviado.current = true;
-          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
-        }
-      }, []);
-      return (
-        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
-          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Crucigrama completo!</p>
-          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
-        </div>
-      );
-    }
-
-    function UnirWin({juego, correctas, total}) {
-      const enviado = React.useRef(false);
-      React.useEffect(()=>{
-        if (!enviado.current) {
-          enviado.current = true;
-          if (window._enviarResultadoJuego) window._enviarResultadoJuego(juego, correctas, total);
-        }
-      }, []);
-      return (
-        <div style={{background:"#10b98133",borderRadius:10,padding:12,textAlign:"center"}}>
-          <p style={{color:"#10b981",fontWeight:"bold",margin:"0 0 6px"}}>🎉 ¡Completaste el juego!</p>
-          <p style={{color:"#64748b",fontSize:11,margin:0}}>✅ Resultado enviado al docente</p>
-        </div>
-      );
-    }
-
-    const juegoIcono = (tipo) => {
-      if (tipo === "sopa") return "🔤";
-      if (tipo === "crucigrama") return "➕";
-      if (tipo === "unir") return "🔗";
-      if (tipo === "completar") return "✏️";
-      if (tipo === "impostor") return "🕵️";
-      return "🎮";
-    };
-    const juegoNombre = (tipo) => {
-      if (tipo === "sopa") return "Sopa de letras";
-      if (tipo === "crucigrama") return "Crucigrama";
-      if (tipo === "unir") return "Unir definiciones";
-      if (tipo === "completar") return "Completar";
-      if (tipo === "impostor") return "El Impostor";
-      return tipo;
-    };
 
     function App() {
       const getSesion = () => {
@@ -994,67 +532,8 @@
 
       const [seccion, setSeccion] = useState("tareas");
       const [pizMensajes, setPizMensajes] = useState([]);
-      const [juegos, setJuegos] = useState([]);
-      const [juegoActivo, setJuegoActivo] = useState(null);
-      const [juegoRespuestas, setJuegoRespuestas] = useState({});
-      const [juegoResuelto, setJuegoResuelto] = useState(false);
       const [pizCargando, setPizCargando] = useState(false);
       const [postitTexto, setPostitTexto] = useState({});
-      const enviarResultado = async (juego, correctas, total) => {
-        try {
-          const instId = sesion.institutionId || sesion.institution?.id;
-          await fetch(`${API}/juegos/resultado`, {
-            method: "POST",
-            headers: { ...authHEst(), "Content-Type": "application/json" },
-            body: JSON.stringify({
-              juegoId: juego.id,
-              grado: sesion.grade,
-              tipo: juego.tipo,
-              tema: juego.tema,
-              correctas, total
-            })
-          });
-        } catch(_) {}
-      };
-      const cargarJuegos = async () => {
-        if (!sesion) return;
-        try {
-          const instId = sesion.institutionId || sesion.institution?.id;
-          const r = await fetch(`${API}/juegos/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
-          const d = await r.json();
-          setJuegos(d.juegos || []);
-        } catch(_) {}
-      };
-      const cargarPizarraEst = async () => {
-        if (!sesion) return;
-        setPizCargando(true);
-        try {
-          const instId = sesion.institutionId || sesion.institution?.id;
-          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
-          const d = await r.json();
-          setPizMensajes(d.mensajes || []);
-        } catch(_) {}
-        setPizCargando(false);
-      };
-      const enviarPostit = async (mensajeId) => {
-        const texto = (postitTexto[mensajeId]||"").trim();
-        if (!texto) return;
-        const color = postitColor[mensajeId] || "#fef08a";
-        const instId = sesion.institutionId || sesion.institution?.id;
-        try {
-          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
-            method: "POST",
-            headers: { ...authHEst(), "Content-Type": "application/json" },
-            body: JSON.stringify({ texto, color })
-          });
-          const d = await r.json();
-          if (d.ok) {
-            setPostitTexto(p => ({ ...p, [mensajeId]: "" }));
-            setPostitModal(null);
-            cargarPizarraEst();
-          }
-        } catch(_) {}
-      };
       const [postitColor, setPostitColor] = useState({});
       const [postitModal, setPostitModal] = useState(null);
       const [sesion, setSesion] = useState(getSesion());
@@ -1133,7 +612,6 @@
       // LOGIN
       React.useEffect(() => {
         if (seccion === "pizarra" && sesion) cargarPizarraEst();
-        if (seccion === "juegos" && sesion) cargarJuegos();
       }, [seccion, sesion]);
 
       if (!sesion && vista==="login") return (
@@ -1265,7 +743,7 @@
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <span style={{
                 color:C.verdeC,fontSize:16,fontWeight:"bold",fontFamily:FT
-              }} className="neon-text" style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700,letterSpacing:2}}>🎮 PORTAL ESTUDIANTIL</span>
+              }}>📚 Portal Estudiante</span>
             </div>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <span style={{color:C.textoS,fontSize:12}}>
@@ -1278,26 +756,22 @@
           </div>
           <div style={S.cont}>
             <div style={{
-              background:"linear-gradient(135deg,#0a1428 0%,#060f1a 100%)",
-              borderRadius:16,padding:"20px 24px",marginBottom:18,
-              border:"1px solid #00f5ff33",
-              boxShadow:"0 0 30px #00f5ff0a,inset 0 1px 0 #00f5ff22",
-              position:"relative",overflow:"hidden"
+              background:"linear-gradient(135deg,#0f2a47,#0a1a35)",
+              borderRadius:12,padding:"18px 20px",marginBottom:18,
+              border:"1px solid "+C.azul
             }}>
-              <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,background:"radial-gradient(circle,#00f5ff15,transparent)",borderRadius:"50%",pointerEvents:"none"}}/>
               <h2 style={{
-                color:"#e8f4f8",fontSize:18,margin:"0 0 6px",fontWeight:800,letterSpacing:0.5
-              }}>⚡ ¡Hola, {sesion.name}!</h2>
-              <p style={{color:"#00f5ff",margin:0,fontSize:11,letterSpacing:2,fontWeight:600}}>
-                GRADO {sesion.grade} · I.E.R. SANTIAGO DE LA SELVA
+                color:C.texto,fontSize:16,margin:"0 0 3px",fontFamily:FT
+              }}>Hola, {sesion.name}!</h2>
+              <p style={{color:C.textoS,margin:0,fontSize:12}}>
+                Grado {sesion.grade}
               </p>
             </div>
             <div style={{display:"flex",gap:6,marginBottom:16}}>
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"pizarra",label:"🖊️ Pizarra"},
-                {id:"juegos",label:"🎮 Juegos"}
+                {id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -1427,39 +901,6 @@
 
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
-            )}
-            {seccion==="juegos"&&(
-              <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                  <h3 style={{color:"#f43f5e",margin:0,fontSize:18}}>🎮 Juegos de Grado {sesion.grade}</h3>
-                  <button onClick={cargarJuegos} style={{...S.btnSm,fontSize:12}}>🔄 Actualizar</button>
-                </div>
-                {juegoActivo&&(window._enviarResultadoJuego=enviarResultado)}
-                {juegoActivo?(<div>
-                  <button onClick={()=>{setJuegoActivo(null);setJuegoResuelto(false);}} style={{...S.btnSm,marginBottom:16}}>← Volver a juegos</button>
-                  <h4 style={{color:C.texto,marginBottom:12}}>{juegoActivo.tipo==="sopa"?"🔤 Sopa de letras":"➕ Crucigrama"}: {juegoActivo.tema}</h4>
-                  {juegoActivo.tipo==="sopa"&&(<SopaLetrasEst juego={juegoActivo}/>)}
-                  {juegoActivo.tipo==="crucigrama"&&(<CrucigramaEst juego={juegoActivo}/>)}
-                  {juegoActivo.tipo==="unir"&&(<UnirDefiniciones juego={juegoActivo}/>)}
-                  {juegoActivo.tipo==="completar"&&(<CompletarOraciones juego={juegoActivo}/>)}
-                  {juegoActivo.tipo==="impostor"&&(<ElImpostor juego={juegoActivo}/>)}
-                </div>):(
-                  juegos.length===0?
-                  <div style={{textAlign:"center",padding:50,background:C.tarjeta,borderRadius:14,color:C.textoS}}>
-                    <p style={{fontSize:48,margin:0}}>🎮</p><p>No hay juegos asignados todavía</p>
-                  </div>:
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
-                    {juegos.map(j=>(
-                      <div key={j.id} onClick={()=>setJuegoActivo(j)} style={{background:C.tarjeta,borderRadius:12,padding:16,border:"1px solid "+C.borde,cursor:"pointer"}}>
-                        <p style={{fontSize:32,margin:"0 0 8px"}}>{juegoIcono(j.tipo)}</p>
-                        <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 4px",fontSize:14}}>{juegoNombre(j.tipo)}</p>
-                        <p style={{color:C.textoS,fontSize:12,margin:"0 0 4px"}}>Tema: {j.tema}</p>
-                        <p style={{color:C.textoS,fontSize:11,margin:0}}>{j.area} · Docente: {j.docente}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             )}
             {seccion==="pizarra"&&(
               <div>
