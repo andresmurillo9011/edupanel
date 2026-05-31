@@ -536,6 +536,11 @@ app.post("/tasks/calificar-ia/:entregaId", authMiddleware, async (req, res) => {
     });
     if (!assignment) return res.status(404).json({ mensaje: "Entrega no encontrada" });
 
+    // Bloquear recalificación si ya tiene nota (a menos que se fuerce)
+    if (assignment.grade != null && !req.body.forzar) {
+      return res.json({ ok: true, nota: assignment.grade, comentario: assignment.comment || "Ya calificado", yaCalificado: true });
+    }
+
     let respuesta = assignment.response || "";
     // Si no hay respuesta libre, construir el texto desde respuestasActividad
     if (!respuesta.trim()) {
@@ -596,10 +601,13 @@ INSTRUCCIONES DE EVALUACIÓN:
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_KEY}` },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        max_tokens: 150,
-        temperature: 0.3,
-        messages: [{ role: "user", content: prompt }]
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 200,
+        temperature: 0,
+        messages: [
+          {role:"system", content:"Eres un evaluador educativo colombiano. Responde ÚNICAMENTE con JSON válido sin texto adicional ni markdown."},
+          {role: "user", content: prompt}
+        ]
       })
     });
     const data = await r.json();
@@ -1462,7 +1470,12 @@ Responde SOLO con JSON válido:
     {"palabra":"TERMINO5","pista":"Definición clara de TERMINO5","direccion":"horizontal","fila":4,"col":0}
   ]
 }
-Las palabras en MAYÚSCULAS sin tildes ni espacios, entre 4-8 letras. Exactamente 5 palabras que se crucen entre sí.`
+Las palabras en MAYÚSCULAS sin tildes ni espacios, entre 4-8 letras. Exactamente 5 palabras que se crucen entre sí.`,
+
+      diagrama: `Genera un diagrama de flujo educativo sobre "${tema}" para ${area} grado ${grado} Colombia.
+Responde SOLO con este JSON válido sin texto adicional:
+{"pasos":[{"paso":"INICIO","titulo":"Inicio","descripcion":"","tipo":"inicio"},{"paso":"2","titulo":"Primer paso","descripcion":"Descripción del primer paso del proceso","tipo":"proceso"},{"paso":"3","titulo":"¿Pregunta de decisión?","descripcion":"Condición a evaluar","tipo":"decision","decision":{"si":"Qué ocurre si es verdadero","no":"Qué ocurre si es falso"}},{"paso":"4","titulo":"Resultado positivo","descripcion":"Consecuencia del sí","tipo":"resultado_ok"},{"paso":"5","titulo":"Resultado negativo","descripcion":"Consecuencia del no","tipo":"resultado_err"},{"paso":"FIN","titulo":"Fin","descripcion":"","tipo":"fin"}],"preguntas":[{"pregunta":"Pregunta 1 sobre el tema","opciones":["A","B","C","D"],"correcta":0},{"pregunta":"Pregunta 2","opciones":["A","B","C","D"],"correcta":1},{"pregunta":"Pregunta 3","opciones":["A","B","C","D"],"correcta":2},{"pregunta":"Pregunta 4","opciones":["A","B","C","D"],"correcta":0},{"pregunta":"Pregunta 5","opciones":["A","B","C","D"],"correcta":3}]}
+Genera pasos y preguntas reales sobre "${tema}", no genéricos. Las preguntas deben tener opciones reales del tema.`
     };
 
     const prompt = prompts[tipo];
@@ -1473,7 +1486,7 @@ Las palabras en MAYÚSCULAS sin tildes ni espacios, entre 4-8 letras. Exactament
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.GROQ_KEY}` },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        max_tokens: 800,
+        max_tokens: tipo === "diagrama" ? 1500 : 800,
         temperature: 0.7,
         messages: [{ role: "user", content: prompt }]
       })
@@ -1483,9 +1496,25 @@ Las palabras en MAYÚSCULAS sin tildes ni espacios, entre 4-8 letras. Exactament
     const text = data.choices?.[0]?.message?.content || "{}";
     let juego;
     try {
-      const clean = text.replace(/```json|```/g, "").trim();
-      juego = JSON.parse(clean);
+      // Limpiar markdown y encontrar el JSON
+      let clean = text.replace(/```json|```/g, "").trim();
+      // Encontrar inicio del JSON
+      const start = clean.search(/[{[]/);
+      if (start > 0) clean = clean.slice(start);
+      // Si el JSON está incompleto, intentar cerrarlo
+      try {
+        juego = JSON.parse(clean);
+      } catch(e) {
+        // Intentar reparar JSON truncado
+        const openBraces = (clean.match(/{/g)||[]).length - (clean.match(/}/g)||[]).length;
+        const openBrackets = (clean.match(/\[/g)||[]).length - (clean.match(/\]/g)||[]).length;
+        let repaired = clean;
+        for(let i=0;i<openBrackets;i++) repaired += ']';
+        for(let i=0;i<openBraces;i++) repaired += '}';
+        juego = JSON.parse(repaired);
+      }
     } catch(e) {
+      console.error("JSON parse error:", text.slice(0,300));
       return res.status(500).json({ mensaje: "Error generando el juego, intenta de nuevo" });
     }
 
@@ -1589,3 +1618,4 @@ app.listen(PORT, async () => {
   try { await prisma.$connect(); console.log("🗄️  PostgreSQL conectado ✅"); }
   catch (e) { console.error("❌ Error PostgreSQL:", e.message); }
 });
+// Sat May 30 21:52:05 HPS 2026
