@@ -978,8 +978,15 @@
           setCargando(true);
           try {
             const grado = sesion.grade;
-            const inst = sesion.institutionId || sesion.institution?.id || "";
-            const r = await fetch(`${API}/juegos/${inst}/${encodeURIComponent(grado)}`);
+            const tok = localStorage.getItem("edutokenest")||"";
+            // Decodificar token para obtener institutionId
+            let inst = sesion.institutionId || sesion.institution?.id || "";
+            if(!inst && tok) {
+              try { inst = JSON.parse(atob(tok.split(".")[1])).institutionId || ""; } catch{}
+            }
+            const r = await fetch(`${API}/juegos/${inst}/${encodeURIComponent(grado)}`,{
+              headers: {"Authorization":`Bearer ${tok}`}
+            });
             const d = await r.json();
             setJuegos(d.juegos||[]);
           } catch { setJuegos([]); }
