@@ -1082,14 +1082,14 @@
           <div style={{background:C.tarj,borderRadius:14,padding:24,marginBottom:16,minHeight:100,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <p style={{color:C.texto,fontSize:16,textAlign:"center",fontWeight:"bold",lineHeight:1.6}}>{actual.texto}</p>
           </div>
-          {resp&&<div style={{background:resp==="Verdadero"===actual.respuesta?"#052e16":"#450a0a",borderRadius:10,padding:12,marginBottom:12,textAlign:"center"}}>
-            <p style={{color:resp==="Verdadero"===actual.respuesta?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{resp==="Verdadero"===actual.respuesta?"✅ ¡Correcto!":"❌ Incorrecto"}</p>
+          {resp&&<div style={{background:(resp==="Verdadero")===actual.respuesta?"#052e16":"#450a0a",borderRadius:10,padding:12,marginBottom:12,textAlign:"center"}}>
+            <p style={{color:(resp==="Verdadero")===actual.respuesta?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{(resp==="Verdadero")===actual.respuesta?"✅ ¡Correcto!":"❌ Incorrecto"}</p>
             <p style={{color:C.textoS,fontSize:12,margin:0}}>{actual.explicacion}</p>
           </div>}
           <div style={{display:"flex",gap:10}}>
             {["Verdadero","Falso"].map(v=>(
               <button key={v} disabled={resp!==null} style={{flex:1,padding:"14px",borderRadius:10,border:"none",cursor:resp?"default":"pointer",fontWeight:"bold",fontSize:15,
-                background:resp===v?(v==="Verdadero"===actual.respuesta?"#052e16":"#450a0a"):v==="Verdadero"?"#064e3b":"#450a0a",
+                background:resp===v?((v==="Verdadero")===actual.respuesta?"#052e16":"#450a0a"):v==="Verdadero"?"#064e3b":"#450a0a",
                 color:v==="Verdadero"?"#6ee7b7":"#fca5a5",opacity:resp&&resp!==v?0.4:1}} onClick={()=>responder(v)}>
                 {v==="Verdadero"?"✅ Verdadero":"❌ Falso"}
               </button>
