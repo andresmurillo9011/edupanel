@@ -771,7 +771,8 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"pizarra",label:"🖊️ Pizarra"}
+                {id:"pizarra",label:"🖊️ Pizarra"},
+                {id:"juegos",label:"🎮 Juegos"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -957,12 +958,383 @@
                 </div>}
               </div>
             )}
+            )}
+            {seccion==="juegos"&&(
+              <JuegosEst sesion={sesion}/>
+            )}
           </div>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+    function JuegosEst({sesion}) {
+      const [juegos, setJuegos] = useState([]);
+      const [cargando, setCargando] = useState(true);
+      const [juegoActivo, setJuegoActivo] = useState(null);
+      const [puntaje, setPuntaje] = useState(null);
+      const API = "https://educlass-backend-4kk0.onrender.com";
+
+      useEffect(()=>{
+        const cargar = async()=>{
+          setCargando(true);
+          try {
+            const grado = sesion.grade;
+            const inst = sesion.institutionId || sesion.institution?.id || "";
+            const r = await fetch(`${API}/juegos/${inst}/${encodeURIComponent(grado)}`);
+            const d = await r.json();
+            setJuegos(d.juegos||[]);
+          } catch { setJuegos([]); }
+          setCargando(false);
+        };
+        cargar();
+      },[sesion]);
+
+      const enviarResultado = async(puntos, total, tiempo)=>{
+        if(!juegoActivo) return;
+        try {
+          const tok = localStorage.getItem("edutokenest")||"";
+          await fetch(`${API}/juegos/resultado`, {
+            method:"POST",
+            headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok}`},
+            body: JSON.stringify({juegoId:juegoActivo.id, puntaje:puntos, total, tiempo, grado:sesion.grade, estudiante:sesion.name})
+          });
+        } catch{}
+        setPuntaje({puntos,total,tiempo});
+      };
+
+      if(juegoActivo&&!puntaje) return <JuegoInteractivo juego={juegoActivo} onFin={enviarResultado} onVolver={()=>setJuegoActivo(null)}/>;
+      if(juegoActivo&&puntaje) return (
+        <div style={{textAlign:"center",padding:32}}>
+          <p style={{fontSize:64,margin:"0 0 10px"}}>🏆</p>
+          <h2 style={{color:"#f59e0b",margin:"0 0 6px"}}>¡Juego completado!</h2>
+          <p style={{color:C.texto,fontSize:24,fontWeight:"bold"}}>{puntaje.puntos}/{puntaje.total} correctas</p>
+          <p style={{color:C.textoS,fontSize:13}}>⏱ {puntaje.tiempo}s</p>
+          <button style={{...S.btn,marginTop:16,maxWidth:200}} onClick={()=>{setJuegoActivo(null);setPuntaje(null);}}>← Volver a juegos</button>
+        </div>
+      );
+
+      return (
+        <div>
+          <h3 style={{color:"#a78bfa",margin:"0 0 16px",fontSize:18}}>🎮 Juegos de Grado {sesion.grade}</h3>
+          {cargando?<p style={{color:C.textoS,textAlign:"center",padding:30}}>Cargando juegos...</p>:
+          juegos.length===0?<div style={{textAlign:"center",padding:40,color:C.textoS}}><p style={{fontSize:48,margin:0}}>🎮</p><p>No hay juegos disponibles aún.</p></div>:(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
+              {juegos.map((j,i)=>{
+                const ICONS={sopa:"🔠",crucigrama:"➕",unir:"🔗",completar:"✏️",impostor:"👾",verdadero_falso:"✅",ahorcado:"🪢",millonario:"💰"};
+                const COLS={sopa:"#0891b2",crucigrama:"#7c3aed",unir:"#10b981",completar:"#f59e0b",impostor:"#ef4444",verdadero_falso:"#059669",ahorcado:"#8b5cf6",millonario:"#d97706"};
+                const tipo = j.tipo||j.juego?.tipo||"sopa";
+                const tema = j.tema||j.juego?.tema||"Juego";
+                return(
+                <div key={j.id||i} style={{background:C.tarj,border:`1px solid ${COLS[tipo]||"#7c3aed"}44`,borderRadius:12,padding:14,cursor:"pointer",transition:"transform .15s"}}
+                  onClick={()=>{setJuegoActivo({...j,...(j.juego||{}),id:j.id,tipo,tema});setPuntaje(null);}}>
+                  <p style={{fontSize:28,margin:"0 0 6px"}}>{ICONS[tipo]||"🎮"}</p>
+                  <p style={{color:C.texto,fontWeight:"bold",margin:"0 0 3px",fontSize:13}}>{tema}</p>
+                  <span style={{background:COLS[tipo]+"22",color:COLS[tipo]||"#a78bfa",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600}}>{tipo}</span>
+                </div>);
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function JuegoInteractivo({juego, onFin, onVolver}) {
+      const tipo = juego.tipo||"sopa";
+      const [inicio] = useState(Date.now());
+
+      const terminar = (puntos, total)=>{
+        const tiempo = Math.round((Date.now()-inicio)/1000);
+        onFin(puntos, total, tiempo);
+      };
+
+      if(tipo==="verdadero_falso") return <JuegoVF juego={juego} onFin={terminar} onVolver={onVolver}/>;
+      if(tipo==="ahorcado") return <JuegoAhorcado juego={juego} onFin={terminar} onVolver={onVolver}/>;
+      if(tipo==="millonario") return <JuegoMillonario juego={juego} onFin={terminar} onVolver={onVolver}/>;
+      if(tipo==="unir") return <JuegoUnir juego={juego} onFin={terminar} onVolver={onVolver}/>;
+      if(tipo==="impostor") return <JuegoImpostor juego={juego} onFin={terminar} onVolver={onVolver}/>;
+      if(tipo==="completar") return <JuegoCompletar juego={juego} onFin={terminar} onVolver={onVolver}/>;
+      // sopa y crucigrama: mostrar palabras/pistas sin interactividad completa
+      return <JuegoSimple juego={juego} onVolver={onVolver}/>;
+    }
+
+    function JuegoVF({juego, onFin, onVolver}) {
+      const items = juego.afirmaciones||[];
+      const [idx, setIdx] = useState(0);
+      const [correctas, setCorrectas] = useState(0);
+      const [resp, setResp] = useState(null);
+      if(items.length===0) return <p style={{color:C.textoS}}>Sin afirmaciones.</p>;
+      const actual = items[idx];
+      const responder=(v)=>{
+        if(resp!==null) return;
+        const ok = (v==="Verdadero")===actual.respuesta;
+        setResp(v);
+        if(ok) setCorrectas(c=>c+1);
+        setTimeout(()=>{
+          if(idx+1>=items.length) onFin(ok?correctas+1:correctas, items.length);
+          else{setIdx(i=>i+1);setResp(null);}
+        }, 1200);
+      };
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+            <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
+            <span style={{color:C.textoS,fontSize:12}}>{idx+1}/{items.length} · ✅ {correctas}</span>
+          </div>
+          <div style={{background:C.tarj,borderRadius:14,padding:24,marginBottom:16,minHeight:100,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <p style={{color:C.texto,fontSize:16,textAlign:"center",fontWeight:"bold",lineHeight:1.6}}>{actual.texto}</p>
+          </div>
+          {resp&&<div style={{background:resp==="Verdadero"===actual.respuesta?"#052e16":"#450a0a",borderRadius:10,padding:12,marginBottom:12,textAlign:"center"}}>
+            <p style={{color:resp==="Verdadero"===actual.respuesta?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{resp==="Verdadero"===actual.respuesta?"✅ ¡Correcto!":"❌ Incorrecto"}</p>
+            <p style={{color:C.textoS,fontSize:12,margin:0}}>{actual.explicacion}</p>
+          </div>}
+          <div style={{display:"flex",gap:10}}>
+            {["Verdadero","Falso"].map(v=>(
+              <button key={v} disabled={resp!==null} style={{flex:1,padding:"14px",borderRadius:10,border:"none",cursor:resp?"default":"pointer",fontWeight:"bold",fontSize:15,
+                background:resp===v?(v==="Verdadero"===actual.respuesta?"#052e16":"#450a0a"):v==="Verdadero"?"#064e3b":"#450a0a",
+                color:v==="Verdadero"?"#6ee7b7":"#fca5a5",opacity:resp&&resp!==v?0.4:1}} onClick={()=>responder(v)}>
+                {v==="Verdadero"?"✅ Verdadero":"❌ Falso"}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function JuegoAhorcado({juego, onFin, onVolver}) {
+      const palabras = juego.palabras||[];
+      const [idx, setIdx] = useState(0);
+      const [letras, setLetras] = useState(new Set());
+      const [errores, setErrores] = useState(0);
+      const [correctas, setCorrectas] = useState(0);
+      const MAX_ERR = 6;
+      if(palabras.length===0) return <p style={{color:C.textoS}}>Sin palabras.</p>;
+      const actual = palabras[idx];
+      const palabra = (actual.palabra||actual).toUpperCase();
+      const pista = actual.pista||"";
+      const terminado = errores>=MAX_ERR || palabra.split("").every(l=>letras.has(l));
+      const ganado = palabra.split("").every(l=>letras.has(l));
+
+      const siguiente = ()=>{
+        if(ganado) setCorrectas(c=>c+1);
+        if(idx+1>=palabras.length) onFin(ganado?correctas+1:correctas, palabras.length);
+        else{setIdx(i=>i+1);setLetras(new Set());setErrores(0);}
+      };
+
+      const LETRAS="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+            <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
+            <span style={{color:C.textoS,fontSize:12}}>Palabra {idx+1}/{palabras.length} · ❤️ {MAX_ERR-errores}</span>
+          </div>
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginBottom:12}}>
+              {palabra.split("").map((l,i)=>(
+                <div key={i} style={{width:32,height:40,borderBottom:`3px solid ${C.azulC}`,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:4}}>
+                  <span style={{color:C.texto,fontSize:18,fontWeight:"bold"}}>{letras.has(l)?l:" "}</span>
+                </div>
+              ))}
+            </div>
+            {pista&&<p style={{color:C.textoS,fontSize:12}}>💡 {pista}</p>}
+            {terminado&&<div style={{background:ganado?"#052e16":"#450a0a",borderRadius:10,padding:12,margin:"10px 0"}}>
+              <p style={{color:ganado?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{ganado?"🎉 ¡Adivinaste!":"💀 Era: "+palabra}</p>
+              <button style={{...S.btn,marginTop:8,maxWidth:160}} onClick={siguiente}>{idx+1>=palabras.length?"Ver resultado":"Siguiente →"}</button>
+            </div>}
+          </div>
+          {!terminado&&<div style={{display:"flex",flexWrap:"wrap",gap:5,justifyContent:"center"}}>
+            {LETRAS.map(l=>(
+              <button key={l} disabled={letras.has(l)} onClick={()=>{
+                const nl=new Set(letras);nl.add(l);setLetras(nl);
+                if(!palabra.includes(l)) setErrores(e=>e+1);
+              }} style={{width:34,height:34,borderRadius:6,border:`1px solid ${letras.has(l)?C.borde:C.azulC}`,
+                background:letras.has(l)?(palabra.includes(l)?"#052e16":"#450a0a"):"transparent",
+                color:letras.has(l)?(palabra.includes(l)?C.ok:C.err):C.texto,
+                fontWeight:"bold",fontSize:13,cursor:letras.has(l)?"default":"pointer"}}>
+                {l}
+              </button>
+            ))}
+          </div>}
+        </div>
+      );
+    }
+
+    function JuegoMillonario({juego, onFin, onVolver}) {
+      const preguntas = juego.preguntas||[];
+      const [idx, setIdx] = useState(0);
+      const [resp, setResp] = useState(null);
+      const [correctas, setCorrectas] = useState(0);
+      if(preguntas.length===0) return <p style={{color:C.textoS}}>Sin preguntas.</p>;
+      const actual = preguntas[idx];
+      const responder=(i)=>{
+        if(resp!==null) return;
+        setResp(i);
+        if(i===actual.correcta) setCorrectas(c=>c+1);
+        setTimeout(()=>{
+          if(idx+1>=preguntas.length) onFin(i===actual.correcta?correctas+1:correctas, preguntas.length);
+          else{setIdx(p=>p+1);setResp(null);}
+        },1500);
+      };
+      const NIVEL_COL=["#10b981","#10b981","#10b981","#f59e0b","#f59e0b","#f59e0b","#ef4444","#ef4444"];
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+            <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
+            <span style={{color:"#f59e0b",fontWeight:"bold"}}>{actual.premio||""}</span>
+          </div>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",borderRadius:14,padding:20,marginBottom:16,textAlign:"center",border:`2px solid ${NIVEL_COL[idx]||"#f59e0b"}`}}>
+            <p style={{color:C.textoS,fontSize:10,marginBottom:6}}>Pregunta {idx+1} de {preguntas.length}</p>
+            <p style={{color:C.texto,fontSize:15,fontWeight:"bold",lineHeight:1.6}}>{actual.pregunta}</p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {(actual.opciones||[]).map((op,i)=>(
+              <button key={i} disabled={resp!==null} onClick={()=>responder(i)} style={{padding:"12px 10px",borderRadius:10,border:`2px solid ${resp===i?(i===actual.correcta?C.ok:C.err):NIVEL_COL[idx]||"#f59e0b"}`,
+                background:resp===i?(i===actual.correcta?"#052e16":"#450a0a"):resp!==null&&i===actual.correcta?"#052e16":"#0a1128",
+                color:resp===i?(i===actual.correcta?C.ok:C.err):C.texto,fontWeight:"bold",fontSize:12,cursor:resp?"default":"pointer",textAlign:"left",opacity:resp!==null&&resp!==i&&i!==actual.correcta?0.5:1}}>
+                {op}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function JuegoUnir({juego, onFin, onVolver}) {
+      const pares = (juego.pares||[]).map(p=>({a:p.columnaA||p.termino||p.concepto,b:p.columnaB||p.definicion}));
+      const [selA, setSelA] = useState(null);
+      const [unidos, setUnidos] = useState({});
+      const [correctos, setCorrectos] = useState(0);
+      const optsB = [...pares].sort(()=>Math.random()-0.5);
+      const total = pares.length;
+      if(Object.keys(unidos).length===total&&total>0) return(
+        <div style={{textAlign:"center",padding:32}}>
+          <p style={{fontSize:48}}>🎉</p>
+          <p style={{color:C.texto,fontSize:18,fontWeight:"bold"}}>{correctos}/{total} correctos</p>
+          <button style={{...S.btn,marginTop:12,maxWidth:200}} onClick={()=>onFin(correctos,total)}>Ver resultado</button>
+        </div>
+      );
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+            <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
+            <span style={{color:C.textoS,fontSize:12}}>Une los conceptos · {Object.keys(unidos).length}/{total}</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div>{pares.map((p,i)=>(<div key={i} onClick={()=>!unidos[i]&&setSelA(i)} style={{padding:"10px 12px",borderRadius:8,marginBottom:6,cursor:unidos[i]?"default":"pointer",
+              background:unidos[i]?"#052e16":selA===i?"#1e1b4b":"#0a1128",
+              border:`1px solid ${unidos[i]?C.ok:selA===i?"#a78bfa":C.borde}`,color:unidos[i]?C.ok:selA===i?"#a78bfa":C.texto,fontSize:12,fontWeight:"bold"}}>
+              {p.a}{unidos[i]?" ✓":""}
+            </div>))}</div>
+            <div>{optsB.map((p,i)=>(<div key={i} onClick={()=>{
+              if(selA===null) return;
+              const correcto = pares[selA].b===p.b;
+              if(correcto) setCorrectos(c=>c+1);
+              setUnidos(u=>({...u,[selA]:p.b}));
+              setSelA(null);
+            }} style={{padding:"10px 12px",borderRadius:8,marginBottom:6,cursor:selA!==null?"pointer":"default",
+              background:Object.values(unidos).includes(p.b)?"#052e16":"#0a1128",
+              border:`1px solid ${Object.values(unidos).includes(p.b)?C.ok:C.borde}`,
+              color:Object.values(unidos).includes(p.b)?C.ok:C.texto,fontSize:12}}>
+              {p.b}
+            </div>))}</div>
+          </div>
+        </div>
+      );
+    }
+
+    function JuegoImpostor({juego, onFin, onVolver}) {
+      const rondas = juego.rondas||juego.grupos||[];
+      const [idx, setIdx] = useState(0);
+      const [resp, setResp] = useState(null);
+      const [correctas, setCorrectas] = useState(0);
+      if(rondas.length===0) return <p style={{color:C.textoS}}>Sin rondas.</p>;
+      const actual = rondas[idx];
+      const palabras = [...(actual.palabras||[])].sort(()=>Math.random()-0.5);
+      const elegir=(p)=>{
+        if(resp) return;
+        setResp(p);
+        if(p===actual.impostor) setCorrectas(c=>c+1);
+        setTimeout(()=>{
+          if(idx+1>=rondas.length) onFin(p===actual.impostor?correctas+1:correctas, rondas.length);
+          else{setIdx(i=>i+1);setResp(null);}
+        },1500);
+      };
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+            <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
+            <span style={{color:C.textoS,fontSize:12}}>Ronda {idx+1}/{rondas.length}</span>
+          </div>
+          <p style={{color:C.texto,fontSize:14,fontWeight:"bold",textAlign:"center",marginBottom:20}}>👾 ¿Cuál NO pertenece al grupo?</p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",marginBottom:16}}>
+            {palabras.map((p,i)=>(
+              <button key={i} disabled={!!resp} onClick={()=>elegir(p)} style={{padding:"12px 20px",borderRadius:10,fontSize:14,fontWeight:"bold",cursor:resp?"default":"pointer",
+                background:resp===p?(p===actual.impostor?"#052e16":"#450a0a"):resp&&p===actual.impostor?"#052e16":"#0f2a47",
+                border:`2px solid ${resp===p?(p===actual.impostor?C.ok:C.err):resp&&p===actual.impostor?C.ok:"#7c3aed"}`,
+                color:resp===p?(p===actual.impostor?C.ok:C.err):C.texto}}>
+                {p}
+              </button>
+            ))}
+          </div>
+          {resp&&<div style={{background:resp===actual.impostor?"#052e16":"#450a0a",borderRadius:10,padding:12,textAlign:"center"}}>
+            <p style={{color:resp===actual.impostor?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{resp===actual.impostor?"✅ ¡Correcto!":"❌ Era: "+actual.impostor}</p>
+            <p style={{color:C.textoS,fontSize:12,margin:0}}>{actual.explicacion}</p>
+          </div>}
+        </div>
+      );
+    }
+
+    function JuegoCompletar({juego, onFin, onVolver}) {
+      const frases = juego.frases||juego.oraciones||[];
+      const [idx, setIdx] = useState(0);
+      const [input, setInput] = useState("");
+      const [resp, setResp] = useState(null);
+      const [correctas, setCorrectas] = useState(0);
+      if(frases.length===0) return <p style={{color:C.textoS}}>Sin frases.</p>;
+      const actual = frases[idx];
+      const verificar=()=>{
+        if(resp) return;
+        const ok = (input||"").trim().toLowerCase()===((actual.respuesta||actual.palabra||"").trim().toLowerCase());
+        setResp(ok?"ok":"err");
+        if(ok) setCorrectas(c=>c+1);
+        setTimeout(()=>{
+          if(idx+1>=frases.length) onFin(ok?correctas+1:correctas, frases.length);
+          else{setIdx(i=>i+1);setInput("");setResp(null);}
+        },1500);
+      };
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+            <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
+            <span style={{color:C.textoS,fontSize:12}}>{idx+1}/{frases.length} · ✅ {correctas}</span>
+          </div>
+          <div style={{background:C.tarj,borderRadius:12,padding:20,marginBottom:16}}>
+            <p style={{color:C.texto,fontSize:15,lineHeight:1.8}}>{actual.frase||actual.texto} <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&verificar()} disabled={!!resp} style={{...S.inp,display:"inline",width:140,textAlign:"center",border:`2px solid ${resp==="ok"?C.ok:resp==="err"?C.err:C.azulC}`}} placeholder="___"/></p>
+          </div>
+          {resp&&<p style={{color:resp==="ok"?C.ok:C.err,textAlign:"center",fontWeight:"bold"}}>{resp==="ok"?"✅ ¡Correcto!":"❌ Era: "+(actual.respuesta||actual.palabra)}</p>}
+          {!resp&&<button style={{...S.btn,maxWidth:200,margin:"0 auto",display:"block"}} onClick={verificar}>Verificar</button>}
+        </div>
+      );
+    }
+
+    function JuegoSimple({juego, onVolver}) {
+      const tipo = juego.tipo;
+      return(
+        <div>
+          <button style={{...S.btnSm,marginBottom:16,fontSize:12}} onClick={onVolver}>← Volver</button>
+          <h3 style={{color:"#a78bfa",marginBottom:12}}>{juego.tema}</h3>
+          {tipo==="sopa"&&juego.palabras&&<div>
+            <p style={{color:C.textoS,fontSize:12,marginBottom:8}}>Palabras a encontrar:</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+              {juego.palabras.map((p,i)=><span key={i} style={{background:"#1e1b4b",color:"#a78bfa",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:"bold"}}>{p.palabra||p}</span>)}
+            </div>
+            {juego.pistas&&<div>{juego.pistas.map((pi,i)=><p key={i} style={{color:C.texto,fontSize:12,marginBottom:4}}>• {pi}</p>)}</div>}
+          </div>}
+          {tipo==="crucigrama"&&juego.palabras&&<div>
+            {juego.palabras.map((p,i)=><div key={i} style={{marginBottom:10,padding:"8px 12px",background:C.tarj,borderRadius:8}}><p style={{color:"#a78bfa",fontWeight:"bold",margin:"0 0 2px"}}>{i+1}. {p.palabra}</p><p style={{color:C.texto,fontSize:12,margin:0}}>{p.pista||p.definicion}</p></div>)}
+          </div>}
+        </div>
+      );
+    }
   </script>
 </body>
 </html>
