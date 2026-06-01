@@ -263,7 +263,34 @@
       const [enviando, setEnviando] = useState(false);
       const [entregada, setEntregada] = useState(tarea.entregada||false);
       const [notaAuto, setNotaAuto] = useState(null);
+      const [guardadoMsg, setGuardadoMsg] = useState("");
       const archivoRef = useRef();
+      const autoguardadoRef = useRef(null);
+
+      // Autoguardado cada 30 segundos si hay respuestas
+      useEffect(()=>{
+        if (entregada) return;
+        const autoguardar = async () => {
+          if (!Object.keys(resps).length && !texto) return;
+          try {
+            await fetch(API+"/tasks/progreso/"+tarea.id, {
+              method:"PATCH",
+              headers:{"Authorization":"Bearer "+(localStorage.getItem("edutokenest")||""),"Content-Type":"application/json"},
+              body:JSON.stringify({respuestasActividad:resps, respuesta:texto})
+            });
+            setGuardadoMsg("✓ Guardado automáticamente");
+            setTimeout(()=>setGuardadoMsg(""),2500);
+          } catch(_) {}
+        };
+        autoguardadoRef.current = setInterval(autoguardar, 30000);
+        // Guardar al salir de la página
+        const guardarAlSalir = ()=>autoguardar();
+        window.addEventListener("beforeunload", guardarAlSalir);
+        return ()=>{
+          clearInterval(autoguardadoRef.current);
+          window.removeEventListener("beforeunload", guardarAlSalir);
+        };
+      },[resps,texto,entregada]);
 
       const actividad = typeof tarea.actividad==="string"
         ? (()=>{ try{return JSON.parse(tarea.actividad);}catch{return null;} })()
@@ -398,6 +425,10 @@
             </div>
             {!entregada&&(
               <div style={S.mFoot}>
+                {guardadoMsg&&<p style={{
+                  color:C.ok,fontSize:10,position:"absolute",
+                  bottom:58,left:22,margin:0
+                }}>{guardadoMsg}</p>}
                 <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
                 <button style={{
                   ...S.btnV,flex:1,opacity:enviando?0.7:1
@@ -836,6 +867,11 @@
                                   color:C.naranja,fontSize:11,
                                   margin:0,fontWeight:"bold"
                                 }}>Pendiente</p>
+                              {t.cerrarEn&&(
+                                <p style={{color:C.err,fontSize:10,margin:"2px 0 0",fontWeight:"bold"}}>
+                                  ⏰ Cierra: {new Date(t.cerrarEn).toLocaleDateString("es-CO",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}
+                                </p>
+                              )}
                               </div>
                               <button style={{
                                 ...S.btnSm,color:C.azulC,
