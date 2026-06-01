@@ -676,6 +676,7 @@ async function renderSeguimiento(dia, hora, grado, materia) {
   const temas = await DB.getTemasListByMateria(materia);
   const idx   = d.proximoTemaIdx || 0;
   const prox  = temas[idx] || "⚠ Sin malla curricular. Ve a Admin → Malla Curricular.";
+  const marcador = d.marcadorClase || {pagina:1, texto:"", archivo:""};
   return `
     <div class="tab-panel">
       <div class="seg-block">
@@ -696,6 +697,55 @@ async function renderSeguimiento(dia, hora, grado, materia) {
               </button>`).join("")}</div>`
           : `<p class="hint-text">Carga la malla desde Admin → Malla Curricular</p>`}
       </div>
+
+      <!-- VISOR DE CLASE -->
+      <div class="seg-block" style="border:1px solid #1e3a5f;border-radius:12px;padding:14px;background:#060e1f">
+        <div class="seg-header" style="margin-bottom:12px"><span>📄</span><h4>Material de clase</h4></div>
+        
+        ${marcador.archivo ? `
+        <div style="background:#0f2a47;border-radius:8px;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <p style="color:#93c5fd;font-size:12px;font-weight:bold;margin:0 0 2px">📎 ${marcador.archivo}</p>
+            <p style="color:#4b5563;font-size:11px;margin:0">Última vez en página <strong style="color:#f59e0b">${marcador.pagina}</strong></p>
+          </div>
+          <button class="secondary-btn" style="font-size:11px;padding:5px 10px" onclick="abrirVisorClase()">📖 Abrir visor</button>
+        </div>` : ''}
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <label style="color:#64748b;font-size:12px;cursor:pointer;flex:1;min-width:160px">
+            <span style="background:#1e3a5f;border:1px dashed #3b82f6;border-radius:8px;padding:8px 12px;display:block;text-align:center;color:#93c5fd">
+              📂 ${marcador.archivo ? 'Cambiar PDF/PPT' : 'Subir PDF o PPT de la clase'}
+            </span>
+            <input type="file" id="clase-archivo" accept=".pdf,.pptx,.ppt" style="display:none" onchange="cargarArchivoClase(event)">
+          </label>
+        </div>
+
+        <!-- Marcador de página y texto -->
+        <div style="background:#0a1128;border-radius:8px;padding:12px;border:1px solid #1e3a5f">
+          <p style="color:#64748b;font-size:11px;font-weight:600;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px">📌 Marcador — ¿dónde quedamos?</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+            <label style="color:#94a3b8;font-size:12px;white-space:nowrap">Página:</label>
+            <input type="number" id="marcador-pagina" min="1" value="${marcador.pagina||1}" 
+              style="width:70px;background:#0f2a47;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;color:#fff;font-size:13px;font-weight:bold">
+          </div>
+          <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:4px">Texto / nota donde quedamos:</label>
+          <textarea id="marcador-texto" style="width:100%;background:#0f2a47;border:1px solid #1e3a5f;border-radius:6px;padding:8px;color:#e2e8f0;font-size:12px;resize:vertical;min-height:60px;box-sizing:border-box;font-family:inherit" 
+            placeholder="Ej: Quedamos en el ejercicio 3 de la página 45, pendiente explicar el concepto de...">${marcador.texto||''}</textarea>
+        </div>
+
+        <!-- Visor PDF inline -->
+        <div id="visor-clase-wrap" style="display:none;margin-top:12px">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <button class="secondary-btn" style="font-size:11px" onclick="cambiarPaginaVisor(-1)">◀ Anterior</button>
+            <span style="color:#94a3b8;font-size:12px">Página <strong id="visor-pagina-actual" style="color:#f59e0b">1</strong></span>
+            <button class="secondary-btn" style="font-size:11px" onclick="cambiarPaginaVisor(1)">Siguiente ▶</button>
+            <button class="secondary-btn" style="font-size:11px;color:#f59e0b;border-color:#f59e0b" onclick="marcarPaginaActual()">📌 Marcar esta página</button>
+            <button class="secondary-btn" style="font-size:11px" onclick="cerrarVisor()">✕ Cerrar</button>
+          </div>
+          <canvas id="visor-canvas" style="width:100%;border-radius:8px;background:#fff;max-height:500px;object-fit:contain"></canvas>
+        </div>
+      </div>
+
       <button class="save-btn" onclick="saveSeguimiento()">💾 Guardar seguimiento</button>
     </div>`;
 }
@@ -719,8 +769,101 @@ async function saveSeguimiento() {
     ...existing,
     temasPasados:    document.getElementById("temas-pasados")?.value    || "",
     temasPendientes: document.getElementById("temas-pendientes")?.value || "",
+    marcadorClase: {
+      pagina: parseInt(document.getElementById("marcador-pagina")?.value||1),
+      texto:  document.getElementById("marcador-texto")?.value || "",
+      archivo: existing.marcadorClase?.archivo || "",
+    }
   }, currentUser.id);
   showToast("✓ Seguimiento guardado");
+}
+
+// ── Visor de PDF ──────────────────────────────────────────
+let _pdfDoc = null;
+let _pdfPagActual = 1;
+let _pdfData = null; // base64
+
+async function cargarArchivoClase(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.name.endsWith(".pdf")) {
+    showToast("⚠ Solo se soportan archivos PDF por ahora");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    _pdfData = e.target.result;
+    // Guardar nombre en marcador
+    if (activeCell) {
+      const { dia, hora, grado, materia } = activeCell;
+      const existing = await DB.getDiario(dia, grado, hora, materia);
+      const pagGuardada = existing.marcadorClase?.pagina || 1;
+      await DB.saveDiario(dia, grado, hora, materia, {
+        ...existing,
+        marcadorClase: { ...existing.marcadorClase, archivo: file.name, pagina: pagGuardada }
+      }, currentUser.id);
+    }
+    await abrirVisorClase();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function abrirVisorClase() {
+  if (!_pdfData && !window._pdfDataGlobal) { showToast("⚠ Primero sube un PDF"); return; }
+  const data = _pdfData || window._pdfDataGlobal;
+  
+  // Cargar PDF.js si no está
+  if (!window.pdfjsLib) {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    document.head.appendChild(script);
+    await new Promise(r => script.onload = r);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+
+  const pdfBytes = Uint8Array.from(atob(data.split(",")[1]), c => c.charCodeAt(0));
+  _pdfDoc = await window.pdfjsLib.getDocument({ data: pdfBytes }).promise;
+
+  // Ir a la página marcada
+  if (activeCell) {
+    const { dia, hora, grado, materia } = activeCell;
+    const d = await DB.getDiario(dia, grado, hora, materia);
+    _pdfPagActual = d.marcadorClase?.pagina || 1;
+  }
+
+  document.getElementById("visor-clase-wrap").style.display = "block";
+  await renderPaginaPDF(_pdfPagActual);
+}
+
+async function renderPaginaPDF(numPag) {
+  if (!_pdfDoc) return;
+  numPag = Math.max(1, Math.min(numPag, _pdfDoc.numPages));
+  _pdfPagActual = numPag;
+  document.getElementById("visor-pagina-actual").textContent = `${numPag} / ${_pdfDoc.numPages}`;
+  document.getElementById("marcador-pagina").value = numPag;
+
+  const page = await _pdfDoc.getPage(numPag);
+  const canvas = document.getElementById("visor-canvas");
+  const ctx = canvas.getContext("2d");
+  const panelW = canvas.parentElement.offsetWidth || 600;
+  const viewport = page.getViewport({ scale: panelW / page.getViewport({scale:1}).width });
+  canvas.height = viewport.height;
+  canvas.width  = viewport.width;
+  await page.render({ canvasContext: ctx, viewport }).promise;
+}
+
+async function cambiarPaginaVisor(delta) {
+  await renderPaginaPDF(_pdfPagActual + delta);
+}
+
+async function marcarPaginaActual() {
+  document.getElementById("marcador-pagina").value = _pdfPagActual;
+  showToast(`📌 Página ${_pdfPagActual} marcada`);
+}
+
+function cerrarVisor() {
+  document.getElementById("visor-clase-wrap").style.display = "none";
 }
 
 // ============================================================
