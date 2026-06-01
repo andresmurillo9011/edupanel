@@ -995,27 +995,42 @@
         cargar();
       },[sesion]);
 
-      const enviarResultado = async(puntos, total, tiempo)=>{
+      const enviarResultado = async(correctas, total, tiempo)=>{
         if(!juegoActivo) return;
+        const nota = total > 0 ? parseFloat((correctas/total*5).toFixed(1)) : 0;
         try {
           const tok = localStorage.getItem("edutokenest")||"";
-          await fetch(`${API}/juegos/resultado`, {
+          const r = await fetch(`${API}/juegos/resultado`, {
             method:"POST",
             headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok}`},
-            body: JSON.stringify({juegoId:juegoActivo.id, puntaje:puntos, total, tiempo, grado:sesion.grade, estudiante:sesion.name})
+            body: JSON.stringify({
+              juegoId: juegoActivo.id,
+              tipo: juegoActivo.tipo,
+              tema: juegoActivo.tema,
+              grado: sesion.grade,
+              correctas, total, tiempo
+            })
           });
-        } catch{}
-        setPuntaje({puntos,total,tiempo});
+          const d = await r.json();
+          setPuntaje({correctas, total, tiempo, nota: d.resultado?.nota ?? nota});
+        } catch{
+          setPuntaje({correctas, total, tiempo, nota});
+        }
       };
 
       if(juegoActivo&&!puntaje) return <JuegoInteractivo juego={juegoActivo} onFin={enviarResultado} onVolver={()=>setJuegoActivo(null)}/>;
       if(juegoActivo&&puntaje) return (
         <div style={{textAlign:"center",padding:32}}>
-          <p style={{fontSize:64,margin:"0 0 10px"}}>🏆</p>
+          <p style={{fontSize:64,margin:"0 0 10px"}}>{puntaje.nota>=4?"🏆":puntaje.nota>=3?"😊":"💪"}</p>
           <h2 style={{color:"#f59e0b",margin:"0 0 6px"}}>¡Juego completado!</h2>
-          <p style={{color:C.texto,fontSize:24,fontWeight:"bold"}}>{puntaje.puntos}/{puntaje.total} correctas</p>
-          <p style={{color:C.textoS,fontSize:13}}>⏱ {puntaje.tiempo}s</p>
-          <button style={{...S.btn,marginTop:16,maxWidth:200}} onClick={()=>{setJuegoActivo(null);setPuntaje(null);}}>← Volver a juegos</button>
+          <p style={{color:C.texto,fontSize:36,fontWeight:"bold",margin:"0 0 4px"}}>{puntaje.correctas}/{puntaje.total} correctas</p>
+          <div style={{background:"#0f2a47",border:"2px solid #f59e0b",borderRadius:14,padding:"16px 24px",display:"inline-block",margin:"12px 0"}}>
+            <p style={{color:C.textoS,fontSize:13,margin:"0 0 4px"}}>Tu nota</p>
+            <p style={{color:"#f59e0b",fontSize:48,fontWeight:"bold",margin:0,fontFamily:"monospace"}}>{puntaje.nota}</p>
+            <p style={{color:C.textoS,fontSize:11,margin:"4px 0 0"}}>sobre 5.0</p>
+          </div>
+          <p style={{color:C.textoS,fontSize:13}}>⏱ {puntaje.tiempo}s · {puntaje.nota>=3?"✅ Aprobado":"⚠️ Necesitas repasar"}</p>
+          <button style={{...S.btn,marginTop:16,maxWidth:220}} onClick={()=>{setJuegoActivo(null);setPuntaje(null);}}>← Volver a juegos</button>
         </div>
       );
 
@@ -1078,7 +1093,7 @@
         setTimeout(()=>{
           if(idx+1>=items.length) onFin(ok?correctas+1:correctas, items.length);
           else{setIdx(i=>i+1);setResp(null);}
-        }, 1200);
+        }, 1000);
       };
       return(
         <div>
@@ -1089,15 +1104,14 @@
           <div style={{background:C.tarj,borderRadius:14,padding:24,marginBottom:16,minHeight:100,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <p style={{color:C.texto,fontSize:16,textAlign:"center",fontWeight:"bold",lineHeight:1.6}}>{actual.texto}</p>
           </div>
-          {resp&&<div style={{background:(resp==="Verdadero")===actual.respuesta?"#052e16":"#450a0a",borderRadius:10,padding:12,marginBottom:12,textAlign:"center"}}>
-            <p style={{color:(resp==="Verdadero")===actual.respuesta?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{(resp==="Verdadero")===actual.respuesta?"✅ ¡Correcto!":"❌ Incorrecto"}</p>
-            <p style={{color:C.textoS,fontSize:12,margin:0}}>{actual.explicacion}</p>
+          {resp&&<div style={{background:(resp==="Verdadero")===actual.respuesta?"#052e16":"#450a0a",borderRadius:10,padding:10,marginBottom:12,textAlign:"center"}}>
+            <p style={{color:(resp==="Verdadero")===actual.respuesta?C.ok:C.err,fontWeight:"bold",margin:0}}>{(resp==="Verdadero")===actual.respuesta?"✅ ¡Correcto!":"❌ Incorrecto"}</p>
           </div>}
           <div style={{display:"flex",gap:10}}>
             {["Verdadero","Falso"].map(v=>(
               <button key={v} disabled={resp!==null} style={{flex:1,padding:"14px",borderRadius:10,border:"none",cursor:resp?"default":"pointer",fontWeight:"bold",fontSize:15,
-                background:resp===v?((v==="Verdadero")===actual.respuesta?"#052e16":"#450a0a"):v==="Verdadero"?"#064e3b":"#450a0a",
-                color:v==="Verdadero"?"#6ee7b7":"#fca5a5",opacity:resp&&resp!==v?0.4:1}} onClick={()=>responder(v)}>
+                background:v==="Verdadero"?"#064e3b":"#450a0a",
+                color:v==="Verdadero"?"#6ee7b7":"#fca5a5",opacity:resp&&resp!==v?0.5:1}} onClick={()=>responder(v)}>
                 {v==="Verdadero"?"✅ Verdadero":"❌ Falso"}
               </button>
             ))}
@@ -1193,9 +1207,12 @@
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {(actual.opciones||[]).map((op,i)=>(
-              <button key={i} disabled={resp!==null} onClick={()=>responder(i)} style={{padding:"12px 10px",borderRadius:10,border:`2px solid ${resp===i?(i===actual.correcta?C.ok:C.err):NIVEL_COL[idx]||"#f59e0b"}`,
-                background:resp===i?(i===actual.correcta?"#052e16":"#450a0a"):resp!==null&&i===actual.correcta?"#052e16":"#0a1128",
-                color:resp===i?(i===actual.correcta?C.ok:C.err):C.texto,fontWeight:"bold",fontSize:12,cursor:resp?"default":"pointer",textAlign:"left",opacity:resp!==null&&resp!==i&&i!==actual.correcta?0.5:1}}>
+              <button key={i} disabled={resp!==null} onClick={()=>responder(i)} style={{padding:"12px 10px",borderRadius:10,
+                border:`2px solid ${resp===i?(i===actual.correcta?C.ok:C.err):NIVEL_COL[idx]||"#f59e0b"}`,
+                background:resp===i?(i===actual.correcta?"#052e16":"#450a0a"):"#0a1128",
+                color:resp===i?(i===actual.correcta?C.ok:C.err):C.texto,
+                fontWeight:"bold",fontSize:12,cursor:resp?"default":"pointer",textAlign:"left",
+                opacity:resp!==null&&resp!==i?0.6:1}}>
                 {op}
               </button>
             ))}
@@ -1274,16 +1291,16 @@
           <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",marginBottom:16}}>
             {palabras.map((p,i)=>(
               <button key={i} disabled={!!resp} onClick={()=>elegir(p)} style={{padding:"12px 20px",borderRadius:10,fontSize:14,fontWeight:"bold",cursor:resp?"default":"pointer",
-                background:resp===p?(p===actual.impostor?"#052e16":"#450a0a"):resp&&p===actual.impostor?"#052e16":"#0f2a47",
-                border:`2px solid ${resp===p?(p===actual.impostor?C.ok:C.err):resp&&p===actual.impostor?C.ok:"#7c3aed"}`,
-                color:resp===p?(p===actual.impostor?C.ok:C.err):C.texto}}>
+                background:resp===p?(p===actual.impostor?"#052e16":"#450a0a"):"#0f2a47",
+                border:`2px solid ${resp===p?(p===actual.impostor?C.ok:C.err):"#7c3aed"}`,
+                color:resp===p?(p===actual.impostor?C.ok:C.err):C.texto,
+                opacity:resp&&resp!==p?0.5:1}}>
                 {p}
               </button>
             ))}
           </div>
           {resp&&<div style={{background:resp===actual.impostor?"#052e16":"#450a0a",borderRadius:10,padding:12,textAlign:"center"}}>
-            <p style={{color:resp===actual.impostor?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{resp===actual.impostor?"✅ ¡Correcto!":"❌ Era: "+actual.impostor}</p>
-            <p style={{color:C.textoS,fontSize:12,margin:0}}>{actual.explicacion}</p>
+            <p style={{color:resp===actual.impostor?C.ok:C.err,fontWeight:"bold",margin:0}}>{resp===actual.impostor?"✅ ¡Correcto!":"❌ Incorrecto"}</p>
           </div>}
         </div>
       );
