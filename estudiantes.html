@@ -1129,50 +1129,74 @@
       const MAX_ERR = 6;
       if(palabras.length===0) return <p style={{color:C.textoS}}>Sin palabras.</p>;
       const actual = palabras[idx];
-      const palabra = (actual.palabra||actual).toUpperCase();
+      const palabra = (actual.palabra||actual).toUpperCase().replace(/[^A-Z]/g,"");
       const pista = actual.pista||"";
-      const terminado = errores>=MAX_ERR || palabra.split("").every(l=>letras.has(l));
-      const ganado = palabra.split("").every(l=>letras.has(l));
-
+      const ganado = palabra.split("").filter(l=>l!==" ").every(l=>letras.has(l));
+      const perdido = errores>=MAX_ERR;
+      const terminado = ganado||perdido;
       const siguiente = ()=>{
         if(ganado) setCorrectas(c=>c+1);
         if(idx+1>=palabras.length) onFin(ganado?correctas+1:correctas, palabras.length);
         else{setIdx(i=>i+1);setLetras(new Set());setErrores(0);}
       };
-
       const LETRAS="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+      const vidas=MAX_ERR-errores;
+      const e=errores;
       return(
         <div>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
             <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
-            <span style={{color:C.textoS,fontSize:12}}>Palabra {idx+1}/{palabras.length} · ❤️ {MAX_ERR-errores}</span>
+            <span style={{color:C.textoS,fontSize:12}}>Palabra {idx+1}/{palabras.length}</span>
+            <span style={{fontSize:13}}>{"❤️".repeat(vidas)}{"🖤".repeat(errores)}</span>
           </div>
-          <div style={{textAlign:"center",marginBottom:16}}>
-            <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginBottom:12}}>
-              {palabra.split("").map((l,i)=>(
-                <div key={i} style={{width:32,height:40,borderBottom:`3px solid ${C.azulC}`,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:4}}>
-                  <span style={{color:C.texto,fontSize:18,fontWeight:"bold"}}>{letras.has(l)?l:" "}</span>
-                </div>
-              ))}
+          <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:12,flexWrap:"wrap"}}>
+            <div style={{background:"#0a1128",borderRadius:12,padding:8}}>
+              <svg viewBox="0 0 120 130" style={{width:110,height:120}}>
+                <line x1="10" y1="125" x2="110" y2="125" stroke="#4b5563" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="30" y1="125" x2="30" y2="10" stroke="#4b5563" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="30" y1="10" x2="75" y2="10" stroke="#4b5563" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="75" y1="10" x2="75" y2="25" stroke="#4b5563" strokeWidth="4" strokeLinecap="round"/>
+                {e>=1&&<circle cx="75" cy="35" r="10" stroke={perdido?"#ef4444":ganado?"#10b981":"#94a3b8"} strokeWidth="2.5" fill="none"/>}
+                {e>=2&&<line x1="75" y1="45" x2="75" y2="80" stroke={perdido?"#ef4444":"#94a3b8"} strokeWidth="2.5" strokeLinecap="round"/>}
+                {e>=3&&<line x1="75" y1="55" x2="55" y2="70" stroke={perdido?"#ef4444":"#94a3b8"} strokeWidth="2.5" strokeLinecap="round"/>}
+                {e>=4&&<line x1="75" y1="55" x2="95" y2="70" stroke={perdido?"#ef4444":"#94a3b8"} strokeWidth="2.5" strokeLinecap="round"/>}
+                {e>=5&&<line x1="75" y1="80" x2="58" y2="105" stroke={perdido?"#ef4444":"#94a3b8"} strokeWidth="2.5" strokeLinecap="round"/>}
+                {e>=6&&<line x1="75" y1="80" x2="92" y2="105" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"/>}
+                {ganado&&<><circle cx="72" cy="33" r="1.5" fill="#10b981"/><circle cx="78" cy="33" r="1.5" fill="#10b981"/><path d="M70 39 Q75 44 80 39" stroke="#10b981" strokeWidth="1.5" fill="none"/></>}
+                {perdido&&<><line x1="70" y1="31" x2="72" y2="33" stroke="#ef4444" strokeWidth="1.5"/><line x1="78" y1="31" x2="80" y2="33" stroke="#ef4444" strokeWidth="1.5"/><path d="M70 41 Q75 38 80 41" stroke="#ef4444" strokeWidth="1.5" fill="none"/></>}
+              </svg>
             </div>
-            {pista&&<p style={{color:C.textoS,fontSize:12}}>💡 {pista}</p>}
-            {terminado&&<div style={{background:ganado?"#052e16":"#450a0a",borderRadius:10,padding:12,margin:"10px 0"}}>
-              <p style={{color:ganado?C.ok:C.err,fontWeight:"bold",margin:"0 0 4px"}}>{ganado?"🎉 ¡Adivinaste!":"💀 Era: "+palabra}</p>
-              <button style={{...S.btn,marginTop:8,maxWidth:160}} onClick={siguiente}>{idx+1>=palabras.length?"Ver resultado":"Siguiente →"}</button>
-            </div>}
+            <div style={{flex:1,minWidth:180}}>
+              {pista&&<div style={{background:"#0f2a47",borderRadius:8,padding:"8px 12px",marginBottom:10,border:`1px solid ${C.azul}`}}>
+                <p style={{color:C.textoS,fontSize:11,margin:"0 0 2px"}}>💡 Pista:</p>
+                <p style={{color:C.azulC,fontSize:12,margin:0}}>{pista}</p>
+              </div>}
+              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:12}}>
+                {palabra.split("").map((l,i)=>(
+                  <div key={i} style={{width:26,height:34,borderBottom:`3px solid ${ganado?C.ok:C.azulC}`,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:2}}>
+                    <span style={{color:ganado?C.ok:C.texto,fontSize:16,fontWeight:"bold"}}>{letras.has(l)?l:""}</span>
+                  </div>
+                ))}
+              </div>
+              {terminado&&<div style={{background:ganado?"#052e16":"#450a0a",borderRadius:10,padding:12,textAlign:"center"}}>
+                <p style={{color:ganado?C.ok:C.err,fontWeight:"bold",margin:"0 0 8px"}}>{ganado?"🎉 ¡La adivinaste!":"💀 Era: "+palabra}</p>
+                <button style={{...S.btn,maxWidth:160,fontSize:13}} onClick={siguiente}>{idx+1>=palabras.length?"Ver resultado":"Siguiente →"}</button>
+              </div>}
+            </div>
           </div>
-          {!terminado&&<div style={{display:"flex",flexWrap:"wrap",gap:5,justifyContent:"center"}}>
-            {LETRAS.map(l=>(
-              <button key={l} disabled={letras.has(l)} onClick={()=>{
+          {!terminado&&<div style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center"}}>
+            {LETRAS.map(l=>{
+              const usada=letras.has(l);
+              const ok=usada&&palabra.includes(l);
+              const mal=usada&&!palabra.includes(l);
+              return(<button key={l} disabled={usada} onClick={()=>{
                 const nl=new Set(letras);nl.add(l);setLetras(nl);
-                if(!palabra.includes(l)) setErrores(e=>e+1);
-              }} style={{width:34,height:34,borderRadius:6,border:`1px solid ${letras.has(l)?C.borde:C.azulC}`,
-                background:letras.has(l)?(palabra.includes(l)?"#052e16":"#450a0a"):"transparent",
-                color:letras.has(l)?(palabra.includes(l)?C.ok:C.err):C.texto,
-                fontWeight:"bold",fontSize:13,cursor:letras.has(l)?"default":"pointer"}}>
-                {l}
-              </button>
-            ))}
+                if(!palabra.includes(l)) setErrores(ex=>ex+1);
+              }} style={{width:30,height:30,borderRadius:5,fontWeight:"bold",fontSize:12,cursor:usada?"default":"pointer",
+                border:`1px solid ${ok?C.ok:mal?C.err:C.azulC}`,
+                background:ok?"#052e16":mal?"#450a0a":"transparent",
+                color:ok?C.ok:mal?C.err:C.texto,opacity:usada?0.6:1}}>{l}</button>);
+            })}
           </div>}
         </div>
       );
@@ -1183,45 +1207,66 @@
       const [idx, setIdx] = useState(0);
       const [resp, setResp] = useState(null);
       const [correctas, setCorrectas] = useState(0);
+      const [animando, setAnimando] = useState(false);
       if(preguntas.length===0) return <p style={{color:C.textoS}}>Sin preguntas.</p>;
       const actual = preguntas[idx];
+      const LETRAS_OPT=["A","B","C","D"];
+      const COLORES_OPT=["#1d4ed8","#7c3aed","#0891b2","#d97706"];
+      const NIVEL_COL=["#10b981","#10b981","#10b981","#f59e0b","#f59e0b","#ef4444","#ef4444","#ef4444"];
+      const PREMIOS=["$100","$200","$300","$500","$1.000","$5.000","$10.000","$50.000","$100.000","$500.000","$1.000.000"];
+      const premio = actual.premio || PREMIOS[Math.min(idx, PREMIOS.length-1)];
       const responder=(i)=>{
-        if(resp!==null) return;
-        setResp(i);
-        if(i===actual.correcta) setCorrectas(c=>c+1);
+        if(resp!==null||animando) return;
+        setAnimando(true);
         setTimeout(()=>{
-          if(idx+1>=preguntas.length) onFin(i===actual.correcta?correctas+1:correctas, preguntas.length);
-          else{setIdx(p=>p+1);setResp(null);}
-        },1500);
+          setResp(i);
+          if(i===actual.correcta) setCorrectas(c=>c+1);
+          setAnimando(false);
+          setTimeout(()=>{
+            if(idx+1>=preguntas.length) onFin(i===actual.correcta?correctas+1:correctas, preguntas.length);
+            else{setIdx(p=>p+1);setResp(null);}
+          },1500);
+        },600);
       };
-      const NIVEL_COL=["#10b981","#10b981","#10b981","#f59e0b","#f59e0b","#f59e0b","#ef4444","#ef4444"];
+      const niveles=preguntas.map((_,i)=>i);
       return(
         <div>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <button style={{...S.btnSm,fontSize:12}} onClick={onVolver}>← Volver</button>
-            <span style={{color:"#f59e0b",fontWeight:"bold"}}>{actual.premio||""}</span>
+            <div style={{display:"flex",gap:4}}>
+              {niveles.map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<idx?"#10b981":i===idx?NIVEL_COL[i]||"#f59e0b":"#1f2937"}}/>)}
+            </div>
+            <span style={{color:"#f59e0b",fontWeight:"bold",fontSize:13}}>💰 {premio}</span>
           </div>
-          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",borderRadius:14,padding:20,marginBottom:16,textAlign:"center",border:`2px solid ${NIVEL_COL[idx]||"#f59e0b"}`}}>
-            <p style={{color:C.textoS,fontSize:10,marginBottom:6}}>Pregunta {idx+1} de {preguntas.length}</p>
-            <p style={{color:C.texto,fontSize:15,fontWeight:"bold",lineHeight:1.6}}>{actual.pregunta}</p>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#0d1117)",borderRadius:16,padding:20,marginBottom:14,textAlign:"center",
+            border:`2px solid ${NIVEL_COL[idx]||"#f59e0b"}`,boxShadow:`0 0 20px ${NIVEL_COL[idx]||"#f59e0b"}33`}}>
+            <p style={{color:C.textoS,fontSize:11,margin:"0 0 8px",letterSpacing:1}}>PREGUNTA {idx+1} DE {preguntas.length}</p>
+            <p style={{color:C.texto,fontSize:15,fontWeight:"bold",lineHeight:1.7,margin:0}}>{actual.pregunta}</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {(actual.opciones||[]).map((op,i)=>(
-              <button key={i} disabled={resp!==null} onClick={()=>responder(i)} style={{padding:"12px 10px",borderRadius:10,
-                border:`2px solid ${resp===i?(i===actual.correcta?C.ok:C.err):NIVEL_COL[idx]||"#f59e0b"}`,
-                background:resp===i?(i===actual.correcta?"#052e16":"#450a0a"):"#0a1128",
-                color:resp===i?(i===actual.correcta?C.ok:C.err):C.texto,
-                fontWeight:"bold",fontSize:12,cursor:resp?"default":"pointer",textAlign:"left",
-                opacity:resp!==null&&resp!==i?0.6:1}}>
-                {op}
-              </button>
-            ))}
+            {(actual.opciones||[]).map((op,i)=>{
+              const seleccionada=resp===i;
+              const correctaOpt=resp!==null&&i===actual.correcta;
+              const bg=seleccionada?(i===actual.correcta?"#052e16":"#450a0a"):animando&&!resp?"#1e3a5f":"#0d1528";
+              const border=seleccionada?(i===actual.correcta?C.ok:C.err):COLORES_OPT[i];
+              return(
+              <button key={i} disabled={resp!==null||animando} onClick={()=>responder(i)} style={{
+                padding:"13px 10px",borderRadius:12,border:`2px solid ${border}`,background:bg,
+                color:seleccionada?(i===actual.correcta?C.ok:C.err):C.texto,
+                fontWeight:"bold",fontSize:12,cursor:(resp||animando)?"default":"pointer",textAlign:"left",
+                transition:"all .2s",opacity:resp!==null&&!seleccionada&&!correctaOpt?0.5:1,
+                display:"flex",alignItems:"center",gap:8}}>
+                <span style={{background:COLORES_OPT[i],color:"#fff",borderRadius:"50%",width:22,height:22,
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:"bold",flexShrink:0}}>{LETRAS_OPT[i]}</span>
+                <span>{op.replace(/^[A-D][:\.]\s*/,"")}</span>
+              </button>);
+            })}
           </div>
+          {animando&&<div style={{textAlign:"center",padding:"12px 0",color:"#f59e0b",fontSize:13}}>⏳ Evaluando respuesta...</div>}
         </div>
       );
     }
-
-    function JuegoUnir({juego, onFin, onVolver}) {
+        function JuegoUnir({juego, onFin, onVolver}) {
       const pares = (juego.pares||[]).map(p=>({a:p.columnaA||p.termino||p.concepto,b:p.columnaB||p.definicion}));
       const [selA, setSelA] = useState(null);
       const [unidos, setUnidos] = useState({});
