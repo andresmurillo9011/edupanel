@@ -420,9 +420,14 @@
         <div style={S.fondo}>
           <div style={S.header}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <button style={{...S.btnSm,color:C.azulC,borderColor:C.azul}}
-                onClick={onVolver}>
-                Volver
+              <button style={{
+                padding:"8px 16px",borderRadius:8,
+                border:"2px solid "+C.azulC,
+                background:"rgba(37,99,235,0.15)",
+                color:C.azulC,cursor:"pointer",
+                fontSize:13,fontWeight:"bold"
+              }} onClick={onVolver}>
+                ← Periodos
               </button>
               <div>
                 <p style={{
@@ -596,6 +601,15 @@
               )}
             </div>
           </div>
+        <button onClick={onVolver} style={{
+          position:"fixed",bottom:20,left:20,
+          padding:"12px 20px",borderRadius:99,
+          background:C.azul,color:"#fff",
+          border:"none",cursor:"pointer",
+          fontSize:13,fontWeight:"bold",
+          boxShadow:"0 4px 20px rgba(37,99,235,0.5)",
+          zIndex:200
+        }}>← Volver a periodos</button>
         </div>
       );
     }
