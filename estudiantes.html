@@ -552,6 +552,146 @@
       );
     }
 
+    function JuegoModal({juego, onCerrar, onResultado}) {
+      const [paso, setPaso] = useState(0);
+      const [resps, setResps] = useState({});
+      const [mostrarResult, setMostrarResult] = useState(false);
+      const [correctas, setCorrectas] = useState(0);
+      const [inicio] = useState(Date.now());
+
+      const preguntas = juego.preguntas || juego.afirmaciones || [];
+      const total = preguntas.length;
+
+      const calcularNota = (corr, tot) => tot>0 ? parseFloat((corr/tot*5).toFixed(1)) : 0;
+
+      const terminar = async () => {
+        let corr = 0;
+        preguntas.forEach((p,i)=>{
+          const resp = resps[i];
+          if (juego.tipo==="verdadero_falso"||juego.afirmaciones) {
+            if (resp !== undefined && resp === p.respuesta) corr++;
+          } else {
+            const corrIdx = p.correcta;
+            if (resp === corrIdx) corr++;
+          }
+        });
+        setCorrectas(corr);
+        setMostrarResult(true);
+        const tiempo = Math.round((Date.now()-inicio)/1000);
+        await onResultado(juego.id, juego.tipo, juego.tema, corr, total, tiempo);
+      };
+
+      const nota = calcularNota(correctas, total);
+
+      return (
+        <div style={S.overlay} onClick={e=>e.target===e.currentTarget&&!mostrarResult&&onCerrar()}>
+          <div style={{...S.modal,maxWidth:600}}>
+            <div style={S.mHead}>
+              <div>
+                <h3 style={{color:C.azulC,margin:0,fontSize:15}}>{juego.tema}</h3>
+                <p style={{color:C.textoS,margin:"2px 0 0",fontSize:11}}>{juego.area} · {juego.tipo}</p>
+              </div>
+              <button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button>
+            </div>
+            <div style={S.mBody}>
+              {mostrarResult?(
+                <div style={{textAlign:"center",padding:20}}>
+                  <p style={{fontSize:50,margin:"0 0 10px"}}>{nota>=4?"🏆":nota>=3?"👍":"💪"}</p>
+                  <p style={{color:C.verdeC,fontSize:22,fontWeight:"bold",margin:"0 0 6px"}}>
+                    {correctas}/{total} correctas
+                  </p>
+                  <p style={{
+                    color:nota>=3?C.ok:C.err,fontSize:44,fontWeight:"bold",
+                    fontFamily:FT,margin:"0 0 16px"
+                  }}>{nota}</p>
+                  <p style={{color:C.textoS,fontSize:13,margin:"0 0 20px"}}>
+                    {nota>=4?"¡Excelente trabajo!":nota>=3?"¡Muy bien!":"Sigue practicando 💪"}
+                  </p>
+                  <button style={S.btnV} onClick={onCerrar}>Cerrar</button>
+                </div>
+              ):(
+                <>
+                  <div style={{marginBottom:12,display:"flex",justifyContent:"space-between"}}>
+                    <span style={{color:C.textoS,fontSize:12}}>
+                      Pregunta {paso+1} de {total}
+                    </span>
+                    <span style={{color:C.azulC,fontSize:12,fontWeight:"bold"}}>
+                      {Math.round((paso/total)*100)}% completado
+                    </span>
+                  </div>
+                  <div style={{
+                    background:"#0a1128",borderRadius:4,height:6,marginBottom:16
+                  }}>
+                    <div style={{
+                      width:(paso/total*100)+"%",height:"100%",
+                      background:C.azulC,borderRadius:4,transition:"width 0.3s"
+                    }}/>
+                  </div>
+                  {preguntas[paso]&&(
+                    <div>
+                      <p style={{color:C.texto,fontWeight:"bold",fontSize:14,margin:"0 0 14px",lineHeight:1.5}}>
+                        {preguntas[paso].pregunta||preguntas[paso].texto||preguntas[paso].afirmacion}
+                      </p>
+                      {(preguntas[paso].opciones)&&(
+                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                          {preguntas[paso].opciones.map((op,j)=>(
+                            <div key={j} style={{
+                              padding:"10px 14px",borderRadius:8,cursor:"pointer",
+                              border:resps[paso]===j?"2px solid "+C.azulC:"1px solid "+C.borde,
+                              background:resps[paso]===j?"#0f2a47":"#0a1128",
+                              color:C.texto,fontSize:13
+                            }} onClick={()=>setResps(p=>({...p,[paso]:j}))}>
+                              {op}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {(!preguntas[paso].opciones)&&(
+                        <div style={S.fila}>
+                          {[true,false].map(v=>(
+                            <div key={String(v)} style={{
+                              flex:1,padding:"12px",borderRadius:8,textAlign:"center",cursor:"pointer",
+                              border:resps[paso]===v?"2px solid "+(v?C.ok:C.err):"1px solid "+C.borde,
+                              background:resps[paso]===v?(v?"#052e16":"#2d0a0a"):"#0a1128",
+                              color:v?C.ok:C.err,fontWeight:"bold",fontSize:14
+                            }} onClick={()=>setResps(p=>({...p,[paso]:v}))}>
+                              {v?"✅ Verdadero":"❌ Falso"}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            {!mostrarResult&&(
+              <div style={S.mFoot}>
+                {paso>0&&(
+                  <button style={S.btnG} onClick={()=>setPaso(p=>p-1)}>
+                    ← Anterior
+                  </button>
+                )}
+                {paso<total-1?(
+                  <button style={{...S.btnA,flex:1}}
+                    disabled={resps[paso]===undefined}
+                    onClick={()=>setPaso(p=>p+1)}>
+                    Siguiente →
+                  </button>
+                ):(
+                  <button style={{...S.btnV,flex:1}}
+                    disabled={resps[paso]===undefined}
+                    onClick={terminar}>
+                    ✅ Finalizar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     function App() {
       const getSesion = () => {
         try {
@@ -578,9 +718,17 @@
       const [tareas, setTareas] = useState([]);
       const [tareaActiva, setTareaActiva] = useState(null);
       const [cargando, setCargando] = useState(false);
+      const [juegos, setJuegos] = useState([]);
+      const [juegoActivo, setJuegoActivo] = useState(null);
+      const [juegoCargando, setJuegoCargando] = useState(false);
+      const [periodos, setPeriodos] = useState([]);
 
       useEffect(()=>{
-        if (sesion) cargarTareas();
+        if (sesion) {
+          cargarTareas();
+          cargarJuegos();
+          cargarPeriodos();
+        }
       }, [sesion]);
 
       const cargarTareas = async () => {
@@ -593,6 +741,38 @@
           setTareas(d.tareas||[]);
         } catch(_) {}
         setCargando(false);
+      };
+
+      const cargarJuegos = async () => {
+        if (!sesion) return;
+        setJuegoCargando(true);
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          const grado = encodeURIComponent(sesion.grade||"");
+          const r = await fetch(`${API}/juegos/${instId}/${grado}`, {headers:authHEst()});
+          const d = await r.json();
+          setJuegos(d.juegos||[]);
+        } catch(_) {}
+        setJuegoCargando(false);
+      };
+
+      const cargarPeriodos = async () => {
+        try {
+          const r = await fetch(API+"/notas/estudiante/"+(sesion?.id||""), {headers:authHEst()});
+          const d = await r.json();
+          setPeriodos(d.notas||[]);
+        } catch(_) {}
+      };
+
+      const enviarResultadoJuego = async (juegoId, tipo, tema, correctas, total, tiempo) => {
+        try {
+          const instId = sesion.institutionId || sesion.institution?.id;
+          await fetch(API+"/juegos/resultado", {
+            method:"POST",
+            headers:{...authHEst(),"Content-Type":"application/json"},
+            body: JSON.stringify({juegoId, grado:sesion.grade, tipo, tema, correctas, total, tiempo})
+          });
+        } catch(_) {}
       };
 
       const login = async () => {
@@ -802,6 +982,7 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
+                {id:"juegos",label:"🎮 Juegos"},
                 {id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
@@ -938,6 +1119,62 @@
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
             )}
+            {seccion==="juegos"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🎮 Juegos educativos</h3>
+                  <button onClick={cargarJuegos} style={{...S.btnSm,fontSize:12}}>🔄 Actualizar</button>
+                </div>
+                {juegoCargando?(
+                  <p style={{color:C.textoS,textAlign:"center",padding:30}}>Cargando juegos...</p>
+                ):juegos.length===0?(
+                  <div style={{textAlign:"center",padding:40,background:C.tarjeta,borderRadius:14,border:"1px solid "+C.borde}}>
+                    <p style={{fontSize:40,margin:"0 0 8px"}}>🎮</p>
+                    <p style={{color:C.textoS,fontSize:13}}>Tu docente aún no ha asignado juegos</p>
+                  </div>
+                ):(
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {juegos.map(j=>(
+                      <div key={j.id} style={{
+                        background:C.tarjeta,border:"1px solid "+C.borde,
+                        borderRadius:10,padding:"14px 16px"
+                      }}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                          <div style={{flex:1}}>
+                            <p style={{color:C.azulC,fontWeight:"bold",margin:"0 0 2px",fontSize:13}}>
+                              {j.tipo==="quiz_cronometrado"?"⏱ Quiz Cronometrado":
+                               j.tipo==="impostor"?"🕵️ El Impostor":
+                               j.tipo==="crucigrama"?"🔤 Crucigrama":
+                               j.tipo==="verdadero_falso"?"✅ Verdadero o Falso":
+                               j.tipo==="ahorcado"?"🪢 Ahorcado":
+                               j.tipo==="millonario"?"💰 Millonario":
+                               j.tipo==="diagrama"?"📊 Diagrama":
+                               j.tipo==="linea_tiempo"?"📅 Línea de Tiempo":
+                               j.tipo==="mapa_conceptual"?"🗺️ Mapa Conceptual":
+                               j.tipo==="debate_ia"?"🗣️ Debate IA":"🎮 "+j.tipo}
+                            </p>
+                            <p style={{color:C.textoS,fontSize:11,margin:"0 0 4px"}}>{j.tema} — {j.area}</p>
+                            <p style={{color:C.textoS,fontSize:10,margin:0}}>📅 {new Date(j.creadoEn).toLocaleDateString("es-CO")}</p>
+                          </div>
+                          <button style={{
+                            ...S.btnV,width:"auto",padding:"7px 14px",fontSize:12
+                          }} onClick={()=>setJuegoActivo(j)}>
+                            Jugar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {juegoActivo&&(
+                  <JuegoModal
+                    juego={juegoActivo}
+                    onCerrar={()=>setJuegoActivo(null)}
+                    onResultado={enviarResultadoJuego}/>
+                )}
+              </div>
+            )}
+
             {seccion==="pizarra"&&(
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
