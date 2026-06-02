@@ -330,6 +330,43 @@
       const [guardando, setGuardando] = useState(false);
       const [cargando, setCargando] = useState(true);
       const [busq, setBusq] = useState("");
+      const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
+      const [notasNuevas, setNotasNuevas] = useState(false);
+      const notasRef = React.useRef(notas);
+      notasRef.current = notas;
+
+      const cargarNotasActualizadas = async () => {
+        try {
+          const r = await fetch(API+"/notas/periodos", {headers:authH()});
+          const d = await r.json();
+          const p = (d.periodos||[]).find(x=>x.id===periodo.id);
+          if (p && p.notas) {
+            const notasServer = p.notas;
+            const notasActual = notasRef.current;
+            // Detectar si hay notas nuevas del servidor
+            let hayNuevas = false;
+            Object.keys(notasServer).forEach(estId => {
+              Object.keys(notasServer[estId]||{}).forEach(actIdx => {
+                const valServer = notasServer[estId][actIdx];
+                const valLocal = (notasActual[estId]||{})[actIdx];
+                if (valServer && !valLocal) hayNuevas = true;
+              });
+            });
+            // Merge: conservar cambios locales, agregar nuevas del server
+            const merged = {...notasServer};
+            Object.keys(notasActual).forEach(estId => {
+              if (!merged[estId]) merged[estId] = {};
+              Object.keys(notasActual[estId]||{}).forEach(actIdx => {
+                if (notasActual[estId][actIdx]) {
+                  merged[estId][actIdx] = notasActual[estId][actIdx];
+                }
+              });
+            });
+            setNotas(merged);
+            if (hayNuevas) { setNotasNuevas(true); setUltimaActualizacion(new Date()); }
+          }
+        } catch(_) {}
+      };
 
       useEffect(() => {
         fetch(API+"/students/grado/"+encodeURIComponent(periodo.grado), {
@@ -337,6 +374,9 @@
         }).then(r=>r.json())
           .then(d=>{ setEstudiantes(d.estudiantes||[]); setCargando(false); })
           .catch(()=>setCargando(false));
+        // Auto-recarga cada 20 segundos
+        const intervalo = setInterval(cargarNotasActualizadas, 20000);
+        return () => clearInterval(intervalo);
       }, []);
 
       const guardar = async () => {
@@ -393,12 +433,27 @@
                 </p>
               </div>
             </div>
-            <button style={{
-              ...S.btnV,width:"auto",padding:"8px 18px",
-              opacity:guardando?0.7:1
-            }} disabled={guardando} onClick={guardar}>
-              {guardando?"Guardando...":"Guardar notas"}
-            </button>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              {notasNuevas&&(
+                <div style={{
+                  background:"#052e16",border:"1px solid #16a34a",
+                  borderRadius:6,padding:"4px 10px",fontSize:11,color:"#4ade80"
+                }}>
+                  ✨ Nueva nota de actividad {ultimaActualizacion?ultimaActualizacion.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"}):""}
+                </div>
+              )}
+              <button style={{
+                ...S.btnSm,color:C.azulC,borderColor:C.azul,fontSize:11
+              }} onClick={cargarNotasActualizadas}>
+                🔄 Actualizar
+              </button>
+              <button style={{
+                ...S.btnV,width:"auto",padding:"8px 18px",
+                opacity:guardando?0.7:1
+              }} disabled={guardando} onClick={guardar}>
+                {guardando?"Guardando...":"Guardar notas"}
+              </button>
+            </div>
           </div>
           <div style={S.cont}>
             <div style={{
@@ -502,12 +557,20 @@
                                   type="number" min="0" max="5"
                                   step="0.1" placeholder="-"
                                   value={notasEst[j]||""}
-                                  onChange={e=>{
+                                  onChange={async e=>{
                                     const v=e.target.value;
-                                    setNotas(prev=>({
-                                      ...prev,
-                                      [est.id]:{...prev[est.id]||{},[j]:v}
-                                    }));
+                                    const nuevasNotas = {
+                                      ...notasRef.current,
+                                      [est.id]:{...notasRef.current[est.id]||{},[j]:v}
+                                    };
+                                    setNotas(nuevasNotas);
+                                    // Autoguardar al backend
+                                    try {
+                                      await fetch(API+"/notas/periodos/"+periodo.id, {
+                                        method:"PUT", headers:authH(),
+                                        body:JSON.stringify({notas:nuevasNotas})
+                                      });
+                                    } catch(_) {}
                                   }}/>
                               </td>
                             ))}
