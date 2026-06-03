@@ -86,9 +86,6 @@ return(<div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()
 
 window.__Opcs=Opcs;
 
-</script>
-<script type="text/babel" data-presets="react">
-
 function App(){
 const urlParams=new URLSearchParams(window.location.search);const codigoUrl=urlParams.get("codigo");
 const[vista,setVista]=useState(codigoUrl?"portal":(_ecToken&&_ecUser)?"dashboard":"login");const[usuario,setUsuario]=useState((_ecToken&&_ecUser)?_ecUser:null);const[msgAuth,setMsgAuth]=useState("");const[nombre,setNombre]=useState("");const[email,setEmail]=useState("");const[password,setPassword]=useState("");const[regInst,setRegInst]=useState("");const[regCargo,setRegCargo]=useState("Docente");const[regCiudad,setRegCiudad]=useState("");const[logoPreview,setLogoPreview]=useState("");const[banderaPreview,setBanderaPreview]=useState("");const[logoFile,setLogoFile]=useState(null);const[banderaFile,setBanderaFile]=useState(null);const logoRef=useRef();const banderaRef=useRef();
@@ -132,8 +129,7 @@ if(vista==="verClase"&&claseActiva)return(<div style={S.fondo}><Header/><div sty
       return null;
     }
 
-</script>
-<script type="text/babel" data-presets="react">
+
 
 function __PasosView({S,C,FT,FC,vista,paso,area,grado,periodo,fecha,tema,duracion,nivelEdu,apertura,desarrollo,retro,cierre,dejaTarea,tarea,contenido,cargando,descWord,descPdf,guardando,guardadoOk,claseActiva,misClases,optAper,optDes,optRet,OPT_CIERRE,OPT_TAREA,OPT_DUR,setVista,setPaso,setArea,setGrado,setPeriodo,setFecha,setTema,setDuracion,setNivelEdu,setApertura,setDesarrollo,setRetro,setCierre,setDejaTarea,setTarea,generarGuia,guardarClase,exportar,reset,Header,esBach}){
   const Opcs=window.__Opcs;
