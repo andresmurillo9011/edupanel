@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vincular Actividades · EduPanel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0e1420;color:#F1F5F9;font-family:'Sora',sans-serif;min-height:100vh;}
+    .header{background:#0a1128;border-bottom:1px solid #1e2d45;padding:12px 20px;display:flex;align-items:center;gap:12px;}
+    .back{color:#60A5FA;text-decoration:none;font-size:13px;font-weight:500;}
+    .title{color:#60A5FA;font-size:16px;font-weight:700;}
+    .cont{max-width:700px;margin:0 auto;padding:24px 16px;}
+    .card{background:#111827;border:1px solid #1e2d45;border-radius:12px;padding:20px;margin-bottom:16px;}
+    .card-title{color:#60A5FA;font-size:14px;font-weight:700;margin-bottom:14px;}
+    .lbl{color:#64748B;font-size:11px;font-weight:600;margin-bottom:4px;text-transform:uppercase;}
+    .sel,.inp{width:100%;background:#0a1128;border:1px solid #1e2d45;border-radius:8px;color:#F1F5F9;padding:10px 12px;font-size:13px;font-family:'Sora',sans-serif;outline:none;}
+    .sel:focus,.inp:focus{border-color:#2563EB;}
+    .row{display:flex;gap:10px;margin-bottom:12px;}
+    .row>div{flex:1;}
+    .btn{padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Sora',sans-serif;width:100%;}
+    .btn-v{background:#059669;color:#fff;}
+    .btn-v:hover{background:#047857;}
+    .btn-g{background:#1e2d45;color:#94a3b8;border:1px solid #1e2d45;}
+    .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:99px;font-weight:600;}
+    .ok{background:#052e16;color:#4ade80;border:1px solid #16a34a;}
+    .err{background:#2d0a0a;color:#f87171;border:1px solid #dc2626;}
+    .warn{background:#0f2a47;color:#60A5FA;border:1px solid #2563EB;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;padding:12px 24px;border-radius:99px;font-size:13px;font-weight:600;display:none;z-index:999;}
+    .step{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .step-num{width:24px;height:24px;border-radius:50%;background:#2563EB;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .tarea-item{background:#0a1128;border:1px solid #1e2d45;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;}
+    .tarea-item:hover{border-color:#2563EB;}
+    .tarea-item.sel{border-color:#059669;background:#052e16;}
+    .empty{text-align:center;padding:30px;color:#64748B;font-size:13px;}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="notas.html" class="back">← Volver a Notas</a>
+  <span style="color:#1e2d45">|</span>
+  <span class="title">📊 Vincular actividades al libro de notas</span>
+</div>
+
+<div class="cont">
+  <div class="card">
+    <div class="step"><div class="step-num">1</div><p style="color:#94a3b8;font-size:13px">Selecciona el <strong style="color:#F1F5F9">periodo</strong> y la <strong style="color:#F1F5F9">actividad</strong> del libro de notas</p></div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <p class="lbl">Periodo</p>
+        <select class="sel" id="sel-periodo" onchange="onPeriodoChange()">
+          <option value="">Cargando...</option>
+        </select>
+      </div>
+      <div>
+        <p class="lbl">Actividad del periodo</p>
+        <select class="sel" id="sel-actividad" disabled>
+          <option value="">Primero selecciona periodo</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step"><div class="step-num">2</div><p style="color:#94a3b8;font-size:13px">Selecciona la <strong style="color:#F1F5F9">tarea o juego</strong> a vincular</p></div>
+    <div style="margin-top:12px;margin-bottom:10px">
+      <input class="inp" id="busq-tarea" placeholder="🔍 Buscar tarea..." oninput="filtrarTareas()" style="margin-bottom:8px">
+    </div>
+    <div id="lista-tareas"><div class="empty">Cargando tareas...</div></div>
+  </div>
+
+  <div class="card" id="preview-card" style="display:none">
+    <p class="card-title">✅ Resumen del vínculo</p>
+    <div id="preview-content"></div>
+    <button class="btn btn-v" style="margin-top:14px" onclick="vincular()">💾 Guardar vínculo</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://educlass-backend-4kk0.onrender.com";
+
+function authH() {
+  const tok = localStorage.getItem("edutoken") || localStorage.getItem("edupanel_token") || "";
+  return {"Content-Type":"application/json","Authorization":"Bearer "+tok};
+}
+
+let periodos = [];
+let tareas = [];
+let tareasFiltradas = [];
+let periodoSel = null;
+let actividadSel = null;
+let tareaSel = null;
+
+async function init() {
+  // Verificar login
+  const tok = localStorage.getItem("edutoken") || localStorage.getItem("edupanel_token");
+  if (!tok) { window.location.href = "login.html"; return; }
+
+  // Cargar periodos
+  try {
+    const r = await fetch(API+"/notas/periodos", {headers:authH()});
+    const d = await r.json();
+    periodos = d.periodos || [];
+    const sel = document.getElementById("sel-periodo");
+    sel.innerHTML = '<option value="">— Seleccionar periodo —</option>';
+    periodos.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.nombre} (${p.area} · G${p.grado})</option>`;
+    });
+  } catch(e) {
+    document.getElementById("sel-periodo").innerHTML = '<option>Error cargando periodos</option>';
+  }
+
+  // Cargar tareas
+  try {
+    const r = await fetch(API+"/tasks", {headers:authH()});
+    const d = await r.json();
+    tareas = d.tareas || d.tasks || [];
+    tareasFiltradas = [...tareas];
+    renderTareas();
+  } catch(e) {
+    document.getElementById("lista-tareas").innerHTML = '<div class="empty">Error cargando tareas</div>';
+  }
+}
+
+function onPeriodoChange() {
+  const id = document.getElementById("sel-periodo").value;
+  periodoSel = periodos.find(p => p.id === id) || null;
+  actividadSel = null;
+  const selAct = document.getElementById("sel-actividad");
+  if (periodoSel) {
+    selAct.disabled = false;
+    selAct.innerHTML = '<option value="">— Seleccionar actividad —</option>';
+    (periodoSel.actividades || []).forEach((a, i) => {
+      selAct.innerHTML += `<option value="${i}">${a}</option>`;
+    });
+    selAct.onchange = () => {
+      const idx = selAct.value;
+      actividadSel = idx !== "" ? { idx: parseInt(idx), nombre: periodoSel.actividades[parseInt(idx)] } : null;
+      updatePreview();
+    };
+  } else {
+    selAct.disabled = true;
+    selAct.innerHTML = '<option>Primero selecciona periodo</option>';
+  }
+  updatePreview();
+}
+
+function filtrarTareas() {
+  const q = document.getElementById("busq-tarea").value.toLowerCase();
+  tareasFiltradas = tareas.filter(t =>
+    (t.title||"").toLowerCase().includes(q) ||
+    (t.area||"").toLowerCase().includes(q) ||
+    (t.grade||"").toLowerCase().includes(q)
+  );
+  renderTareas();
+}
+
+function renderTareas() {
+  const el = document.getElementById("lista-tareas");
+  if (tareasFiltradas.length === 0) {
+    el.innerHTML = '<div class="empty">No hay tareas</div>';
+    return;
+  }
+  el.innerHTML = tareasFiltradas.map(t => `
+    <div class="tarea-item ${tareaSel?.id === t.id ? 'sel' : ''}" onclick="selTarea('${t.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <p style="color:#60A5FA;font-weight:600;font-size:13px;margin:0 0 2px">${t.title}</p>
+          <p style="color:#64748B;font-size:11px;margin:0">${t.area||''} · Grado ${t.grade||''} · ${t.type||'taller'}</p>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <span class="badge ${t.periodoId ? 'ok' : 'warn'}">${t.periodoId ? '✅ Vinculada' : '⏳ Sin vincular'}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selTarea(id) {
+  tareaSel = tareas.find(t => t.id === id) || null;
+  renderTareas();
+  updatePreview();
+}
+
+function updatePreview() {
+  const card = document.getElementById("preview-card");
+  const content = document.getElementById("preview-content");
+  if (periodoSel && actividadSel && tareaSel) {
+    card.style.display = "block";
+    content.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0a1128;border-radius:8px">
+          <span style="color:#64748B;font-size:12px">Periodo</span>
+          <span style="color:#F1F5F9;font-size:13px;font-weight:600">${periodoSel.nombre}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0a1128;border-radius:8px">
+          <span style="color:#64748B;font-size:12px">Actividad</span>
+          <span style="color:#F1F5F9;font-size:13px;font-weight:600">${actividadSel.nombre}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0a1128;border-radius:8px">
+          <span style="color:#64748B;font-size:12px">Tarea/Juego</span>
+          <span style="color:#F1F5F9;font-size:13px;font-weight:600">${tareaSel.title}</span>
+        </div>
+        <p style="color:#4ade80;font-size:12px;margin-top:4px">
+          Cuando los estudiantes entreguen esta tarea, su nota irá directo a <strong>${actividadSel.nombre}</strong> del periodo <strong>${periodoSel.nombre}</strong>.
+        </p>
+      </div>
+    `;
+  } else {
+    card.style.display = "none";
+  }
+}
+
+async function vincular() {
+  if (!periodoSel || actividadSel === null || !tareaSel) return;
+  try {
+    const r = await fetch(API+"/tasks/"+tareaSel.id+"/vincular", {
+      method: "PUT",
+      headers: authH(),
+      body: JSON.stringify({
+        periodoId: periodoSel.id,
+        actividadIdx: actividadSel.idx
+      })
+    });
+    if (r.ok) {
+      // Update local state
+      const t = tareas.find(x => x.id === tareaSel.id);
+      if (t) t.periodoId = periodoSel.id;
+      showToast("✅ Vínculo guardado correctamente");
+      renderTareas();
+      setTimeout(() => { tareaSel = null; updatePreview(); }, 1500);
+    } else {
+      const d = await r.json();
+      showToast("❌ "+(d.mensaje||"Error al guardar"));
+    }
+  } catch(e) {
+    showToast("❌ Error de conexión");
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  t.style.background = msg.startsWith("✅") ? "#059669" : "#dc2626";
+  setTimeout(() => t.style.display = "none", 3000);
+}
+
+init();
+</script>
+</body>
+</html>
