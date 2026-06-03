@@ -208,6 +208,7 @@
       const [nombresAct, setNombresAct] = useState([]);
       const [guardando, setGuardando] = useState(false);
       const [err, setErr] = useState("");
+      const [semanas, setSemanas] = useState(10);
 
       const crear = async () => {
         if (!nombre||!area||!grado) { setErr("Completa todos los campos"); return; }
@@ -221,7 +222,8 @@
             body:JSON.stringify({
               nombre, area, grado,
               porcentaje:Number(porcentaje),
-              actividades:acts
+              actividades:acts,
+              semanas:Number(semanas)
             })
           });
           const d = await r.json();
@@ -275,6 +277,14 @@
                     onChange={e=>setPorcentaje(e.target.value)}/>
                 </div>
                 <div style={{flex:1}}>
+                  <p style={S.lbl}>Semanas del periodo</p>
+                  <input style={S.inp} type="number" min="1" max="20"
+                    value={semanas}
+                    onChange={e=>setSemanas(parseInt(e.target.value)||1)}/>
+                </div>
+              </div>
+              <div style={{...S.fila,marginBottom:10}}>
+                <div style={{flex:1}}>
                   <p style={S.lbl}>Num. actividades</p>
                   <input style={S.inp} type="number" min="1" max="10"
                     value={cantAct}
@@ -318,6 +328,137 @@
               }} disabled={guardando} onClick={crear}>
                 {guardando?"Creando...":"Crear periodo"}
               </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
+    function ModalEditarPeriodo({periodo, onCerrar, onGuardado}) {
+      const [nombre, setNombre] = useState(periodo.nombre||"");
+      const [porcentaje, setPorcentaje] = useState(periodo.porcentaje||100);
+      const [semanas, setSemanas] = useState(periodo.semanas||10);
+      const [actividades, setActividades] = useState([...(periodo.actividades||[])]);
+      const [guardando, setGuardando] = useState(false);
+      const [err, setErr] = useState("");
+      const [vistaHorario, setVistaHorario] = useState(false);
+
+      const guardar = async () => {
+        if (!nombre) { setErr("Completa el nombre"); return; }
+        setGuardando(true); setErr("");
+        try {
+          const r = await fetch(API+"/notas/periodos/"+periodo.id, {
+            method:"PUT", headers:authH(),
+            body:JSON.stringify({
+              nombre, porcentaje:Number(porcentaje),
+              semanas:Number(semanas),
+              actividades: actividades.filter(a=>a.trim()),
+              notas: periodo.notas||{}
+            })
+          });
+          const d = await r.json();
+          if (r.ok) onGuardado({...periodo, nombre, porcentaje:Number(porcentaje), semanas:Number(semanas), actividades:actividades.filter(a=>a.trim())});
+          else setErr(d.mensaje||"Error");
+        } catch(_) { setErr("Error de conexion"); }
+        setGuardando(false);
+      };
+
+      const agregarActividad = () => setActividades(a=>[...a, "Actividad "+(a.length+1)]);
+      const quitarActividad = i => setActividades(a=>a.filter((_,j)=>j!==i));
+
+      // Distribucion semanal
+      const semanasNum = parseInt(semanas)||1;
+      const actsPorSemana = Math.ceil(actividades.length / semanasNum);
+      const semanasList = Array.from({length:semanasNum}, (_,i) => ({
+        semana: i+1,
+        acts: actividades.slice(i*actsPorSemana, (i+1)*actsPorSemana)
+      }));
+
+      return (
+        <div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onCerrar()}>
+          <div style={{...S.modal, maxWidth:560}}>
+            <div style={S.mHead}>
+              <h3 style={{color:C.azulC,margin:0,fontSize:15}}>✏️ Editar periodo</h3>
+              <button style={{...S.btnSm,fontSize:16}} onClick={onCerrar}>✕</button>
+            </div>
+            <div style={S.mBody}>
+              <div style={{display:"flex",gap:8,marginBottom:14}}>
+                <button style={{...S.btnSm,color:!vistaHorario?C.azulC:C.textoS,borderColor:!vistaHorario?C.azul:C.borde,flex:1}} onClick={()=>setVistaHorario(false)}>✏️ Editar</button>
+                <button style={{...S.btnSm,color:vistaHorario?C.naranja:C.textoS,borderColor:vistaHorario?C.naranja:C.borde,flex:1}} onClick={()=>setVistaHorario(true)}>📅 Ver por semanas</button>
+              </div>
+              {!vistaHorario?(
+                <>
+                  <div style={{marginBottom:10}}>
+                    <p style={S.lbl}>Nombre del periodo</p>
+                    <input style={S.inp} value={nombre} onChange={e=>setNombre(e.target.value)}/>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginBottom:10}}>
+                    <div style={{flex:1}}>
+                      <p style={S.lbl}>Porcentaje (%)</p>
+                      <input style={S.inp} type="number" min="1" max="100" value={porcentaje} onChange={e=>setPorcentaje(e.target.value)}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <p style={S.lbl}>Semanas del periodo</p>
+                      <input style={S.inp} type="number" min="1" max="20" value={semanas} onChange={e=>setSemanas(e.target.value)}/>
+                    </div>
+                  </div>
+                  <div style={{marginBottom:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <p style={{...S.lbl,margin:0}}>Actividades ({actividades.length})</p>
+                      <button style={{...S.btnSm,color:C.ok,borderColor:C.verde,fontSize:11}} onClick={agregarActividad}>+ Agregar</button>
+                    </div>
+                    {actividades.map((a,i)=>(
+                      <div key={i} style={{display:"flex",gap:6,marginBottom:5}}>
+                        <input style={{...S.inp,flex:1}} placeholder={"Actividad "+(i+1)} value={a}
+                          onChange={e=>{const arr=[...actividades];arr[i]=e.target.value;setActividades(arr);}}/>
+                        <button style={{...S.btnSm,color:C.err,borderColor:C.rojo,padding:"4px 8px"}} onClick={()=>quitarActividad(i)}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  {err&&<p style={{...S.err,marginTop:8}}>{err}</p>}
+                </>
+              ):(
+                <div>
+                  <p style={{color:C.textoS,fontSize:12,margin:"0 0 12px"}}>
+                    {actividades.length} actividades distribuidas en {semanasNum} semanas
+                  </p>
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {semanasList.map(s=>(
+                      <div key={s.semana} style={{
+                        background:"#0a1128",border:"1px solid "+C.borde,
+                        borderRadius:8,padding:"10px 12px",
+                        borderLeft:"3px solid "+(s.acts.length>0?C.azulC:C.borde)
+                      }}>
+                        <p style={{color:C.azulC,fontWeight:"bold",fontSize:12,margin:"0 0 4px"}}>
+                          Semana {s.semana}
+                        </p>
+                        {s.acts.length>0?(
+                          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                            {s.acts.map((a,i)=>(
+                              <span key={i} style={{
+                                background:C.azul+"33",color:C.azulC,
+                                fontSize:11,padding:"2px 8px",borderRadius:99,
+                                border:"1px solid "+C.azul+"55"
+                              }}>{a}</span>
+                            ))}
+                          </div>
+                        ):(
+                          <p style={{color:C.textoS,fontSize:11,margin:0}}>Sin actividades</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={S.mFoot}>
+              <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
+              {!vistaHorario&&(
+                <button style={{...S.btnA,flex:1,opacity:guardando?0.7:1}} disabled={guardando} onClick={guardar}>
+                  {guardando?"Guardando...":"💾 Guardar cambios"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -632,6 +773,7 @@
       const [cargando, setCargando] = useState(false);
       const [showNuevo, setShowNuevo] = useState(false);
       const [periodoActivo, setPeriodoActivo] = useState(null);
+      const [editando, setEditando] = useState(null);
       const [filtroGrado, setFiltroGrado] = useState("");
       const [filtroArea, setFiltroArea] = useState("");
 
@@ -688,6 +830,15 @@
 
       return (
         <div style={S.fondo}>
+          {editando && (
+            <ModalEditarPeriodo
+              periodo={editando}
+              onCerrar={()=>setEditando(null)}
+              onGuardado={p=>{
+                setPeriodos(ps=>ps.map(x=>x.id===p.id?p:x));
+                setEditando(null);
+              }}/>
+          )}
           {showNuevo && (
             <ModalNuevoPeriodo
               onCerrar={()=>setShowNuevo(false)}
@@ -849,6 +1000,10 @@
                         }} onClick={()=>setPeriodoActivo(p)}>
                           Ingresar notas
                         </button>
+                        <button style={{
+                          ...S.btnSm,color:C.azulC,borderColor:C.azul,
+                          padding:"8px 10px"
+                        }} onClick={()=>setEditando(p)}>✏️</button>
                         <button style={{
                           ...S.btnSm,color:C.err,borderColor:C.rojo,
                           padding:"8px 10px"
