@@ -40,6 +40,7 @@
 
 <div class="header">
   <a href="notas.html" class="back">← Volver a Notas</a>
+  <button onclick="window.open(window.location.href,'_blank','width=800,height=600')" style="margin-left:auto;padding:6px 12px;background:#0f2a47;border:1px solid #2563EB;border-radius:6px;color:#60A5FA;font-size:11px;cursor:pointer;">🪟 Abrir en ventana</button>
   <span style="color:#1e2d45">|</span>
   <span class="title">📊 Vincular actividades al libro de notas</span>
 </div>
@@ -84,7 +85,7 @@
 const API = "https://educlass-backend-4kk0.onrender.com";
 
 function authH() {
-  const tok = localStorage.getItem("edutoken") || localStorage.getItem("edupanel_token") || "";
+  const tok = localStorage.getItem("edutoken") || localStorage.getItem("edupanel_token") || localStorage.getItem("edupanelToken") || "";
   return {"Content-Type":"application/json","Authorization":"Bearer "+tok};
 }
 
@@ -116,7 +117,7 @@ async function init() {
 
   // Cargar tareas
   try {
-    const r = await fetch(API+"/tasks", {headers:authH()});
+    const r = await fetch(API+"/tasks/mis-tareas", {headers:authH()});
     const d = await r.json();
     tareas = d.tareas || d.tasks || [];
     tareasFiltradas = [...tareas];
