@@ -448,7 +448,7 @@
 
       useEffect(()=>{
         if (!studentId) return;
-        fetch(API+"/notas/estudiante/"+studentId, {headers:authHEst()})
+        fetch(API+"/notas/periodos-estudiante", {headers:authHEst()})
           .then(r=>r.json())
           .then(d=>{ setNotas(d.notas||[]); setCargando(false); })
           .catch(()=>setCargando(false));
