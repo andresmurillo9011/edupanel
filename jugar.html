@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jugar · EduPanel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0e1420;color:#F1F5F9;font-family:'Sora',sans-serif;min-height:100vh;}
+    .header{background:#0a1128;border-bottom:1px solid #1e2d45;padding:12px 20px;display:flex;align-items:center;gap:12px;}
+    .back{color:#60A5FA;text-decoration:none;font-size:13px;}
+    .titulo{color:#60A5FA;font-size:15px;font-weight:700;flex:1;}
+    .cont{max-width:700px;margin:0 auto;padding:20px 16px;}
+    .card{background:#111827;border:1px solid #1e2d45;border-radius:12px;padding:20px;margin-bottom:16px;}
+    .btn{padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Sora',sans-serif;}
+    .btn-v{background:#059669;color:#fff;width:100%;}
+    .btn-a{background:#2563EB;color:#fff;width:100%;}
+    .btn-g{background:#1e2d45;color:#94a3b8;}
+    .opcion{padding:12px 16px;border-radius:8px;cursor:pointer;border:1.5px solid #1e2d45;background:#0a1128;color:#F1F5F9;font-size:13px;margin-bottom:8px;transition:all 0.15s;width:100%;text-align:left;}
+    .opcion:hover{border-color:#2563EB;background:#0f2a47;}
+    .opcion.sel{border-color:#2563EB;background:#0f2a47;}
+    .opcion.ok{border-color:#059669;background:#052e16;color:#4ade80;}
+    .opcion.err{border-color:#dc2626;background:#2d0a0a;color:#f87171;}
+    .progress{height:8px;background:#1e2d45;border-radius:4px;margin-bottom:16px;}
+    .progress-bar{height:100%;background:#2563EB;border-radius:4px;transition:width 0.3s;}
+    .nota-grande{font-size:64px;font-weight:700;text-align:center;font-family:'Sora',sans-serif;}
+    .tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:99px;font-weight:500;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;padding:12px 24px;border-radius:99px;font-size:13px;font-weight:600;display:none;z-index:999;}
+  </style>
+</head>
+<body>
+<div class="header">
+  <a href="estudiantes.html" class="back">← Volver</a>
+  <span class="titulo" id="juego-titulo">Cargando juego...</span>
+</div>
+<div class="cont" id="contenido">
+  <div class="card" style="text-align:center;padding:40px;">
+    <p style="font-size:40px;margin-bottom:12px;">⏳</p>
+    <p style="color:#64748B;">Cargando juego...</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://educlass-backend-4kk0.onrender.com";
+const juego = JSON.parse(localStorage.getItem("juegoActivo") || "null");
+const estudiante = JSON.parse(localStorage.getItem("educlass_estudiante") || "null");
+const tok = localStorage.getItem("edutokenest") || "";
+
+if (!juego) {
+  document.getElementById("contenido").innerHTML = '<div class="card" style="text-align:center;padding:40px;"><p style="font-size:40px;">❌</p><p style="color:#64748B;">No hay juego seleccionado</p></div>';
+} else {
+  document.getElementById("juego-titulo").textContent = juego.tema + " — " + juego.tipo;
+  iniciarJuego(juego);
+}
+
+function showToast(msg, ok=true) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.background = ok ? "#059669" : "#dc2626";
+  t.style.display = "block";
+  setTimeout(() => t.style.display="none", 3000);
+}
+
+async function enviarResultado(correctas, total, tiempo) {
+  if (!estudiante) return;
+  try {
+    await fetch(API+"/juegos/resultado", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},
+      body:JSON.stringify({
+        juegoId: juego.id || juego.tema,
+        grado: estudiante.grade,
+        tipo: juego.tipo,
+        tema: juego.tema,
+        correctas, total, tiempo
+      })
+    });
+  } catch(_) {}
+}
+
+function mostrarResultado(correctas, total, tiempo) {
+  const nota = total > 0 ? (correctas/total*5).toFixed(1) : 0;
+  const color = nota >= 3 ? "#4ade80" : "#f87171";
+  const emoji = nota >= 4 ? "🏆" : nota >= 3 ? "👍" : "💪";
+  document.getElementById("contenido").innerHTML = `
+    <div class="card" style="text-align:center;padding:32px;">
+      <p style="font-size:60px;margin-bottom:12px;">${emoji}</p>
+      <p class="nota-grande" style="color:${color};margin-bottom:8px;">${nota}</p>
+      <p style="color:#94a3b8;font-size:14px;margin-bottom:4px;">${correctas} de ${total} correctas</p>
+      <p style="color:#64748B;font-size:12px;margin-bottom:24px;">Tiempo: ${Math.floor(tiempo/60)}m ${tiempo%60}s</p>
+      <p style="color:${color};font-size:14px;font-weight:bold;margin-bottom:24px;">
+        ${nota >= 4 ? "¡Excelente trabajo!" : nota >= 3 ? "¡Muy bien!" : "¡Sigue practicando! 💪"}
+      </p>
+      <a href="estudiantes.html" class="btn btn-v" style="display:block;text-decoration:none;text-align:center;">← Volver al portal</a>
+    </div>`;
+  enviarResultado(correctas, total, tiempo);
+}
+
+function iniciarJuego(j) {
+  const tipo = j.tipo;
+  const preguntas = j.preguntas || j.afirmaciones || j.letras || j.pares || j.categorias || [];
+  
+  if (tipo === "sopa") { mostrarSopa(j); return; }
+  if (tipo === "memoria") { mostrarMemoria(j); return; }
+  if (tipo === "ruleta") { mostrarRuleta(j); return; }
+  if (tipo === "pasapalabra") { mostrarPasapalabra(j); return; }
+  
+  // Quiz generico (crucigrama, quiz, vf, completar, impostor, ahorcado, millonario)
+  mostrarQuiz(j, preguntas);
+}
+
+// ── QUIZ GENÉRICO ──
+function mostrarQuiz(j, preguntas) {
+  if (!preguntas.length) {
+    document.getElementById("contenido").innerHTML = '<div class="card"><p style="color:#64748B;text-align:center;">No hay preguntas disponibles</p></div>';
+    return;
+  }
+  let paso = 0, correctas = 0, inicio = Date.now(), resps = {};
+
+  function render() {
+    const p = preguntas[paso];
+    const pct = Math.round(paso/preguntas.length*100);
+    const pregunta = p.pregunta || p.afirmacion || p.texto || "";
+    const opciones = p.opciones || (p.respuesta !== undefined ? ["Verdadero","Falso"] : []);
+    const correctaIdx = p.correcta !== undefined ? p.correcta : (p.respuesta === true ? 0 : 1);
+
+    let opcionesHTML = "";
+    opciones.forEach((op, i) => {
+      const sel = resps[paso] === i;
+      opcionesHTML += `<button class="opcion${sel?" sel":""}" onclick="selOp(${i})">${op}</button>`;
+    });
+
+    document.getElementById("contenido").innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="color:#64748B;font-size:12px;">Pregunta ${paso+1} de ${preguntas.length}</span>
+          <span style="color:#60A5FA;font-size:12px;">${pct}%</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <p style="font-size:15px;font-weight:600;margin-bottom:16px;line-height:1.5;">${pregunta}</p>
+        <div id="opciones">${opcionesHTML}</div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          ${paso > 0 ? '<button class="btn btn-g" onclick="prevPaso()" style="flex:0">← Ant</button>' : ''}
+          ${paso < preguntas.length-1 
+            ? `<button class="btn btn-a" onclick="nextPaso()" ${resps[paso]===undefined?"disabled":""}>Siguiente →</button>`
+            : `<button class="btn btn-v" onclick="terminar()" ${resps[paso]===undefined?"disabled":""}>✅ Finalizar</button>`
+          }
+        </div>
+      </div>`;
+  }
+
+  window.selOp = (i) => { resps[paso] = i; render(); };
+  window.nextPaso = () => { if(resps[paso]!==undefined) { paso++; render(); }};
+  window.prevPaso = () => { paso--; render(); };
+  window.terminar = () => {
+    preguntas.forEach((p,i) => {
+      const correctaIdx = p.correcta !== undefined ? p.correcta : (p.respuesta === true ? 0 : 1);
+      if (resps[i] === correctaIdx) correctas++;
+    });
+    const tiempo = Math.round((Date.now()-inicio)/1000);
+    mostrarResultado(correctas, preguntas.length, tiempo);
+  };
+
+  render();
+}
+
+// ── MEMORIA ──
+function mostrarMemoria(j) {
+  const pares = j.pares || [];
+  if (!pares.length) { document.getElementById("contenido").innerHTML = '<div class="card"><p style="color:#64748B;text-align:center;">No hay pares disponibles</p></div>'; return; }
+  
+  const inicio = Date.now();
+  let cards = [], flipped = [], matched = [], intentos = 0;
+  
+  pares.forEach(p => { cards.push({id:p.id, texto:p.termino, tipo:"T"}); cards.push({id:p.id, texto:p.definicion, tipo:"D"}); });
+  cards.sort(() => Math.random()-0.5);
+
+  function render() {
+    const matchedIds = new Set(matched);
+    const flippedIdxs = new Set(flipped);
+    document.getElementById("contenido").innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+          <span style="color:#60A5FA;font-weight:bold;">🃏 Memoria: ${j.tema}</span>
+          <span style="color:#64748B;font-size:12px;">Pares: ${matched.length/2}/${pares.length} · Intentos: ${intentos}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          ${cards.map((c,i) => {
+            const isFlipped = flippedIdxs.has(i);
+            const isMatched = matchedIds.has(c.id) && matched.filter(m=>m===c.id).length >= 2;
+            return `<div onclick="flipCard(${i})" style="height:70px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:6px;border:1.5px solid ${isMatched?'#059669':isFlipped?'#2563EB':'#1e2d45'};background:${isMatched?'#052e16':isFlipped?'#0f2a47':'#0a1128'};color:${isMatched?'#4ade80':isFlipped?'#F1F5F9':'#0a1128'};transition:all 0.2s;">
+              ${isFlipped||isMatched ? c.texto : '?'}
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    if (matched.length === pares.length*2) {
+      setTimeout(() => { const tiempo=Math.round((Date.now()-inicio)/1000); mostrarResultado(pares.length,pares.length,tiempo); }, 500);
+    }
+  }
+
+  window.flipCard = (idx) => {
+    const matchedSet = new Set(matched);
+    const c = cards[idx];
+    if (flipped.includes(idx) || matchedSet.has(c.id) && matched.filter(m=>m===c.id).length>=2) return;
+    if (flipped.length === 2) return;
+    flipped.push(idx);
+    if (flipped.length === 2) {
+      intentos++;
+      const [a,b] = flipped;
+      if (cards[a].id === cards[b].id && cards[a].tipo !== cards[b].tipo) {
+        matched.push(cards[a].id, cards[b].id);
+        flipped = [];
+        render();
+      } else {
+        render();
+        setTimeout(() => { flipped = []; render(); }, 1000);
+      }
+    } else { render(); }
+  };
+  render();
+}
+
+// ── RULETA ──
+function mostrarRuleta(j) {
+  const cats = j.categorias || [];
+  if (!cats.length) { document.getElementById("contenido").innerHTML = '<div class="card"><p style="color:#64748B;text-align:center;">No hay categorías</p></div>'; return; }
+  
+  const inicio = Date.now();
+  let correctas = 0, total = 0, pregActual = null, catActual = null;
+
+  function girarRuleta() {
+    const cat = cats[Math.floor(Math.random()*cats.length)];
+    const pregs = cat.preguntas || [];
+    if (!pregs.length) { girarRuleta(); return; }
+    const preg = pregs[Math.floor(Math.random()*pregs.length)];
+    catActual = cat; pregActual = preg;
+    document.getElementById("contenido").innerHTML = `
+      <div class="card">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="width:120px;height:120px;border-radius:50%;background:${cat.color};margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#fff;">${cat.nombre}</div>
+          <p style="color:#64748B;font-size:12px;">Correctas: ${correctas}/${total}</p>
+        </div>
+        <p style="font-size:15px;font-weight:600;margin-bottom:16px;line-height:1.5;">${preg.pregunta}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="btn" style="flex:1;background:#052e16;color:#4ade80;border:1px solid #059669;" onclick="respRuleta(true)">✅ Correcto</button>
+          <button class="btn" style="flex:1;background:#2d0a0a;color:#f87171;border:1px solid #dc2626;" onclick="respRuleta(false)">❌ Incorrecto</button>
+        </div>
+        <p style="color:#64748B;font-size:11px;">Respuesta: <strong style="color:#94a3b8;">${preg.respuesta}</strong></p>
+        <button class="btn btn-a" style="margin-top:12px;" onclick="girarRuleta()">🎯 Girar de nuevo</button>
+        ${total>=5?`<button class="btn btn-v" style="margin-top:8px;" onclick="terminarRuleta()">✅ Finalizar (${total} rondas)</button>`:''}
+      </div>`;
+  }
+
+  window.respRuleta = (ok) => { total++; if(ok) correctas++; showToast(ok?"¡Correcto! +1":"Incorrecto",ok); girarRuleta(); };
+  window.terminarRuleta = () => { const tiempo=Math.round((Date.now()-inicio)/1000); mostrarResultado(correctas,total,tiempo); };
+  
+  document.getElementById("contenido").innerHTML = `
+    <div class="card" style="text-align:center;padding:32px;">
+      <p style="font-size:60px;margin-bottom:16px;">🎯</p>
+      <p style="color:#F1F5F9;font-size:16px;font-weight:600;margin-bottom:8px;">${j.tema}</p>
+      <p style="color:#64748B;font-size:13px;margin-bottom:24px;">Ruleta educativa · ${cats.length} categorías</p>
+      <button class="btn btn-a" onclick="girarRuleta()">🎯 ¡Girar la ruleta!</button>
+    </div>`;
+}
+
+// ── PASAPALABRA ──
+function mostrarPasapalabra(j) {
+  const letras = j.letras || [];
+  if (!letras.length) { document.getElementById("contenido").innerHTML = '<div class="card"><p style="color:#64748B;text-align:center;">No hay letras disponibles</p></div>'; return; }
+  
+  const inicio = Date.now();
+  let paso = 0, correctas = 0, resps = {};
+
+  function render() {
+    const l = letras[paso];
+    const pct = Math.round(paso/letras.length*100);
+    document.getElementById("contenido").innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="color:#64748B;font-size:12px;">Letra ${paso+1} de ${letras.length}</span>
+          <span style="color:#60A5FA;font-size:12px;">${pct}%</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="width:80px;height:80px;border-radius:50%;background:#2563EB;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:#fff;">${l.letra}</div>
+          <p style="color:#94a3b8;font-size:12px;">${l.pista||""}</p>
+        </div>
+        <p style="font-size:14px;font-weight:600;margin-bottom:12px;">${l.pregunta}</p>
+        <input id="resp-input" type="text" placeholder="Tu respuesta..." style="width:100%;padding:10px 12px;background:#0a1128;border:1.5px solid #1e2d45;border-radius:8px;color:#F1F5F9;font-size:14px;font-family:'Sora',sans-serif;margin-bottom:12px;" 
+          value="${resps[paso]||""}" onkeydown="if(event.key==='Enter')verificarPasapalabra()">
+        <div style="display:flex;gap:8px;">
+          ${paso>0?'<button class="btn btn-g" onclick="prevPasapalabra()">← Ant</button>':''}
+          <button class="btn btn-a" onclick="verificarPasapalabra()" style="flex:1;">
+            ${paso<letras.length-1?"Siguiente →":"✅ Finalizar"}
+          </button>
+        </div>
+      </div>`;
+    document.getElementById("resp-input").focus();
+  }
+
+  window.verificarPasapalabra = () => {
+    const input = document.getElementById("resp-input").value.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    const correcta = (letras[paso].respuesta||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    resps[paso] = input;
+    if (input === correcta) { showToast("¡Correcto! ✅"); correctas++; }
+    else { showToast("Respuesta: "+letras[paso].respuesta, false); }
+    if (paso < letras.length-1) { paso++; render(); }
+    else { const tiempo=Math.round((Date.now()-inicio)/1000); mostrarResultado(correctas,letras.length,tiempo); }
+  };
+  window.prevPasapalabra = () => { paso--; render(); };
+  render();
+}
+
+// ── SOPA (ver palabras) ──
+function mostrarSopa(j) {
+  const palabras = j.palabras || [];
+  const pistas = j.pistas || [];
+  document.getElementById("contenido").innerHTML = `
+    <div class="card">
+      <h3 style="color:#60A5FA;margin-bottom:12px;">📝 Sopa de Letras: ${j.tema}</h3>
+      <p style="color:#64748B;font-size:12px;margin-bottom:16px;">Encuentra estas ${palabras.length} palabras en tu cuaderno o pizarrón:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        ${palabras.map(p=>`<span style="background:#0f2a47;color:#60A5FA;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:600;">${p}</span>`).join("")}
+      </div>
+      <h4 style="color:#94a3b8;margin-bottom:8px;font-size:13px;">Pistas:</h4>
+      ${pistas.map((p,i)=>`<p style="color:#64748B;font-size:12px;margin-bottom:4px;">${i+1}. ${p}</p>`).join("")}
+      <button class="btn btn-v" style="margin-top:20px;" onclick="mostrarResultado(${palabras.length},${palabras.length},60)">✅ Completé la sopa</button>
+    </div>`;
+}
+</script>
+</body>
+</html>
