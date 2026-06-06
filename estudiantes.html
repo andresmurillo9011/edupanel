@@ -552,7 +552,7 @@
       );
     }
 
-    function App() {
+    function JuegosEstudiante({sesion}){const[juegos,setJuegos]=React.useState([]);const[cargando,setCargando]=React.useState(true);React.useEffect(()=>{const cargar=async()=>{setCargando(true);try{const _s=JSON.parse(localStorage.getItem("educlass_estudiante")||"null");if(!_s){setCargando(false);return;}const instId=_s.institutionId||(_s.institution&&_s.institution.id);const grado=encodeURIComponent(_s.grade||"");const tok=localStorage.getItem("edutokenest")||localStorage.getItem("edutoken")||"";const r=await fetch(API+"/juegos/"+instId+"/"+grado,{headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok}});const d=await r.json();const completados=JSON.parse(localStorage.getItem("juegosCompletados")||"[]");const estId=(_s.id||"");const juegosDisp=(d.juegos||[]).filter(j=>!completados.includes((j.id||j.tema)+"_"+estId));setJuegos(juegosDisp);}catch(_){}setCargando(false);};cargar();},[sesion]);if(cargando)return React.createElement("p",{style:{color:"#64748B",textAlign:"center",padding:30}},"Cargando juegos...");if(!juegos.length)return React.createElement("div",{style:{textAlign:"center",padding:40,background:"#111827",borderRadius:14,border:"1px solid #1e2d45"}},React.createElement("p",{style:{fontSize:40,margin:"0 0 8px"}},"🎮"),React.createElement("p",{style:{color:"#64748B",fontSize:13}},"No hay juegos disponibles"));return React.createElement("div",null,React.createElement("h3",{style:{color:"#34D399",marginBottom:16}},"🎮 Juegos disponibles"),juegos.map((j,i)=>React.createElement("div",{key:i,style:{background:"#111827",border:"1px solid #1e2d45",borderRadius:10,padding:"14px 16px",marginBottom:8}},React.createElement("p",{style:{color:"#60A5FA",fontWeight:"bold",margin:"0 0 2px"}},j.tema+" — "+j.tipo),React.createElement("p",{style:{color:"#64748B",fontSize:11,margin:"0 0 8px"}},j.area+" · Grado "+j.grado),React.createElement("button",{style:{padding:"8px 16px",background:"#059669",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:"bold"},onClick:()=>{localStorage.setItem("juegoActivo",JSON.stringify(j));window.open("https://andresmurillo9011.github.io/edupanel/jugar.html","_blank");}},"▶ Jugar"))));}function App() {
       const getSesion = () => {
         try {
           const tok = localStorage.getItem("edutokenest");
@@ -802,7 +802,7 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"pizarra",label:"🖊️ Pizarra"}
+                {id:"juegos",label:"🎮 Juegos"},{id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -938,7 +938,7 @@
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
             )}
-            {seccion==="pizarra"&&(
+            {seccion==="juegos"&&React.createElement(JuegosEstudiante,{sesion:sesion})}{seccion==="pizarra"&&(
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🖊️ Pizarra de {sesion.grade}</h3>
