@@ -336,95 +336,49 @@ function mostrarPasapalabra(j) {
   render();
 }
 
-// ── SOPA INTERACTIVA ──
+// ── SOPA CON CHECKBOXES ──
 function mostrarSopa(j) {
   const rawPalabras = j.palabras || [];
   const pistas = j.pistas || [];
-  const palabras = rawPalabras.map(p => typeof p === "object" ? (p.palabra||p.termino||Object.values(p)[0]||"") : p)
-    .filter(p=>p).map(p=>p.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s/g,""));
-
-  const TAMANO = Math.max(12, Math.ceil(palabras.join("").length * 0.8));
-  const DIRS = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
-  const LETRAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-  // Crear cuadrícula vacía
-  let grid = Array.from({length:TAMANO}, ()=>Array(TAMANO).fill(""));
-  let posiciones = {}; // palabra -> [{r,c}]
-
-  function colocar(palabra) {
-    const dirs = [...DIRS].sort(()=>Math.random()-0.5);
-    for (let intento = 0; intento < 100; intento++) {
-      const [dr,dc] = dirs[intento % dirs.length];
-      const r0 = Math.floor(Math.random()*TAMANO);
-      const c0 = Math.floor(Math.random()*TAMANO);
-      const celdas = [];
-      let ok = true;
-      for (let k = 0; k < palabra.length; k++) {
-        const r = r0 + dr*k, c = c0 + dc*k;
-        if (r<0||r>=TAMANO||c<0||c>=TAMANO) { ok=false; break; }
-        if (grid[r][c] && grid[r][c] !== palabra[k]) { ok=false; break; }
-        celdas.push({r,c});
-      }
-      if (ok) { celdas.forEach(({r,c},k)=>grid[r][c]=palabra[k]); return celdas; }
-    }
-    return null;
-  }
-
-  // Colocar palabras
-  palabras.forEach(p => { posiciones[p] = colocar(p); });
-  // Rellenar vacíos
-  for (let r=0;r<TAMANO;r++) for(let c=0;c<TAMANO;c++) if(!grid[r][c]) grid[r][c]=LETRAS[Math.floor(Math.random()*LETRAS.length)];
-
+  const palabras = rawPalabras.map(p => typeof p === "object" ? (p.palabra||p.termino||Object.values(p)[0]||"") : p).filter(p=>p);
+  
   const inicio = Date.now();
-  let seleccionando = false, sel = [], encontradas = new Set(), correctas = 0;
+  let encontradas = new Set();
 
   function render() {
-    const celSize = Math.min(28, Math.floor(320/TAMANO));
     document.getElementById("contenido").innerHTML = `
-      <div class="card" style="padding:14px;">
-        <h3 style="color:#60A5FA;margin-bottom:8px;font-size:14px;">🔠 ${j.tema}</h3>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
-          ${palabras.map(p=>`<span style="background:${encontradas.has(p)?'#052e16':'#0f2a47'};color:${encontradas.has(p)?'#4ade80':'#60A5FA'};padding:3px 8px;border-radius:99px;font-size:10px;font-weight:600;text-decoration:${encontradas.has(p)?'line-through':'none'};">${p}</span>`).join("")}
+      <div class="card">
+        <h3 style="color:#60A5FA;margin-bottom:4px;font-size:15px;">🔠 Sopa de Letras</h3>
+        <p style="color:#94a3b8;font-size:12px;margin-bottom:14px;">${j.tema}</p>
+        <p style="color:#64748B;font-size:12px;margin-bottom:12px;">Busca las palabras y marca cada una cuando la encuentres:</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+          ${palabras.map((p,i)=>`
+            <div onclick="togglePalabra(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${encontradas.has(i)?'#059669':'#1e2d45'};background:${encontradas.has(i)?'#052e16':'#0a1128'};transition:all 0.15s;">
+              <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${encontradas.has(i)?'#059669':'#374151'};background:${encontradas.has(i)?'#059669':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                ${encontradas.has(i)?'<span style="color:#fff;font-size:13px;font-weight:bold;">✓</span>':''}
+              </div>
+              <div style="flex:1;">
+                <p style="color:${encontradas.has(i)?'#4ade80':'#F1F5F9'};font-weight:600;font-size:13px;margin:0;text-decoration:${encontradas.has(i)?'line-through':'none'};">${p}</p>
+                ${pistas[i]?`<p style="color:#64748B;font-size:11px;margin:2px 0 0;">💡 ${pistas[i]}</p>`:''}
+              </div>
+            </div>`).join("")}
         </div>
-        <div id="sopa-grid" style="display:grid;grid-template-columns:repeat(${TAMANO},${celSize}px);gap:2px;touch-action:none;user-select:none;">
-          ${grid.map((fila,r)=>fila.map((letra,c)=>{
-            const enSel = sel.some(s=>s.r===r&&s.c===c);
-            const encontr = palabras.filter(p=>posiciones[p]).some(p=>encontradas.has(p)&&posiciones[p].some(s=>s.r===r&&s.c===c));
-            return `<div class="scel" data-r="${r}" data-c="${c}" style="width:${celSize}px;height:${celSize}px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:${Math.max(9,celSize-8)}px;font-weight:600;cursor:pointer;background:${encontr?'#052e16':enSel?'#1e40af':'#0a1128'};color:${encontr?'#4ade80':enSel?'#fff':'#F1F5F9'};border:1px solid ${encontr?'#059669':enSel?'#3b82f6':'#1e2d45'};">${letra}</div>`;
-          }).join("")).join("")}
-        </div>
-        <p style="color:#64748B;font-size:11px;margin-top:8px;">Encontradas: ${encontradas.size}/${palabras.length}</p>
-        ${encontradas.size===palabras.length?`<button class="btn btn-v" style="margin-top:12px;" onclick="terminarSopa()">✅ ¡Completé todas!</button>`:''}
+        <p style="color:#64748B;font-size:12px;text-align:center;margin-bottom:12px;">Encontradas: <strong style="color:#4ade80;">${encontradas.size}</strong> de ${palabras.length}</p>
+        <button class="btn btn-v" onclick="terminarSopa()" ${encontradas.size===0?"disabled":""}>
+          ${encontradas.size===palabras.length?"✅ ¡Completé todas! — Finalizar":"📝 Finalizar con "+encontradas.size+"/"+palabras.length+" encontradas"}
+        </button>
       </div>`;
-    // Eventos
-    let mouseDown = false;
-    document.querySelectorAll(".scel").forEach(el => {
-      el.addEventListener("mousedown", e => { mouseDown=true; sel=[{r:+el.dataset.r,c:+el.dataset.c}]; render(); });
-      el.addEventListener("mouseover", e => { if(mouseDown){const r=+el.dataset.r,c=+el.dataset.c;if(!sel.some(s=>s.r===r&&s.c===c)){sel.push({r,c});render();}} });
-      el.addEventListener("touchstart", e => { e.preventDefault(); sel=[{r:+el.dataset.r,c:+el.dataset.c}]; render(); });
-      el.addEventListener("touchmove", e => { e.preventDefault(); const t=e.touches[0]; const el2=document.elementFromPoint(t.clientX,t.clientY); if(el2&&el2.classList.contains("scel")){const r=+el2.dataset.r,c=+el2.dataset.c;if(!sel.some(s=>s.r===r&&s.c===c)){sel.push({r,c});render();}} });
-    });
-    document.addEventListener("mouseup", ()=>{ if(mouseDown){mouseDown=false;verificarSel();} }, {once:true});
-    document.addEventListener("touchend", verificarSel, {once:true});
   }
 
-  function verificarSel() {
-    const selStr = sel.map(s=>grid[s.r][s.c]).join("");
-    const selStrRev = [...selStr].reverse().join("");
-    palabras.forEach(p=>{
-      if (!encontradas.has(p) && posiciones[p]) {
-        const posStr = posiciones[p].map(s=>grid[s.r][s.c]).join("");
-        if (selStr===p||selStrRev===p) { encontradas.add(p); correctas++; showToast("✅ "+p+" encontrada!"); }
-      }
-    });
-    sel=[];
+  window.togglePalabra = (i) => {
+    if(encontradas.has(i)) encontradas.delete(i);
+    else { encontradas.add(i); showToast("✅ "+palabras[i]+" marcada!"); }
     render();
-    if(encontradas.size===palabras.length) { setTimeout(terminarSopa,800); }
-  }
+  };
 
   window.terminarSopa = () => {
     const tiempo=Math.round((Date.now()-inicio)/1000);
-    mostrarResultado(correctas, palabras.length, tiempo);
+    mostrarResultado(encontradas.size, palabras.length, tiempo);
   };
 
   render();
