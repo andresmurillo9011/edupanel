@@ -124,11 +124,11 @@
     });
 
       const cargarPizarraEst = async () => {
-        if (!sesion) return;
+        var sesionLocal=getSesion();if(!sesionLocal)return;
         setPizCargando(true);
         try {
           const instId = sesion.institutionId || sesion.institution?.id;
-          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
+          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesionLocal.grade)}`, { headers: authHEst() });
           const d = await r.json();
           setPizMensajes(d.mensajes || []);
         } catch(_) {}
@@ -140,7 +140,7 @@
         const color = postitColor[mensajeId] || "#fef08a";
         const instId = sesion.institutionId || sesion.institution?.id;
         try {
-          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
+          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesionLocal.grade)}/${mensajeId}`, {
             method: "POST",
             headers: { ...authHEst(), "Content-Type": "application/json" },
             body: JSON.stringify({ texto, color })
@@ -552,7 +552,7 @@
       );
     }
 
-    function JuegosEstudiante({sesion}){const[juegos,setJuegos]=React.useState([]);const[cargando,setCargando]=React.useState(true);React.useEffect(()=>{if(!sesion)return;const cargar=async()=>{setCargando(true);try{const instId=sesion.institutionId||(sesion.institution&&sesion.institution.id);const grado=encodeURIComponent(sesion.grade||"");const tok=localStorage.getItem("edutokenest")||"";const r=await fetch(API+"/juegos/"+instId+"/"+grado,{headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok}});const d=await r.json();setJuegos(d.juegos||[]);}catch(_){}setCargando(false);};cargar();},[sesion]);if(cargando)return React.createElement("p",{style:{color:"#64748B",textAlign:"center",padding:30}},"Cargando juegos...");if(!juegos.length)return React.createElement("div",{style:{textAlign:"center",padding:40,background:"#111827",borderRadius:14,border:"1px solid #1e2d45"}},React.createElement("p",{style:{fontSize:40,margin:"0 0 8px"}},"🎮"),React.createElement("p",{style:{color:"#64748B",fontSize:13}},"Tu docente aún no ha publicado juegos"));return React.createElement("div",null,React.createElement("h3",{style:{color:"#34D399",marginBottom:16}},"🎮 Juegos disponibles"),juegos.map((j,i)=>React.createElement("div",{key:i,style:{background:"#111827",border:"1px solid #1e2d45",borderRadius:10,padding:"14px 16px",marginBottom:8}},React.createElement("p",{style:{color:"#60A5FA",fontWeight:"bold",margin:"0 0 2px"}},j.tema+" — "+j.tipo),React.createElement("p",{style:{color:"#64748B",fontSize:11,margin:0}},j.area+" · Grado "+j.grado))));}function App() {
+    function JuegosEstudiante({sesion}){const[juegos,setJuegos]=React.useState([]);const[cargando,setCargando]=React.useState(true);React.useEffect(()=>{if(!sesion)return;const cargar=async()=>{setCargando(true);try{const instId=sesionLocal.institutionId||(sesionLocal.institution&&sesionLocal.institution.id);const grado=encodeURIComponent(sesion.grade||"");const tok=localStorage.getItem("edutokenest")||"";const r=await fetch(API+"/juegos/"+instId+"/"+grado,{headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok}});const d=await r.json();setJuegos(d.juegos||[]);}catch(_){}setCargando(false);};cargar();},[sesion]);if(cargando)return React.createElement("p",{style:{color:"#64748B",textAlign:"center",padding:30}},"Cargando juegos...");if(!juegos.length)return React.createElement("div",{style:{textAlign:"center",padding:40,background:"#111827",borderRadius:14,border:"1px solid #1e2d45"}},React.createElement("p",{style:{fontSize:40,margin:"0 0 8px"}},"🎮"),React.createElement("p",{style:{color:"#64748B",fontSize:13}},"Tu docente aún no ha publicado juegos"));return React.createElement("div",null,React.createElement("h3",{style:{color:"#34D399",marginBottom:16}},"🎮 Juegos disponibles"),juegos.map((j,i)=>React.createElement("div",{key:i,style:{background:"#111827",border:"1px solid #1e2d45",borderRadius:10,padding:"14px 16px",marginBottom:8}},React.createElement("p",{style:{color:"#60A5FA",fontWeight:"bold",margin:"0 0 2px"}},j.tema+" — "+j.tipo),React.createElement("p",{style:{color:"#64748B",fontSize:11,margin:0}},j.area+" · Grado "+j.grado))));}function App() {
       const getSesion = () => {
         try {
           const tok = localStorage.getItem("edutokenest");
