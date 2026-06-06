@@ -552,7 +552,7 @@
       );
     }
 
-    function App() {
+    function JuegosEstudiante({sesion}){const[juegos,setJuegos]=React.useState([]);const[cargando,setCargando]=React.useState(true);React.useEffect(()=>{if(!sesion)return;const cargar=async()=>{setCargando(true);try{const instId=sesion.institutionId||(sesion.institution&&sesion.institution.id);const grado=encodeURIComponent(sesion.grade||"");const tok=localStorage.getItem("edutokenest")||"";const r=await fetch(API+"/juegos/"+instId+"/"+grado,{headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok}});const d=await r.json();setJuegos(d.juegos||[]);}catch(_){}setCargando(false);};cargar();},[sesion]);if(cargando)return React.createElement("p",{style:{color:"#64748B",textAlign:"center",padding:30}},"Cargando juegos...");if(!juegos.length)return React.createElement("div",{style:{textAlign:"center",padding:40,background:"#111827",borderRadius:14,border:"1px solid #1e2d45"}},React.createElement("p",{style:{fontSize:40,margin:"0 0 8px"}},"🎮"),React.createElement("p",{style:{color:"#64748B",fontSize:13}},"Tu docente aún no ha publicado juegos"));return React.createElement("div",null,React.createElement("h3",{style:{color:"#34D399",marginBottom:16}},"🎮 Juegos disponibles"),juegos.map((j,i)=>React.createElement("div",{key:i,style:{background:"#111827",border:"1px solid #1e2d45",borderRadius:10,padding:"14px 16px",marginBottom:8}},React.createElement("p",{style:{color:"#60A5FA",fontWeight:"bold",margin:"0 0 2px"}},j.tema+" — "+j.tipo),React.createElement("p",{style:{color:"#64748B",fontSize:11,margin:0}},j.area+" · Grado "+j.grado))));}function App() {
       const getSesion = () => {
         try {
           const tok = localStorage.getItem("edutokenest");
@@ -802,7 +802,7 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"pizarra",label:"🖊️ Pizarra"}
+                {id:"juegos",label:"🎮 Juegos"},{id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -938,7 +938,7 @@
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
             )}
-            {seccion==="pizarra"&&(
+            {seccion==="juegos"&&React.createElement(JuegosEstudiante,{sesion:sesion})}{seccion==="pizarra"&&(
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🖊️ Pizarra de {sesion.grade}</h3>
