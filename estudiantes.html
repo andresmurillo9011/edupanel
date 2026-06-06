@@ -448,7 +448,7 @@
 
       useEffect(()=>{
         if (!studentId) return;
-        fetch(API+"/notas/periodos-estudiante", {headers:authHEst()})
+        fetch(API+"/notas/estudiante/"+studentId, {headers:authHEst()})
           .then(r=>r.json())
           .then(d=>{ setNotas(d.notas||[]); setCargando(false); })
           .catch(()=>setCargando(false));
@@ -552,7 +552,7 @@
       );
     }
 
-    const cargarJuegos=async()=>{const s=getSesion();if(!s)return;try{const instId=s.institutionId||s.institution?.id;const grado=encodeURIComponent(s.grade||"");const r=await fetch(API+"/juegos/"+instId+"/"+grado,{headers:authHEst()});const d=await r.json();window.__juegos=d.juegos||[];document.dispatchEvent(new CustomEvent("juegosLoaded",{detail:d.juegos||[]}));}catch(e){}};function App() {
+    function App() {
       const getSesion = () => {
         try {
           const tok = localStorage.getItem("edutokenest");
