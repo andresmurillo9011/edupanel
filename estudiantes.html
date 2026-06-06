@@ -802,7 +802,7 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"juegos",label:"🎮 Juegos"},{id:"pizarra",label:"🖊️ Pizarra"}
+                {id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -938,7 +938,7 @@
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
             )}
-            {seccion==="juegos"&&(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🎮 Juegos disponibles</h3></div><p style={{color:C.textoS,fontSize:13,textAlign:"center",padding:20}}>Cargando juegos...</p></div>)}{seccion==="pizarra"&&(
+            {seccion==="pizarra"&&(
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🖊️ Pizarra de {sesion.grade}</h3>
