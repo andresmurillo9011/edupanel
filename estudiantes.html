@@ -124,11 +124,11 @@
     });
 
       const cargarPizarraEst = async () => {
-        var sesionLocal=getSesion();if(!sesionLocal)return;
+        if (!sesion) return;
         setPizCargando(true);
         try {
           const instId = sesion.institutionId || sesion.institution?.id;
-          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesionLocal.grade)}`, { headers: authHEst() });
+          const r = await fetch(`${API}/pizarra-est/${instId}/${encodeURIComponent(sesion.grade)}`, { headers: authHEst() });
           const d = await r.json();
           setPizMensajes(d.mensajes || []);
         } catch(_) {}
@@ -140,7 +140,7 @@
         const color = postitColor[mensajeId] || "#fef08a";
         const instId = sesion.institutionId || sesion.institution?.id;
         try {
-          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesionLocal.grade)}/${mensajeId}`, {
+          const r = await fetch(`${API}/pizarra-postit/${instId}/${encodeURIComponent(sesion.grade)}/${mensajeId}`, {
             method: "POST",
             headers: { ...authHEst(), "Content-Type": "application/json" },
             body: JSON.stringify({ texto, color })
@@ -552,7 +552,7 @@
       );
     }
 
-    function JuegosEstudiante({sesion}){const[juegos,setJuegos]=React.useState([]);const[cargando,setCargando]=React.useState(true);React.useEffect(()=>{const cargar=async()=>{setCargando(true);try{const _s=JSON.parse(localStorage.getItem("educlass_estudiante")||"null");if(!_s){setCargando(false);return;}const instId=_s.institutionId||(_s.institution&&_s.institution.id);const gradoRaw=_s.grade||"";const grado=encodeURIComponent(gradoRaw);const tok=localStorage.getItem("edutokenest")||localStorage.getItem("edutoken")||localStorage.getItem("token")||"";const r=await fetch(API+"/juegos/"+instId+"/"+grado,{headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok}});const d=await r.json();setJuegos(d.juegos||[]);}catch(_){}setCargando(false);};cargar();},[sesion]);if(cargando)return React.createElement("p",{style:{color:"#64748B",textAlign:"center",padding:30}},"Cargando juegos...");if(!juegos.length)return React.createElement("div",{style:{textAlign:"center",padding:40,background:"#111827",borderRadius:14,border:"1px solid #1e2d45"}},React.createElement("p",{style:{fontSize:40,margin:"0 0 8px"}},"🎮"),React.createElement("p",{style:{color:"#64748B",fontSize:13}},"Tu docente aún no ha publicado juegos"));return React.createElement("div",null,React.createElement("h3",{style:{color:"#34D399",marginBottom:16}},"🎮 Juegos disponibles"),juegos.map((j,i)=>React.createElement("div",{key:i,style:{background:"#111827",border:"1px solid #1e2d45",borderRadius:10,padding:"14px 16px",marginBottom:8}},React.createElement("p",{style:{color:"#60A5FA",fontWeight:"bold",margin:"0 0 2px"}},j.tema+" — "+j.tipo),React.createElement("p",{style:{color:"#64748B",fontSize:11,margin:"0 0 8px"}},j.area+" · Grado "+j.grado),React.createElement("button",{style:{padding:"8px 16px",background:"#059669",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:"bold"},onClick:()=>{localStorage.setItem("juegoActivo",JSON.stringify(j));window.open("https://andresmurillo9011.github.io/edupanel/jugar.html","_blank");}},"▶ Jugar"))));}function App() {
+    function App() {
       const getSesion = () => {
         try {
           const tok = localStorage.getItem("edutokenest");
@@ -802,7 +802,7 @@
               {[
                 {id:"tareas",label:"📋 Mis tareas"},
                 {id:"notas",label:"📊 Mis notas"},
-                {id:"juegos",label:"🎮 Juegos"},{id:"pizarra",label:"🖊️ Pizarra"}
+                {id:"pizarra",label:"🖊️ Pizarra"}
               ].map(s=>(
                 <button key={s.id} style={{
                   ...S.btnSm,
@@ -938,7 +938,7 @@
             {seccion==="notas"&&(
               <NotasEstudiante studentId={sesion.id}/>
             )}
-            {seccion==="juegos"&&React.createElement(JuegosEstudiante,{sesion:sesion})}{seccion==="pizarra"&&(
+            {seccion==="pizarra"&&(
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <h3 style={{color:C.verdeC,margin:0,fontSize:18}}>🖊️ Pizarra de {sesion.grade}</h3>

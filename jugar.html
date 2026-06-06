@@ -65,6 +65,7 @@ function showToast(msg, ok=true) {
 
 async function enviarResultado(correctas, total, tiempo) {
   if (!estudiante) return;
+  const nota = total > 0 ? parseFloat((correctas/total*5).toFixed(1)) : 0;
   try {
     await fetch(API+"/juegos/resultado", {
       method:"POST",
@@ -74,9 +75,20 @@ async function enviarResultado(correctas, total, tiempo) {
         grado: estudiante.grade,
         tipo: juego.tipo,
         tema: juego.tema,
-        correctas, total, tiempo
+        correctas, total, tiempo, nota,
+        estudianteId: estudiante.id,
+        estudianteNombre: estudiante.name
       })
     });
+  } catch(_) {}
+  // Marcar juego como completado en localStorage para no mostrarlo de nuevo
+  try {
+    const completados = JSON.parse(localStorage.getItem("juegosCompletados")||"[]");
+    const key = (juego.id||juego.tema)+"_"+estudiante.id;
+    if (!completados.includes(key)) {
+      completados.push(key);
+      localStorage.setItem("juegosCompletados", JSON.stringify(completados));
+    }
   } catch(_) {}
 }
 
@@ -172,13 +184,15 @@ function mostrarMemoria(j) {
   if (!pares.length) { document.getElementById("contenido").innerHTML = '<div class="card"><p style="color:#64748B;text-align:center;">No hay pares disponibles</p></div>'; return; }
   
   const inicio = Date.now();
-  let cards = [], flipped = [], matched = [], intentos = 0;
+  let cards = [], flipped = [], matched = [], intentos = 0, volteos = {};
+  const MAX_VOLTEOS = 4;
   
   pares.forEach(p => { cards.push({id:p.id, texto:p.termino, tipo:"T"}); cards.push({id:p.id, texto:p.definicion, tipo:"D"}); });
   cards.sort(() => Math.random()-0.5);
+  cards.forEach((_,i) => volteos[i] = 0);
 
   function render() {
-    const matchedIds = new Set(matched);
+    const matchedSet = new Set(matched);
     const flippedIdxs = new Set(flipped);
     document.getElementById("contenido").innerHTML = `
       <div class="card">
@@ -189,29 +203,37 @@ function mostrarMemoria(j) {
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
           ${cards.map((c,i) => {
             const isFlipped = flippedIdxs.has(i);
-            const isMatched = matchedIds.has(c.id) && matched.filter(m=>m===c.id).length >= 2;
-            return `<div onclick="flipCard(${i})" style="height:70px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:6px;border:1.5px solid ${isMatched?'#059669':isFlipped?'#2563EB':'#1e2d45'};background:${isMatched?'#052e16':isFlipped?'#0f2a47':'#0a1128'};color:${isMatched?'#4ade80':isFlipped?'#F1F5F9':'#0a1128'};transition:all 0.2s;">
-              ${isFlipped||isMatched ? c.texto : '?'}
+            const isMatched = matchedSet.has(i);
+            const agotada = volteos[i] >= MAX_VOLTEOS && !isMatched;
+            return `<div onclick="flipCard(${i})" style="height:70px;border-radius:8px;cursor:${agotada||isMatched?'default':'pointer'};display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:6px;border:1.5px solid ${isMatched?'#059669':agotada?'#7f1d1d':isFlipped?'#2563EB':'#1e2d45'};background:${isMatched?'#052e16':agotada?'#1a0a0a':isFlipped?'#0f2a47':'#0a1128'};color:${isMatched?'#4ade80':agotada?'#4b1010':isFlipped?'#F1F5F9':'#0a1128'};opacity:${agotada?0.4:1};transition:all 0.2s;">
+              ${isFlipped||isMatched ? c.texto : agotada ? '🔒' : '?'}
             </div>`;
           }).join("")}
         </div>
+        <p style="color:#64748B;font-size:11px;margin-top:12px;text-align:center;">Cada carta puede voltearse máximo ${MAX_VOLTEOS} veces 🔒</p>
       </div>`;
-    if (matched.length === pares.length*2) {
-      setTimeout(() => { const tiempo=Math.round((Date.now()-inicio)/1000); mostrarResultado(pares.length,pares.length,tiempo); }, 500);
+    const totalPosibles = cards.filter((_,i)=>volteos[i]<MAX_VOLTEOS&&!matched.includes(i)).length;
+    if (matched.length/2 === pares.length || (totalPosibles < 2 && matched.length < pares.length*2)) {
+      setTimeout(() => {
+        const correctasMem = matched.length/2;
+        const tiempo=Math.round((Date.now()-inicio)/1000);
+        mostrarResultado(correctasMem, pares.length, tiempo);
+      }, 800);
     }
   }
 
   window.flipCard = (idx) => {
-    const matchedSet = new Set(matched);
-    const c = cards[idx];
-    if (flipped.includes(idx) || matchedSet.has(c.id) && matched.filter(m=>m===c.id).length>=2) return;
+    if (matched.includes(idx)) return;
+    if (volteos[idx] >= MAX_VOLTEOS) { showToast("Esta carta ya no se puede voltear 🔒", false); return; }
+    if (flipped.includes(idx)) return;
     if (flipped.length === 2) return;
+    volteos[idx]++;
     flipped.push(idx);
     if (flipped.length === 2) {
       intentos++;
       const [a,b] = flipped;
       if (cards[a].id === cards[b].id && cards[a].tipo !== cards[b].tipo) {
-        matched.push(cards[a].id, cards[b].id);
+        matched.push(a, b);
         flipped = [];
         render();
       } else {
