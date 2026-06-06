@@ -345,7 +345,7 @@ function mostrarSopa(j) {
       <h3 style="color:#60A5FA;margin-bottom:12px;">📝 Sopa de Letras: ${j.tema}</h3>
       <p style="color:#64748B;font-size:12px;margin-bottom:16px;">Encuentra estas ${palabras.length} palabras en tu cuaderno o pizarrón:</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-        ${palabras.map(p=>`<span style="background:#0f2a47;color:#60A5FA;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:600;">${p}</span>`).join("")}
+        ${palabras.map(p=>`<span style="background:#0f2a47;color:#60A5FA;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:600;">${typeof p==="object"?(p.palabra||p.termino||p.word||JSON.stringify(p)):p}</span>`).join("")}
       </div>
       <h4 style="color:#94a3b8;margin-bottom:8px;font-size:13px;">Pistas:</h4>
       ${pistas.map((p,i)=>`<p style="color:#64748B;font-size:12px;margin-bottom:4px;">${i+1}. ${p}</p>`).join("")}
