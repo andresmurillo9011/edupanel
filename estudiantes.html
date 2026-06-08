@@ -297,6 +297,11 @@
         : tarea.actividad;
 
       const entregar = async () => {
+        // ✅ VERIFICAR SI LA TAREA YA CERRÓ
+        if (tarea.cerrarEn && new Date(tarea.cerrarEn) < new Date()) {
+          alert("⏰ Esta actividad ya cerró. No puedes entregar.");
+          return;
+        }
         if (!Object.keys(resps).length && !texto && !archivo) {
           alert("Responde o adjunta algo antes de entregar");
           return;
@@ -432,8 +437,8 @@
                 <button style={S.btnG} onClick={onCerrar}>Cancelar</button>
                 <button style={{
                   ...S.btnV,flex:1,opacity:enviando?0.7:1
-                }} disabled={enviando} onClick={entregar}>
-                  {enviando?"Enviando...":"Entregar tarea"}
+                }} disabled={enviando || (tarea.cerrarEn && new Date(tarea.cerrarEn) < new Date())} onClick={entregar}>
+                  {enviando?"Enviando...":(tarea.cerrarEn && new Date(tarea.cerrarEn) < new Date())?"⏰ Actividad cerrada":"Entregar tarea"}
                 </button>
               </div>
             )}
